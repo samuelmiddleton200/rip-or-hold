@@ -12,65 +12,79 @@
   body{height:var(--app-h,100%)}
 </style>
 <style>*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{--bg:#120a2e;--p1:rgba(255,255,255,.07);--p2:rgba(255,255,255,.12);--p3:#3b3a86;--ink:#f4f1ff;--dim:#a9a4d6;--gold:#ffd23f;--grn:#4fe38a;--red:#ff6b7a;--blu:#4dd2ff;--pink:#ff5fa8;--vio:#8a6bff;--font:'Fredoka','Trebuchet MS','Segoe UI',system-ui,sans-serif;--pix:'Silkscreen','Press Start 2P',ui-monospace,Consolas,monospace}
+/* Palette comes from the game's own art: deep blue-teal night (so cards pop), honey gold, mint, coral, sky, warm cream text, shop-wood browns. */
+:root{--bg:#0d1926;--surf:#17304a;--surf2:#1f4163;--line:rgba(176,214,255,.16);--ink:#f7f0dd;--dim:#9db6cc;--gold:#ffc83d;--gold2:#d9920f;--grn:#63e3a4;--grn2:#2e9c6b;--red:#ff7a6b;--red2:#a8322e;--blu:#62c6ff;--blu2:#2f80d4;--wood:#b8742e;--wood2:#7a4a22;
+  --p1:rgba(255,255,255,.05);--p2:rgba(255,255,255,.09);--p3:#2d5075;--pink:#ff8fc0;--vio:#a283ff;
+  --font:'Fredoka','Trebuchet MS','Segoe UI',system-ui,sans-serif;--pix:'Silkscreen','Press Start 2P',ui-monospace,Consolas,monospace}
 html,body{margin:0;height:100%;color:var(--ink);font-family:var(--font);font-size:17px;overflow:hidden;background:var(--bg)}
-body{display:flex;flex-direction:column;background:radial-gradient(1100px 650px at 12% -8%,#40308f 0,transparent 62%),radial-gradient(900px 600px at 104% 112%,#7b2a8c66 0,transparent 58%),linear-gradient(#170d3b,#0b0622)}
+body{display:flex;flex-direction:column;background:radial-gradient(1000px 560px at 18% -12%,#24496b 0,transparent 62%),radial-gradient(800px 500px at 108% 112%,#1d5a55 0,transparent 58%),radial-gradient(rgba(255,255,255,.045) 1px,transparent 1.5px) 0 0/16px 16px,linear-gradient(#10202f,#08111b)}
 img{image-rendering:pixelated}
-::-webkit-scrollbar{width:12px;height:12px}::-webkit-scrollbar-track{background:rgba(0,0,0,.25)}::-webkit-scrollbar-thumb{background:#4a3fa8;border-radius:8px;border:2px solid #1a1048}
-/* ───── buttons: chunky, glossy, they press down ───── */
-button{font-family:var(--font);font-weight:600;font-size:inherit;color:#fff;cursor:pointer;border:0;border-radius:12px;padding:6px 14px;background:linear-gradient(#6a7bff,#4455e0);box-shadow:inset 0 2px 0 rgba(255,255,255,.35),0 4px 0 #1f2678,0 7px 10px rgba(0,0,0,.35);text-shadow:0 1px 0 rgba(0,0,0,.35);transition:transform .06s,filter .12s}
-button:hover{filter:brightness(1.12)}
-button:active{transform:translateY(3px);box-shadow:inset 0 2px 0 rgba(255,255,255,.3),0 1px 0 #1f2678,0 2px 4px rgba(0,0,0,.4)}
-button.gold{background:linear-gradient(#ffe066,#ffa81f);color:#2a1700;text-shadow:0 1px 0 rgba(255,255,255,.4);box-shadow:inset 0 2px 0 rgba(255,255,255,.6),0 4px 0 #8a5a00,0 7px 10px rgba(0,0,0,.35)}
-button.grn{background:linear-gradient(#63f09a,#1faa5a);color:#04210f;text-shadow:0 1px 0 rgba(255,255,255,.35);box-shadow:inset 0 2px 0 rgba(255,255,255,.5),0 4px 0 #0f6a37,0 7px 10px rgba(0,0,0,.35)}
-button.red{background:linear-gradient(#ff8795,#d63a4a);box-shadow:inset 0 2px 0 rgba(255,255,255,.4),0 4px 0 #7a1824,0 7px 10px rgba(0,0,0,.35)}
-button:disabled{opacity:.38;pointer-events:none;filter:grayscale(.5)}
-/* ───── top bar: logo, stat chips, the big Next Day button ───── */
-#top{display:flex;align-items:center;gap:12px;padding:7px 14px;background:linear-gradient(#2d1f72,#1c1252);border-bottom:3px solid #090520;box-shadow:0 4px 18px rgba(0,0,0,.5);flex:none;z-index:5;position:relative}
-#top h1{margin:0;font-family:var(--pix);font-size:17px;letter-spacing:1px;color:var(--gold);text-shadow:0 3px 0 #7a4a00,0 0 18px #ffb52e88;line-height:1.1;white-space:nowrap}
-#top h1 span{display:block;font-size:10px;letter-spacing:3px;color:#cdbfff;text-shadow:none}
+.ico{image-rendering:pixelated;display:inline-block;vertical-align:middle;flex:none}.ico.locked{filter:grayscale(1) brightness(.55)}
+::-webkit-scrollbar{width:12px;height:12px}::-webkit-scrollbar-track{background:rgba(0,0,0,.25)}::-webkit-scrollbar-thumb{background:#3d6a94;border-radius:8px;border:2px solid #0d1926}
+/* ───── buttons: flat, chunky, a hard bottom edge like pixel-game buttons; they press down ───── */
+button{font-family:var(--font);font-weight:600;font-size:inherit;color:var(--ink);cursor:pointer;border:0;border-radius:10px;padding:6px 14px;background:var(--surf2);box-shadow:inset 0 0 0 2px rgba(176,214,255,.22),0 4px 0 #07111c;transition:transform .06s,filter .12s}
+button:hover{filter:brightness(1.14)}
+button:active{transform:translateY(3px);box-shadow:inset 0 0 0 2px rgba(176,214,255,.22),0 1px 0 #07111c}
+button.gold{background:var(--gold);color:#2b1a00;box-shadow:inset 0 3px 0 #ffe9a3,inset 0 0 0 2px #1b1330,0 4px 0 #8a5a00}
+button.gold:active{box-shadow:inset 0 3px 0 #ffe9a3,inset 0 0 0 2px #1b1330,0 1px 0 #8a5a00}
+button.grn{background:var(--grn);color:#052a1a;box-shadow:inset 0 3px 0 #b8f7d6,inset 0 0 0 2px #1b1330,0 4px 0 var(--grn2)}
+button.grn:active{box-shadow:inset 0 3px 0 #b8f7d6,inset 0 0 0 2px #1b1330,0 1px 0 var(--grn2)}
+button.red{background:var(--red);color:#2d0a06;box-shadow:inset 0 3px 0 #ffc2ba,inset 0 0 0 2px #1b1330,0 4px 0 var(--red2)}
+button:disabled{opacity:.4;pointer-events:none;filter:grayscale(.6)}
+/* ───── top bar: wordmark, stat chips, Next Day ───── */
+#top{display:flex;align-items:center;gap:12px;padding:7px 14px;background:linear-gradient(#17304a,#10243a);border-bottom:3px solid #07111c;box-shadow:0 4px 16px rgba(0,0,0,.45);flex:none;z-index:5;position:relative}
+#top h1{margin:0;display:flex;align-items:center;gap:8px;font-family:var(--pix);font-size:16px;letter-spacing:1px;color:var(--ink);line-height:1.1;white-space:nowrap}
+#top h1 b{color:var(--gold);text-shadow:0 2px 0 var(--wood2)}
+#top h1 span{display:block;font-size:9px;letter-spacing:3px;color:var(--dim)}
 #top .st{display:flex;gap:8px;flex:1;justify-content:center;flex-wrap:wrap}
-#top .chip{display:flex;align-items:center;gap:8px;padding:4px 14px 4px 8px;border-radius:999px;background:rgba(0,0,0,.38);border:2px solid rgba(255,255,255,.14);line-height:1}
-#top .chip i{font-style:normal;font-size:21px}
+#top .chip{display:flex;align-items:center;gap:8px;padding:4px 14px 4px 8px;border-radius:10px;background:rgba(0,0,0,.32);box-shadow:inset 0 0 0 2px var(--line);line-height:1}
 #top .chip small{display:block;font-size:10px;color:var(--dim);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:2px}
-#top .chip b{font-size:19px;white-space:nowrap}
-#top button.go{font-size:18px;padding:8px 18px;white-space:nowrap;animation:gopulse 2.4s ease-in-out infinite}
-@keyframes gopulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.18)}}
-/* ───── bottom tab bar, like an app ───── */
-#nav{order:5;display:flex;gap:3px;padding:6px 6px calc(6px + env(safe-area-inset-bottom));background:linear-gradient(#1b1250,#0d0730);border-top:3px solid #090520;box-shadow:0 -6px 18px rgba(0,0,0,.5);flex:none;overflow-x:auto;justify-content:center;z-index:5}
-#nav button{flex:1 1 0;min-width:62px;max-width:128px;display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 4px 4px;background:transparent;box-shadow:none;border-radius:14px;font-size:12px;color:var(--dim);text-shadow:none;letter-spacing:.3px}
-#nav button:hover{background:rgba(255,255,255,.08);filter:none}
-#nav button .ic{font-size:23px;line-height:1;filter:grayscale(.4) brightness(.92);transition:transform .12s}
-#nav button.on{background:linear-gradient(#ffe066,#ffa81f);color:#2a1700;box-shadow:inset 0 2px 0 rgba(255,255,255,.55),0 3px 0 #8a5a00}
-#nav button.on .ic{filter:none;transform:translateY(-2px) scale(1.15)}
+#top .chip b{font-size:18px;white-space:nowrap}
+#top button.go{font-size:17px;padding:8px 18px;white-space:nowrap}
+/* ───── bottom tab bar ───── */
+#nav{order:5;display:flex;gap:4px;padding:6px 8px calc(6px + env(safe-area-inset-bottom));background:linear-gradient(#10243a,#0b1a2a);border-top:3px solid #07111c;box-shadow:0 -6px 16px rgba(0,0,0,.4);flex:none;overflow-x:auto;justify-content:center;z-index:5}
+#nav button{flex:1 1 0;min-width:62px;max-width:128px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 4px 4px;background:transparent;box-shadow:none;border-radius:10px;font-size:12px;color:var(--dim);letter-spacing:.3px}
+#nav button:hover{background:rgba(255,255,255,.07);filter:none}
+#nav button .ico{opacity:.75;transition:transform .12s}
+#nav button.on{background:var(--gold);color:#2b1a00;box-shadow:inset 0 3px 0 #ffe9a3,inset 0 0 0 2px #1b1330,0 3px 0 #8a5a00}
+#nav button.on .ico{opacity:1;transform:translateY(-1px)}
 #main{order:1;flex:1;overflow:auto;padding:12px 14px;position:relative}
-#news{order:4;flex:none;background:rgba(0,0,0,.5);border-top:2px solid rgba(255,255,255,.1);padding:3px 14px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;gap:8px;align-items:center}
+#news{order:4;flex:none;background:rgba(0,0,0,.45);border-top:2px solid var(--line);padding:3px 14px;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;gap:8px;align-items:center}
 #news b{color:var(--gold);font-family:var(--pix);font-size:10px;letter-spacing:1px}
 .up{color:var(--grn)}.down{color:var(--red)}.dim{color:var(--dim)}.gold{color:var(--gold)}
-h2{margin:0 0 8px;font-family:var(--pix);font-size:19px;color:var(--gold);letter-spacing:.5px;text-shadow:2px 2px 0 #000a}
-h3{margin:12px 0 6px;font-size:20px;color:#d6e4ff;font-weight:600}
+/* page header: icon, title, one line of help */
+.ph{display:flex;align-items:center;gap:12px;margin:0 0 12px}
+.ph .ico{padding:6px;background:rgba(0,0,0,.3);border-radius:12px;box-shadow:inset 0 0 0 2px var(--line);box-sizing:content-box}
+.ph h2{margin:0}.ph p{margin:1px 0 0;color:var(--dim);font-size:14px;line-height:1.25;max-width:760px}
+h2{margin:0 0 8px;font-family:var(--pix);font-size:17px;color:var(--ink);letter-spacing:1px;text-transform:uppercase}
+h3{margin:14px 0 6px;font-family:var(--pix);font-size:12px;letter-spacing:1.5px;color:var(--gold);text-transform:uppercase}
 /* ───── panels ───── */
-.row{display:flex;align-items:center;gap:12px;background:linear-gradient(rgba(255,255,255,.10),rgba(255,255,255,.04));border:2px solid rgba(255,255,255,.12);border-radius:16px;padding:8px 12px;margin:6px 0;box-shadow:0 3px 0 rgba(0,0,0,.25)}
-.row[data-a]:hover{border-color:rgba(255,214,90,.55);box-shadow:0 3px 0 rgba(0,0,0,.25),0 0 14px rgba(255,214,90,.25)}
+.row{display:flex;align-items:center;gap:12px;background:var(--surf);border:2px solid var(--line);border-radius:12px;padding:8px 12px;margin:6px 0;box-shadow:0 3px 0 rgba(0,0,0,.28)}
+.row[data-a]:hover{border-color:rgba(255,200,61,.6)}
 .row .nm{flex:1;min-width:130px;font-weight:600}.row .nm small{display:block;color:var(--dim);font-size:14px;line-height:1.1;font-weight:400}
 .row .pr{min-width:70px;text-align:right;font-weight:600}
 .tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
-.tabs button{background:rgba(255,255,255,.10);color:var(--ink);box-shadow:inset 0 0 0 2px rgba(255,255,255,.14);border-radius:999px;padding:4px 14px;text-shadow:none;font-size:16px}
-.tabs button.on{background:linear-gradient(#7ee6ff,#2fb4ff);color:#04202f;box-shadow:inset 0 2px 0 rgba(255,255,255,.55),0 3px 0 #0d6a92}
+.tabs button{background:rgba(255,255,255,.07);color:var(--ink);box-shadow:inset 0 0 0 2px var(--line);border-radius:8px;padding:4px 13px;font-size:15px}
+.tabs button.on{background:var(--blu);color:#04202f;box-shadow:inset 0 3px 0 #c9efff,inset 0 0 0 2px #1b1330,0 3px 0 var(--blu2)}
 .grid{display:flex;flex-wrap:wrap;gap:12px}
-.box{background:linear-gradient(rgba(255,255,255,.10),rgba(255,255,255,.04));border:2px solid rgba(255,255,255,.12);border-radius:18px;padding:10px 14px;box-shadow:0 4px 0 rgba(0,0,0,.25)}
+.box{background:var(--surf);border:2px solid var(--line);border-radius:14px;padding:10px 14px;box-shadow:0 4px 0 rgba(0,0,0,.28)}
 .cols{display:flex;gap:14px;flex-wrap:wrap}.cols>*{flex:1;min-width:280px}
 .setcard{border-left:8px solid var(--c)}
-.tag{display:inline-block;padding:0 8px;border-radius:999px;background:rgba(255,255,255,.16);font-size:12px;margin-left:5px;font-weight:600;letter-spacing:.5px;vertical-align:middle}
+.tag{display:inline-block;padding:0 7px;border-radius:5px;background:rgba(255,255,255,.14);font-size:11px;margin-left:5px;font-family:var(--pix);letter-spacing:.5px;vertical-align:middle}
 .tag.hot{background:#e0455a}.tag.new{background:#23a85a}.tag.oop{background:#8a5cd6}
 .ev{font-size:14px;white-space:nowrap;line-height:1.2}
-.prog{height:14px;background:rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.15);border-radius:999px;overflow:hidden;min-width:100px}.prog i{display:block;height:100%;background:linear-gradient(#7dffae,#1fb85f);border-radius:999px}
+.prog{height:14px;background:rgba(0,0,0,.4);border:2px solid var(--line);border-radius:6px;overflow:hidden;min-width:100px}.prog i{display:block;height:100%;background:var(--grn)}
+/* stat blocks */
+.stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:12px}
+.stat{background:var(--surf);border:2px solid var(--line);border-radius:12px;padding:8px 12px;display:flex;gap:10px;align-items:center;box-shadow:0 3px 0 rgba(0,0,0,.28)}
+.stat .ico{padding:5px;background:rgba(0,0,0,.28);border-radius:8px;box-sizing:content-box}
+.stat small{display:block;color:var(--dim);font-size:11px;letter-spacing:1.2px;text-transform:uppercase}.stat b{font-size:20px;line-height:1.1}
 
 /* ───── cards (the picture is drawn on a canvas by card-art/renderer.js) ───── */
 .card{--w:120px;position:relative;width:var(--w);height:calc(var(--w)*1.4);flex:none;cursor:pointer;font-size:calc(var(--w)*.13);perspective:600px;--rc:#6b6b6b;border-radius:3px}
 .card.sm{--w:78px}
 .card canvas.cv{display:block;width:100%;height:100%;image-rendering:pixelated;border-radius:3px}
-.card .ptag{position:absolute;left:50%;bottom:-15px;transform:translateX(-50%);background:#0a0624;border:2px solid #3b3a86;border-radius:999px;padding:0 8px;font-size:calc(var(--w)*.15);font-weight:600;white-space:nowrap;color:var(--grn);z-index:3}
+.card .ptag{position:absolute;left:50%;bottom:-15px;transform:translateX(-50%);background:#08121d;border:2px solid #2d5075;border-radius:6px;padding:0 7px;font-size:calc(var(--w)*.15);font-weight:600;white-space:nowrap;color:var(--grn);z-index:3}
 .card .ptag u{text-decoration:none;color:var(--dim)}
 .card.sm .ptag{font-size:13px;bottom:-12px;padding:0 6px}
 .r-uncommon{--rc:#5ed06f;box-shadow:0 0 6px #5ed06f66}
@@ -102,9 +116,9 @@ h3{margin:12px 0 6px;font-size:20px;color:#d6e4ff;font-weight:600}
 .slab .card{margin:0 auto}
 .slab>.ptag{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);background:#070b18;border:1px solid var(--p3);border-radius:3px;padding:0 5px;font-size:16px;color:var(--grn);white-space:nowrap}
 /* ───── overlays ───── */
-#ov{position:fixed;inset:0;background:radial-gradient(circle at 50% 38%,rgba(70,40,160,.88),rgba(6,3,24,.96) 70%);display:none;z-index:50;overflow:auto}
+#ov{position:fixed;inset:0;background:radial-gradient(circle at 50% 38%,rgba(36,84,124,.9),rgba(5,12,20,.97) 72%);display:none;z-index:50;overflow:auto}
 #ov.on{display:flex;align-items:center;justify-content:center}
-.modal{background:linear-gradient(#2c1f78,#170e45);border:3px solid var(--gold);border-radius:20px;padding:14px 18px;max-width:96vw;max-height:94vh;overflow:auto;position:relative;box-shadow:0 0 0 5px rgba(0,0,0,.45),0 0 44px rgba(255,200,60,.35),0 14px 40px rgba(0,0,0,.6)}
+.modal{background:linear-gradient(#1c3a58,#112638);border:3px solid var(--gold);border-radius:16px;padding:14px 18px;max-width:96vw;max-height:94vh;overflow:auto;position:relative;box-shadow:0 0 0 5px rgba(0,0,0,.45),0 0 40px rgba(255,200,60,.28),0 14px 40px rgba(0,0,0,.6)}
 .modal.shake{animation:shake .08s linear 8}
 .opn{width:min(960px,98vw);text-align:center}
 .stage{height:300px;display:flex;align-items:center;justify-content:center;position:relative}
@@ -130,18 +144,18 @@ canvas.ch{background:rgba(0,0,0,.4);border:2px solid var(--p3);border-radius:10p
 .bar{height:26px;background:#070b18;border:2px solid var(--p3);position:relative;border-radius:4px;margin:10px auto;max-width:420px}
 .bar .zone{position:absolute;top:0;bottom:0;background:#2faa55aa}
 .bar .cur{position:absolute;top:-4px;bottom:-4px;width:6px;background:#fff}
-.pill{display:inline-block;background:rgba(255,255,255,.14);border-radius:999px;padding:0 10px;font-size:14px;font-weight:600}
-.toast{position:fixed;left:50%;top:76px;transform:translateX(-50%);background:linear-gradient(#ffe066,#ffa81f);color:#2a1700;padding:6px 20px;border-radius:999px;z-index:80;font-size:17px;font-weight:700;box-shadow:0 5px 0 #8a5a00,0 10px 24px rgba(0,0,0,.5);white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis}
-.broke{background:linear-gradient(#6a2030,#4a1422);border:2px solid var(--red);padding:8px 14px;border-radius:14px;margin-bottom:10px}
+.pill{display:inline-block;background:rgba(255,255,255,.12);border-radius:6px;padding:0 9px;font-size:13px;font-weight:600}
+.toast{position:fixed;left:50%;top:76px;transform:translateX(-50%);background:var(--gold);color:#2b1a00;padding:6px 18px;border-radius:10px;z-index:80;font-size:16px;font-weight:700;box-shadow:inset 0 3px 0 #ffe9a3,inset 0 0 0 2px #1b1330,0 5px 0 #8a5a00,0 10px 24px rgba(0,0,0,.5);white-space:nowrap;max-width:94vw;overflow:hidden;text-overflow:ellipsis}
+.broke{background:#4a1d22;border:2px solid var(--red);padding:8px 14px;border-radius:12px;margin-bottom:10px}
 .pimg{image-rendering:auto;flex:none;filter:drop-shadow(2px 3px 0 rgba(0,0,0,.5))}
-.sil{--w:78px;width:var(--w);height:calc(var(--w)*1.4);border-radius:10px;background:rgba(0,0,0,.28);border:2px dashed rgba(255,255,255,.22);color:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:14px;flex:none}
+.sil{--w:78px;width:var(--w);height:calc(var(--w)*1.4);border-radius:8px;background:rgba(0,0,0,.28);border:2px dashed rgba(255,255,255,.22);color:rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:14px;flex:none}
 /* ───── phones (iPhone sideways is about 852x393) ───── */
 #top,#nav,#news,#main{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
 #top{padding-top:calc(7px + env(safe-area-inset-top))}
 @media (max-height:520px){
   body{font-size:15px}
   #top{padding-top:calc(3px + env(safe-area-inset-top));padding-bottom:3px;gap:8px}
-  #top h1{font-size:13px}#top h1 span{display:none}
+  #top h1{font-size:12px}#top h1 span{display:none}#top h1 .ico{width:20px;height:20px}
   #top .st{gap:5px;flex-wrap:nowrap;overflow:hidden}#top .chip{padding:2px 10px 2px 6px;gap:5px}#top .chip i{font-size:16px}#top .chip small{font-size:9px;margin:0}#top .chip b{font-size:15px}
   #top button.go{font-size:14px;padding:5px 12px}
   #nav{padding-top:3px;padding-bottom:calc(3px + env(safe-area-inset-bottom));gap:2px}
@@ -226,14 +240,14 @@ canvas.ch{background:rgba(0,0,0,.4);border:2px solid var(--p3);border-radius:10p
 .stag.unset{border-style:dashed;color:#cbb690}.stag.good{color:#7df29a;border-color:#2f9a55}.stag.ok{color:#ffd23f;border-color:#a8821e}.stag.high{color:#ff8f7e;border-color:#b0483a}
 
 /* ---- store tiles ---- */
-.shopbanner{background:linear-gradient(135deg,color-mix(in srgb,var(--c) 70%,#2b1a6b),#1c1252);border:3px solid color-mix(in srgb,var(--c) 70%,#fff);border-radius:18px;padding:10px 16px;box-shadow:0 4px 0 rgba(0,0,0,.3)}.shopbanner b{font-family:var(--pix);font-size:17px;color:#fff;text-shadow:2px 2px 0 #0008}.shopbanner small{display:block;color:#f0e8ff;font-size:14px;margin-top:2px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:12px}
-.tile{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:12px 10px 10px;border-radius:20px;background:radial-gradient(circle at 50% 22%,color-mix(in srgb,var(--c) 55%,transparent),rgba(255,255,255,.05) 62%),linear-gradient(#27196a,#170e45);border:3px solid color-mix(in srgb,var(--c) 65%,#fff 10%);box-shadow:0 5px 0 rgba(0,0,0,.35),0 0 18px color-mix(in srgb,var(--c) 35%,transparent);transition:transform .12s}
+.shopbanner{display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,color-mix(in srgb,var(--c) 40%,#17304a),#10243a);border:2px solid color-mix(in srgb,var(--c) 60%,#fff 10%);border-radius:14px;padding:10px 16px;box-shadow:0 4px 0 rgba(0,0,0,.3)}.shopbanner b{font-family:var(--pix);font-size:15px;color:var(--ink);letter-spacing:1px;text-transform:uppercase}.shopbanner small{display:block;color:#d7e6f4;font-size:14px;margin-top:2px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:12px}
+.tile{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px;padding:12px 10px 10px;border-radius:14px;background:radial-gradient(circle at 50% 24%,color-mix(in srgb,var(--c) 42%,transparent),transparent 68%),var(--surf);border:2px solid color-mix(in srgb,var(--c) 55%,var(--line));box-shadow:0 4px 0 rgba(0,0,0,.32);transition:transform .12s}
 .tile:hover{transform:translateY(-3px)}
-.tile .timg{height:100px;display:flex;align-items:flex-end;justify-content:center}.tile .timg .pimg{filter:drop-shadow(0 6px 6px rgba(0,0,0,.55))}
+.tile .timg{height:100px;display:flex;align-items:flex-end;justify-content:center}.tile .timg .pimg{filter:drop-shadow(0 6px 5px rgba(0,0,0,.5))}
 .tile .tn{font-weight:700;font-size:17px;line-height:1.1;margin-top:4px}.tile .td{font-size:12px;color:var(--dim);line-height:1.15;min-height:28px}
 .tile .tev{font-size:14px;font-weight:600}.tile .tev small{display:block;font-weight:400;font-size:11px;color:var(--dim)}
-.tile .tp{font-family:var(--pix);font-size:17px;color:var(--gold);text-shadow:2px 2px 0 #000a;margin:2px 0}
+.tile .tp{font-family:var(--pix);font-size:15px;color:#2b1a00;background:var(--gold);padding:1px 9px;border-radius:5px;box-shadow:inset 0 2px 0 #ffe9a3,0 2px 0 #8a5a00;margin:4px 0}
 .tile .tb{display:flex;gap:6px;justify-content:center}.tile .tl{font-size:11px;color:var(--dim)}
 @media (max-height:520px){.tiles{grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}.tile{padding:8px 6px 6px;border-radius:14px}.tile .timg{height:70px}.tile .timg .pimg{height:70px!important}.tile .tn{font-size:14px}.tile .td{display:none}.tile .tp{font-size:14px}}
 
@@ -256,6 +270,18 @@ canvas.ch{background:rgba(0,0,0,.4);border:2px solid var(--p3);border-radius:10p
   .tiles{grid-template-columns:repeat(2,1fr)}.shopbanner small{display:none}.cols>*{min-width:0}
   #nav button{min-width:40px;font-size:9px}#nav button .ic{font-size:19px}
 }
+
+/* ---- pack tear intro ---- */
+.packstage{cursor:pointer;height:310px}
+.packstage .pimg{position:relative;z-index:2;animation:idle 1.7s ease-in-out infinite;filter:drop-shadow(0 12px 10px rgba(0,0,0,.55))}
+@keyframes idle{0%,100%{transform:translateY(0) rotate(-1.5deg)}50%{transform:translateY(-10px) rotate(1.5deg)}}
+.packstage.tearing .pimg{animation:tearA .56s ease-in forwards}
+@keyframes tearA{0%{transform:scale(1) rotate(0)}20%{transform:scale(1.06) rotate(-4deg)}40%{transform:scale(1.1) rotate(4deg)}60%{transform:scale(1.14) rotate(-3deg);filter:brightness(1.6) drop-shadow(0 0 30px #ffd23f)}100%{transform:scale(2.6);opacity:0;filter:brightness(3)}}
+.taphint{position:absolute;bottom:4px;left:0;right:0;text-align:center;font-family:var(--pix);font-size:12px;letter-spacing:1.5px;color:var(--gold);animation:blinkh 1.1s steps(2) infinite;z-index:3}
+@keyframes blinkh{50%{opacity:.35}}
+.tiles.wide{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+@media (max-height:520px){.packstage{height:230px}.packstage .pimg{height:150px!important}}
+.tile .tb button{white-space:nowrap}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -936,6 +962,131 @@ function load(){
 }
 function resetGame(){ try { localStorage.removeItem(SAVEKEY); } catch (e){} newGameState(); save(); }
 
+// ───────────────────────── pixel icons, drawn in code on a 16x16 grid, same chunky style as the cards ─────────────────────────
+// ico(name, px) returns an <img> that shows crisp at any size. Every icon: dark outline, 2-3 tones per colour, a highlight pixel row.
+const IC = { k:'#1b1330', w:'#ffffff', cream:'#fbeccb', cream2:'#e8cf9b', gold:'#ffc83d', gold2:'#d9920f', orange:'#ff8a3d', orange2:'#d9561f', red:'#ec5a4f', red2:'#a8322e', mint:'#63e3a4', mint2:'#2e9c6b', sky:'#62c6ff', sky2:'#2f80d4', violet:'#a283ff', violet2:'#5b46c9', wood:'#b8742e', wood2:'#7a4a22', grey:'#c5cee0', grey2:'#7482a0', pink:'#ff8fc0' };
+const ICONS = {};
+function mkIcon(name, draw){
+  const cv = document.createElement('canvas'); cv.width = cv.height = 16; const x = cv.getContext('2d');
+  const R = (a, b, w, h, c) => { x.fillStyle = IC[c] || c; x.fillRect(a, b, w, h); };
+  const P = (a, b, c) => R(a, b, 1, 1, c);
+  const disc = (cx, cy, r, c) => { for (let j = -r; j <= r; j++) for (let i = -r; i <= r; i++) if (i * i + j * j <= r * r + r * .6) P(cx + i, cy + j, c); };
+  const ring = (cx, cy, r, c) => { for (let j = -r - 1; j <= r + 1; j++) for (let i = -r - 1; i <= r + 1; i++) { const d = i * i + j * j; if (d <= (r + .5) * (r + .5) && d > (r - .9) * (r - .9)) P(cx + i, cy + j, c); } };
+  draw({ R, P, disc, ring });
+  return ICONS[name] = cv.toDataURL();
+}
+const DRAW = {
+  pack({ R, P }){                                                   // foil booster pack: Store
+    R(3, 1, 10, 14, 'k'); R(4, 2, 8, 12, 'orange'); R(4, 2, 8, 2, 'gold2'); R(4, 12, 8, 2, 'gold2');
+    for (let i = 4; i < 12; i += 2){ P(i, 2, 'gold'); P(i, 13, 'gold'); }
+    R(4, 4, 1, 8, 'gold'); R(7, 5, 2, 6, 'gold'); R(5, 7, 6, 2, 'gold'); R(7, 7, 2, 2, 'w'); P(10, 5, 'orange2'); P(10, 10, 'orange2');
+  },
+  shop({ R, P }){                                                   // storefront with striped awning: My Shop
+    R(1, 2, 14, 5, 'k'); for (let i = 0; i < 7; i++) R(2 + i * 2, 3, 2, 3, i % 2 ? 'cream' : 'red'); R(2, 6, 12, 1, 'red2'); for (let i = 0; i < 6; i++) P(2 + i * 2 + 1, 7, 'red2');
+    R(2, 8, 12, 7, 'k'); R(3, 8, 10, 6, 'cream'); R(3, 13, 10, 1, 'cream2'); R(6, 9, 4, 5, 'wood'); R(6, 9, 4, 1, 'wood2'); P(9, 12, 'gold');
+    R(3, 9, 2, 3, 'sky'); R(11, 9, 2, 3, 'sky'); P(3, 9, 'w'); P(11, 9, 'w');
+  },
+  box({ R, P }){                                                    // sealed box: Sealed
+    R(1, 4, 14, 11, 'k'); R(2, 6, 12, 8, 'sky2'); R(2, 6, 12, 1, 'sky'); R(2, 4, 12, 3, 'sky'); R(2, 4, 12, 1, 'w');
+    R(7, 4, 2, 10, 'gold'); R(7, 4, 2, 1, 'cream'); R(2, 13, 12, 1, 'violet2'); P(4, 9, 'w'); P(5, 9, 'w'); R(10, 9, 3, 2, 'violet'); P(2, 4, 'k'); P(13, 4, 'k');
+  },
+  cards({ R, P }){                                                  // fanned cards: Collection
+    R(1, 4, 8, 11, 'k'); R(2, 5, 6, 9, 'sky'); R(2, 5, 6, 2, 'w'); R(3, 8, 4, 4, 'sky2');
+    R(4, 2, 8, 12, 'k'); R(5, 3, 6, 10, 'mint'); R(5, 3, 6, 2, 'w'); R(6, 6, 4, 5, 'mint2'); P(7, 7, 'w');
+    R(7, 3, 8, 12, 'k'); R(8, 4, 6, 10, 'cream'); R(8, 4, 6, 2, 'red'); R(9, 7, 4, 5, 'gold'); R(10, 8, 2, 3, 'orange'); P(9, 7, 'w');
+  },
+  grade({ R, P, ring, disc }){                                      // graded slab + magnifier: Grading
+    R(1, 1, 9, 13, 'k'); R(2, 2, 7, 11, 'grey'); R(2, 2, 7, 3, 'w'); R(3, 3, 5, 1, 'red'); R(3, 6, 5, 6, 'sky2'); R(4, 7, 3, 3, 'gold');
+    ring(10, 10, 3, 'k'); disc(10, 10, 2, 'sky'); P(9, 9, 'w'); R(12, 12, 2, 2, 'wood2'); R(13, 13, 2, 2, 'k'); P(14, 14, 'wood');
+  },
+  ticket({ R, P }){                                                 // event ticket: Card Show
+    R(1, 4, 14, 9, 'k'); R(2, 5, 12, 7, 'gold'); R(2, 5, 12, 1, 'cream'); P(1, 8, 'k'); P(14, 8, 'k'); P(2, 8, 'gold2'); P(13, 8, 'gold2');
+    for (let y = 5; y < 12; y += 2) P(10, y, 'gold2');
+    R(4, 7, 4, 3, 'orange'); P(5, 6, 'orange'); P(6, 6, 'orange'); R(5, 8, 2, 1, 'cream'); R(11, 6, 2, 5, 'orange2'); P(12, 7, 'cream'); P(12, 9, 'cream');
+  },
+  globe({ R, P, disc, ring }){                                      // globe: eBay
+    disc(8, 8, 6, 'k'); disc(8, 8, 5, 'sky'); R(5, 5, 3, 2, 'mint'); R(8, 4, 3, 2, 'mint'); R(9, 7, 3, 3, 'mint'); R(4, 8, 2, 2, 'mint'); R(7, 10, 3, 2, 'mint2');
+    P(5, 4, 'w'); P(6, 4, 'w'); P(4, 5, 'w'); R(2, 8, 12, 1, 'sky2'); R(8, 2, 1, 12, 'sky2'); P(8, 8, 'w');
+  },
+  bars({ R, P }){                                                   // bar chart: Stats
+    R(1, 13, 14, 2, 'k'); R(2, 12, 12, 1, 'grey'); R(2, 8, 3, 5, 'k'); R(3, 9, 1, 3, 'mint'); R(6, 4, 3, 9, 'k'); R(7, 5, 1, 7, 'gold'); R(10, 1, 3, 12, 'k'); R(11, 2, 1, 10, 'red');
+    P(3, 9, 'w'); P(7, 5, 'w'); P(11, 2, 'w'); R(1, 1, 1, 12, 'grey2'); P(1, 13, 'grey2');
+  },
+  coin({ R, P, disc }){                                             // coin: cash
+    disc(8, 8, 7, 'k'); disc(8, 8, 6, 'gold'); disc(8, 8, 4, 'gold2'); disc(8, 8, 3, 'gold'); R(7, 5, 2, 6, 'gold2'); R(6, 6, 4, 1, 'gold2'); R(6, 9, 4, 1, 'gold2'); P(5, 4, 'w'); P(6, 3, 'w'); P(4, 5, 'w');
+  },
+  calendar({ R, P }){                                               // calendar: day
+    R(1, 2, 14, 13, 'k'); R(2, 5, 12, 9, 'cream'); R(2, 3, 12, 3, 'red'); R(2, 3, 12, 1, 'orange'); R(4, 1, 2, 3, 'k'); R(10, 1, 2, 3, 'k'); P(4, 2, 'grey'); P(10, 2, 'grey');
+    for (let j = 0; j < 2; j++) for (let i = 0; i < 4; i++) R(3 + i * 3, 7 + j * 3, 2, 2, j === 0 && i === 1 ? 'red' : 'cream2');
+  },
+  trend({ R, P }){                                                  // rising line with arrow: net worth
+    R(1, 1, 1, 14, 'grey2'); R(1, 14, 14, 1, 'grey2'); R(3, 10, 2, 2, 'mint'); R(5, 8, 2, 2, 'mint'); R(7, 9, 2, 2, 'mint'); R(9, 6, 2, 2, 'mint'); R(11, 3, 2, 2, 'mint'); R(10, 2, 5, 1, 'mint'); R(13, 2, 1, 5, 'mint'); P(11, 4, 'w'); P(13, 3, 'w');
+    P(3, 10, 'w'); P(5, 8, 'w');
+  },
+  star({ R, P }){                                                   // star: reputation
+    R(7, 1, 2, 3, 'k'); R(6, 3, 4, 3, 'k'); R(1, 5, 14, 3, 'k'); R(2, 8, 12, 2, 'k'); R(3, 10, 3, 4, 'k'); R(10, 10, 3, 4, 'k'); R(6, 9, 4, 2, 'k');
+    R(7, 2, 2, 3, 'gold'); R(6, 4, 4, 3, 'gold'); R(2, 6, 12, 2, 'gold'); R(3, 8, 10, 2, 'gold'); R(4, 10, 2, 3, 'gold'); R(10, 10, 2, 3, 'gold'); R(7, 9, 2, 2, 'gold');
+    P(7, 3, 'w'); P(6, 5, 'w'); P(3, 6, 'w'); R(10, 8, 3, 2, 'gold2'); P(11, 11, 'gold2');
+  },
+  case({ R, P }){                                                   // briefcase: odd jobs
+    R(5, 2, 6, 4, 'k'); R(6, 3, 4, 2, 'grey'); R(1, 5, 14, 10, 'k'); R(2, 6, 12, 8, 'wood'); R(2, 6, 12, 2, 'orange'); R(2, 10, 12, 1, 'wood2'); R(7, 9, 2, 3, 'gold'); P(7, 9, 'w');
+  },
+  heart({ R, P }){
+    R(2, 3, 5, 2, 'k'); R(9, 3, 5, 2, 'k'); R(1, 4, 14, 4, 'k'); R(2, 8, 12, 2, 'k'); R(4, 10, 8, 2, 'k'); R(6, 12, 4, 2, 'k'); R(7, 14, 2, 1, 'k');
+    R(3, 4, 4, 1, 'red'); R(9, 4, 4, 1, 'red'); R(2, 5, 12, 3, 'red'); R(3, 8, 10, 2, 'red'); R(5, 10, 6, 2, 'red'); R(7, 12, 2, 1, 'red'); P(3, 5, 'w'); P(4, 4, 'w');
+  },
+};
+for (const k in DRAW) mkIcon(k, DRAW[k]);
+const ico = (name, px, cls) => `<img class="ico${cls ? ' ' + cls : ''}" src="${ICONS[name]}" width="${px || 24}" height="${px || 24}" alt="">`;
+
+// ───────────────────────── pixel people: buyers and vendors at the card shows ─────────────────────────
+const AVATARS = {
+  kid:       { skin:'#f6c9a0', hair:'#7a4a22', style:'cap',    hat:'#ec5a4f', shirt:'#63e3a4', mouth:'grin' },
+  collector: { skin:'#e8b88c', hair:'#cfd5e3', style:'short',  shirt:'#b8742e', mouth:'smile', glasses:true, tie:'#ec5a4f' },
+  hagg:      { skin:'#d99a6c', hair:'#1b1330', style:'short',  shirt:'#a8322e', mouth:'smirk', stache:true },
+  dealer:    { skin:'#f2c39a', hair:'#3b2a1a', style:'fedora', hat:'#7482a0', shirt:'#2f80d4', mouth:'flat', tie:'#ffc83d' },
+  whale:     { skin:'#f6c9a0', hair:'#ffc83d', style:'slick',  shirt:'#1b1330', mouth:'grin', shades:true, chain:true },
+  v0:        { skin:'#e8b88c', hair:'#7a4a22', style:'short',  shirt:'#c5503f', mouth:'smile', beard:'#7a4a22' },
+  v1:        { skin:'#f6c9a0', hair:'#e8613f', style:'curly',  shirt:'#a283ff', mouth:'grin' },
+  v2:        { skin:'#d99a6c', hair:'#2f80d4', style:'beanie', hat:'#2f80d4', shirt:'#63e3a4', mouth:'smile' },
+  v3:        { skin:'#e8b88c', hair:'#1b1330', style:'bald',   shirt:'#b8742e', mouth:'flat', stache:true },
+  v4:        { skin:'#f6c9a0', hair:'#ff8fc0', style:'long',   shirt:'#ffc83d', mouth:'grin' },
+  v5:        { skin:'#e8b88c', hair:'#e8eefc', style:'short',  shirt:'#62c6ff', mouth:'smile', glasses:true },
+  v6:        { skin:'#d99a6c', hair:'#1b1330', style:'slick',  shirt:'#2e9c6b', mouth:'flat', tie:'#ec5a4f' },
+  v7:        { skin:'#f6c9a0', hair:'#63e3a4', style:'bun',    shirt:'#fbeccb', mouth:'smile', glasses:true },
+};
+function avatar(key){
+  if (ICONS['av:' + key]) return ICONS['av:' + key];
+  const o = AVATARS[key] || AVATARS.kid, cv = document.createElement('canvas'); cv.width = cv.height = 16; const x = cv.getContext('2d');
+  const R = (a, b, w, h, c) => { x.fillStyle = IC[c] || c; x.fillRect(a, b, w, h); }, P = (a, b, c) => R(a, b, 1, 1, c);
+  R(2, 11, 12, 5, 'k'); R(3, 12, 10, 4, o.shirt); R(3, 12, 10, 1, 'rgba(255,255,255,.28)'); R(6, 10, 4, 3, o.skin); R(6, 12, 4, 1, 'rgba(0,0,0,.18)');            // shoulders and neck
+  if (o.tie){ R(7, 12, 2, 4, o.tie); P(7, 12, 'rgba(255,255,255,.3)'); }
+  if (o.chain){ R(5, 12, 1, 1, 'gold'); R(10, 12, 1, 1, 'gold'); R(6, 13, 4, 1, 'gold'); }
+  R(3, 1, 10, 10, 'k'); R(4, 2, 8, 8, o.skin); R(4, 9, 8, 1, 'rgba(0,0,0,.12)');                                                                                 // head
+  const st = o.style, h = o.hair;
+  if (st === 'short'){ R(4, 2, 8, 2, h); P(4, 4, h); P(11, 4, h); }
+  else if (st === 'slick'){ R(4, 2, 8, 2, h); R(4, 2, 5, 3, h); P(11, 4, h); R(5, 2, 3, 1, 'rgba(255,255,255,.35)'); }
+  else if (st === 'long'){ R(4, 2, 8, 2, h); R(3, 3, 2, 8, h); R(11, 3, 2, 8, h); R(3, 11, 2, 1, 'k'); R(11, 11, 2, 1, 'k'); }
+  else if (st === 'curly'){ R(3, 1, 10, 3, h); P(3, 4, h); P(12, 4, h); P(4, 0, 'k'); R(4, 1, 8, 1, 'rgba(255,255,255,.3)'); }
+  else if (st === 'bald'){ R(5, 2, 2, 1, 'rgba(255,255,255,.5)'); }
+  else if (st === 'cap'){ R(3, 0, 10, 4, 'k'); R(4, 1, 8, 3, o.hat); R(2, 4, 12, 1, 'k'); R(3, 4, 10, 1, 'rgba(0,0,0,.3)'); R(5, 1, 3, 1, 'rgba(255,255,255,.4)'); }
+  else if (st === 'fedora'){ R(4, 0, 8, 4, 'k'); R(5, 1, 6, 3, o.hat); R(1, 3, 14, 2, 'k'); R(2, 3, 12, 1, o.hat); R(5, 3, 6, 1, '#1b1330'); }
+  else if (st === 'beanie'){ R(3, 0, 10, 5, 'k'); R(4, 1, 8, 3, o.hat); R(4, 3, 8, 1, 'rgba(255,255,255,.3)'); P(7, 0, 'w'); P(8, 0, 'w'); }
+  else if (st === 'bun'){ R(4, 2, 8, 2, h); P(4, 4, h); P(11, 4, h); R(6, 0, 4, 2, 'k'); R(7, 0, 2, 2, h); }
+  if (o.glasses){ R(4, 5, 3, 3, 'k'); R(9, 5, 3, 3, 'k'); R(5, 6, 1, 1, 'rgba(255,255,255,.7)'); R(10, 6, 1, 1, 'rgba(255,255,255,.7)'); R(7, 6, 2, 1, 'k'); P(5, 6, 'sky'); P(10, 6, 'sky'); }
+  else if (o.shades){ R(4, 5, 8, 2, 'k'); P(5, 5, 'rgba(255,255,255,.5)'); P(10, 5, 'rgba(255,255,255,.5)'); }
+  else { P(6, 6, 'k'); P(9, 6, 'k'); P(6, 5, 'rgba(255,255,255,.0)'); }
+  if (o.stache) R(6, 8, 4, 1, 'k');
+  if (o.beard){ R(4, 8, 8, 2, o.beard); R(6, 8, 4, 1, 'rgba(0,0,0,.25)'); }
+  const m = o.mouth, my = o.stache || o.beard ? 9 : 8;
+  if (m === 'smile'){ P(6, my, 'k'); P(7, my + (o.beard ? 0 : 0), 'k'); P(8, my, 'k'); P(9, my, 'k'); P(5, my - 1, 'k'); P(10, my - 1, 'k'); }
+  else if (m === 'grin'){ R(6, my - 1, 4, 2, 'k'); R(7, my, 2, 1, 'w'); }
+  else if (m === 'smirk'){ R(6, my, 3, 1, 'k'); P(9, my - 1, 'k'); }
+  else { R(6, my, 4, 1, 'k'); }
+  return ICONS['av:' + key] = cv.toDataURL();
+}
+const av = (key, px) => `<img class="ico av" src="${avatar(key)}" width="${px || 48}" height="${px || 48}" alt="">`;
+
 // ───────────────────────── sealed product pictures ─────────────────────────
 const SPR = {};
 const hex3 = h => { h = h.replace('#', ''); return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)]; };
@@ -1081,12 +1232,13 @@ const prodName = (setId, pid) => prodOfSet(setOf(setId), pid).name;
 const sealedKeys = () => Object.keys(G.inv.sealed);
 const instOf = u => G.inv.cards.find(c => c.u === u);
 
+const pageHead = (icon, title, sub) => `<div class="ph">${ico(icon, 32)}<div><h2>${title}</h2>${sub ? '<p>' + sub + '</p>' : ''}</div></div>`;
 function render(){
   if (!G) return;
   const nw = netWorth();
-  $('#top').innerHTML = `<h1>RIP OR HOLD<span>CARD SHOP SIM</span></h1><div class="st"><div class="chip"><i>📅</i><div><small>Day</small><b>${G.day + 1} · ${DAYNAMES[G.day % 7]}</b></div></div><div class="chip"><i>🪙</i><div><small>Cash</small><b class="gold">${money(G.cash)}</b></div></div><div class="chip"><i>📈</i><div><small>Net worth</small><b>${money(nw)}</b></div></div><div class="chip"><i>⭐</i><div><small>Rep</small><b>${Math.floor(G.rep)}</b></div></div></div><button class="gold go" data-a="next">NEXT DAY ▶</button>`;
-  const tabs = [['shop', 'Store', '🛒'], ['myshop', 'My Shop', '🏪'], ['inv', 'Sealed', '📦'], ['coll', 'Collection', '🃏'], ['grade', 'Grading', '🔎'], ['show', 'Card Show', '🎪'], ['ebay', 'eBay', '🌐'], ...(G.broke ? [['jobs', 'Odd Jobs', '🧹']] : []), ['stats', 'Stats', '📊']];
-  $('#nav').innerHTML = tabs.map(t => `<button data-a="tab" data-v="${t[0]}" class="${SCREEN === t[0] ? 'on' : ''}"><span class="ic">${t[2]}</span>${t[1]}</button>`).join('');
+  $('#top').innerHTML = `<h1>${ico('pack', 26)}<div><b>RIP</b> OR <b>HOLD</b><span>CARD SHOP SIM</span></div></h1><div class="st"><div class="chip">${ico('calendar', 24)}<div><small>Day</small><b>${G.day + 1} · ${DAYNAMES[G.day % 7]}</b></div></div><div class="chip">${ico('coin', 24)}<div><small>Cash</small><b class="gold">${money(G.cash)}</b></div></div><div class="chip">${ico('trend', 24)}<div><small>Net worth</small><b>${money(nw)}</b></div></div><div class="chip">${ico('star', 24)}<div><small>Rep</small><b>${Math.floor(G.rep)}</b></div></div></div><button class="gold go" data-a="next">NEXT DAY ▶</button>`;
+  const tabs = [['shop', 'Store', 'pack'], ['myshop', 'My Shop', 'shop'], ['inv', 'Sealed', 'box'], ['coll', 'Collection', 'cards'], ['grade', 'Grading', 'grade'], ['show', 'Card Show', 'ticket'], ['ebay', 'eBay', 'globe'], ...(G.broke ? [['jobs', 'Odd Jobs', 'case']] : []), ['stats', 'Stats', 'bars']];
+  $('#nav').innerHTML = tabs.map(t => `<button data-a="tab" data-v="${t[0]}" class="${SCREEN === t[0] ? 'on' : ''}">${ico(t[2], 26)}${t[1]}</button>`).join('');
   const n = G.news[0];
   $('#news').innerHTML = n ? `<b>DAY ${n.day + 1}</b> <span class="${n.tone}">${n.text}</span>` : '';
   const m = $('#main'), sc = m.scrollTop;
@@ -1129,17 +1281,17 @@ function shopVintage(){
 // ───────────────────────── sealed inventory ─────────────────────────
 function scrInv(){
   const keys = sealedKeys();
-  let h = '<h2>Sealed Product</h2><div class="dim" style="margin-bottom:6px">Rip it for the cards, hold it and hope it goes up, or sell it. Out-of-print sealed tends to appreciate 15-30% a year.</div>';
-  if (!keys.length) return h + '<div class="box">You have no sealed product. Visit the Store.</div>';
+  let h = pageHead('box', 'Sealed product', 'Rip it for the cards, hold it and hope it goes up, or sell it.');
+  if (!keys.length) return h + `<div class="box" style="display:flex;gap:14px;align-items:center">${ico('box', 48)}<div><b>Nothing sealed.</b><div class="dim">Visit the Store to buy packs and boxes.</div></div></div>`;
+  h += '<div class="tiles wide">';
   for (const k of keys){
     const [s, p] = k.split(':'), n = G.inv.sealed[k], set = setOf(s), prod = prodOfSet(set, p), mk = sealedPx(s, p), ev = productEV(s, p), ch = schg7(k), paid = basisPer(k);
-    const state = set.vintage ? 'VINTAGE' : inPrint(set, G.day) ? 'IN PRINT' : 'OUT OF PRINT';
-    h += `<div class="row">${prodImg(s, p, 56)}<div class="nm"><b>${prod.name}</b> x${n} <span class="tag ${state === 'IN PRINT' ? '' : 'oop'}">${state}</span><small>${set.name} · you paid ${money(paid)} each</small></div>
-      <div class="ev">Market ${money(mk)} <span class="${col(ch)}">${pct(ch)} wk</span><br>Rip EV ${money(ev)} <span class="${ev > mk ? 'up' : 'down'}">${ev > mk ? 'rip it' : 'hold/sell'}</span></div>
-      <button class="gold" data-a="rip" data-k="${k}" data-n="1">RIP 1</button>${n > 1 ? `<button data-a="rip" data-k="${k}" data-n="${n}">RIP ALL</button>` : ''}
-      <button data-a="dsell" data-k="${k}">Sell ${money(mk * DEALER_SEALED)}</button><button data-a="chart" data-k="${k}">Chart</button></div>`;
+    h += `<div class="tile" style="--c:${prod.color || set.color}"><div class="timg">${prodImg(s, p, 96)}</div><div class="tn">${prod.name} <span class="tag">x${n}</span></div><div class="td">you paid ${money(paid)} each</div>
+      <div class="tev">market ${money(mk)} <span class="${col(ch)}">${pct(ch)} wk</span><small>rip value ${money(ev)} · <span class="${ev > mk ? 'up' : 'down'}">${ev > mk ? 'rip it' : 'hold or sell'}</span></small></div>
+      <div class="tb"><button class="gold" data-a="rip" data-k="${k}" data-n="1">RIP 1</button>${n > 1 ? `<button data-a="rip" data-k="${k}" data-n="${n}">ALL</button>` : ''}</div>
+      <div class="tb" style="margin-top:6px"><button data-a="dsell" data-k="${k}">Sell ${money(mk * DEALER_SEALED)}</button><button data-a="chart" data-k="${k}">Chart</button></div></div>`;
   }
-  return h;
+  return h + '</div>';
 }
 
 // ───────────────────────── collection ─────────────────────────
@@ -1153,7 +1305,7 @@ function binderGroups(){
 }
 function scrColl(){
   const tabs = [['cards', 'Cards'], ['sets', 'Sets'], ['hof', 'Hall of Fame'], ['ach', 'Achievements']];
-  let h = `<div class="tabs">${tabs.map(t => `<button data-a="ctab" data-v="${t[0]}" class="${CTAB === t[0] ? 'on' : ''}">${t[1]}</button>`).join('')}</div>`;
+  let h = pageHead('cards', 'Collection', 'Everything you own, your sets, your best pulls.') + `<div class="tabs">${tabs.map(t => `<button data-a="ctab" data-v="${t[0]}" class="${CTAB === t[0] ? 'on' : ''}">${t[1]}</button>`).join('')}</div>`;
   if (CTAB === 'sets') return h + collSets();
   if (CTAB === 'hof') return h + collHof();
   if (CTAB === 'ach') return h + collAch();
@@ -1185,7 +1337,7 @@ function collHof(){
 }
 function collAch(){
   const n = ACH.filter(a => G.ach[a[0]]).length;
-  return `<div class="dim" style="margin-bottom:6px">${n} of ${ACH.length} unlocked</div>` + ACH.map(a => `<div class="row" style="opacity:${G.ach[a[0]] ? 1 : .5}"><div style="font-size:30px">${G.ach[a[0]] ? '🏅' : '🔒'}</div><div class="nm"><b>${a[1]}</b><small>${a[2]}</small></div>${G.ach[a[0]] ? '<span class="dim">day ' + (G.ach[a[0]] + 1) + '</span>' : ''}</div>`).join('');
+  return `<div class="dim" style="margin-bottom:6px">${n} of ${ACH.length} unlocked</div>` + ACH.map(a => `<div class="row" style="opacity:${G.ach[a[0]] ? 1 : .5}">${ico('star', 32, G.ach[a[0]] ? '' : 'locked')}<div class="nm"><b>${a[1]}</b><small>${a[2]}</small></div>${G.ach[a[0]] ? '<span class="dim">day ' + (G.ach[a[0]] + 1) + '</span>' : ''}</div>`).join('');
 }
 
 const agoTxt = d => { const n = G.day - d; return n <= 0 ? 'today' : n === 1 ? 'yesterday' : n + ' days ago'; };
@@ -1252,7 +1404,7 @@ function scrMarket(){
 
 // ───────────────────────── grading ─────────────────────────
 function scrGrade(){
-  let h = `<h2>Grading</h2><div class="dim" style="margin-bottom:6px">Send raw cards to be graded: Standard ${money(25)} each and 30 days, Express ${money(100)} each and 5 days. The hidden condition decides: a fresh modern pull is a 10 about 30% of the time (vintage about 2%). A 10 is worth 5x raw (10x for chase cards, 20x vintage), a 9 is 1.3x, an 8 is 0.9x, a 7 or lower is 0.5x. Grading can lose you money.</div>`;
+  let h = pageHead('grade', 'Grading', 'Send raw cards to be graded.') + `<div class="dim" style="margin-bottom:8px;font-size:14px">Standard ${money(25)} each and 30 days, Express ${money(100)} each and 5 days. The hidden condition decides: a fresh modern pull is a 10 about 30% of the time (vintage about 2%). A 10 is worth 5x raw (10x for chase cards, 20x vintage), a 9 is 1.3x, an 8 is 0.9x, a 7 or lower is 0.5x. Grading can lose you money.</div>`;
   const raw = G.inv.cards.filter(c => !c.g && !c.bs).sort((a, b) => cv(b) - cv(a)).slice(0, 60);
   const n = GSEL.size, fee = gradingCost(GEXP) * n;
   h += `<div class="tabs"><button class="${!GEXP ? 'on' : ''}" data-a="gexp" data-v="0">Standard (30 days)</button><button class="${GEXP ? 'on' : ''}" data-a="gexp" data-v="1">Express (5 days)</button><button class="gold" data-a="gsend" ${!n || G.cash < fee ? 'disabled' : ''}>Send ${n} card${n === 1 ? '' : 's'} (${money(fee)})</button><button data-a="gclear">Clear</button></div>`;
@@ -1265,7 +1417,7 @@ function scrGrade(){
 const JOBS = [['mow', 'Mow Lawns', 'Neighbors pay cash.', 4, 0], ['dog', 'Walk Dogs', 'Keep the leashes steady.', 5, 0], ['del', 'Deliver Pizza', 'Hit the doorstep on time.', 6, 0], ['shop', 'Work at a Card Shop', 'Needs reputation 10. Best pay.', 9, 10]];
 function scrJobs(){
   if (JOB) return jobScreen();
-  let h = '<h2>Odd Jobs</h2>' + (G.broke ? '<div class="broke">You are out of money and have nothing worth selling. Do a few jobs to rebuild. No game over here.</div>' : '<div class="dim" style="margin-bottom:6px">Each job takes the whole day and 5 timing rounds. Hit the green zone for full pay.</div>');
+  let h = pageHead('case', 'Odd jobs', 'Earn some cash to get back in the game.') + (G.broke ? '<div class="broke">You are out of money and have nothing worth selling. Do a few jobs to rebuild. No game over here.</div>' : '<div class="dim" style="margin-bottom:6px">Each job takes the whole day and 5 timing rounds. Hit the green zone for full pay.</div>');
   for (const [id, nm, ds, pay, rep] of JOBS) h += `<div class="row"><div class="nm"><b>${nm}</b><small>${ds}</small></div><div class="pr">up to ${money(pay * 5)}</div><button class="gold" data-a="job" data-v="${id}" ${G.rep < rep ? 'disabled' : ''}>Work</button></div>`;
   return h;
 }
@@ -1298,7 +1450,7 @@ function scrShow(){
   if (SH && SH.stage === 'run') return showRun();
   if (SH && SH.stage === 'done') return showDone();
   const kind = showKind(G.day);
-  let h = '<h2>Card Show</h2>';
+  let h = pageHead('ticket', 'Card show', 'Saturdays: sell at your table, haggle on the floor, trade with vendors.');
   if (!kind){
     const ns = nextSat(G.day);
     return h + `<div class="box">Shows run on <b>Saturdays</b>. Next: ${DAYNAMES[5]} in <b>${ns - G.day}</b> day${ns - G.day > 1 ? 's' : ''} (${showKind(ns)}).</div>
@@ -1321,11 +1473,11 @@ function scrShow(){
 }
 // buyers: [key, face, name, weight, offer low, offer high, max low, max high, who they want, line]
 const BUYERS = [
-  ['kid', '🧒', 'Kid with allowance', 24, .70, .82, .95, 1.0, it => it.v < 12, 'Can I get this one? It\'s all I have.'],
-  ['collector', '🧐', 'Collector', 34, .86, .96, 1.04, 1.10, it => true, 'That\'s a nice one. What do you want for it?'],
-  ['hagg', '😏', 'Hard haggler', 16, .70, .82, .95, 1.0, it => true, 'I\'ll give you a fair price. Maybe.'],
-  ['dealer', '🤝', 'Dealer', 20, .70, .80, .90, .96, it => it.v >= 3, 'I buy in volume. Cash now.'],
-  ['whale', '🤑', 'Big spender', 0, .96, 1.06, 1.10, 1.15, it => it.v >= 60, 'Money is no object for the right card.'],
+  ['kid', 'kid', 'Kid with allowance', 24, .70, .82, .95, 1.0, it => it.v < 12, 'Can I get this one? It\'s all I have.'],
+  ['collector', 'collector', 'Collector', 34, .86, .96, 1.04, 1.10, it => true, 'That\'s a nice one. What do you want for it?'],
+  ['hagg', 'hagg', 'Hard haggler', 16, .70, .82, .95, 1.0, it => true, 'I\'ll give you a fair price. Maybe.'],
+  ['dealer', 'dealer', 'Dealer', 20, .70, .80, .90, .96, it => it.v >= 3, 'I buy in volume. Cash now.'],
+  ['whale', 'whale', 'Big spender', 0, .96, 1.06, 1.10, 1.15, it => it.v >= 60, 'Money is no object for the right card.'],
 ];
 function tableItems(){ return SH.table.map((t, i) => { if (t.k === 'c'){ const c = instOf(t.u); return { i, t, def:DEFS[c.d], c, v:cv(c) }; } const [s, p] = t.key.split(':'); return { i, t, sealed:true, key:t.key, v:sealedPx(s, p) }; }); }
 function nextBuyer(){
@@ -1341,7 +1493,7 @@ function nextBuyer(){
   SH.cur = { b, it, offer:Math.max(.01, offer), maxP, pat:3 + (b[0] === 'collector' ? 1 : 0), ask:0, msg:b[9] };
 }
 function genVendors(){
-  const names = [['Dusty Dan', '🧔'], ['Retro Rita', '👩‍🦰'], ['Binder Bros', '👬'], ['Cardboard Carl', '🧑‍🦲'], ['Mint Mia', '👩‍🎤'], ['Shoebox Sam', '🧓'], ['Slab Steve', '🧑‍💼'], ['Foil Fran', '👩‍🔬']].sort(() => rnd() - .5);
+  const names = [['Dusty Dan', 'v0'], ['Retro Rita', 'v1'], ['Binder Bros', 'v2'], ['Cardboard Carl', 'v3'], ['Mint Mia', 'v4'], ['Shoebox Sam', 'v5'], ['Slab Steve', 'v6'], ['Foil Fran', 'v7']].sort(() => rnd() - .5);
   const kinds = [['dealer', 'Dealer', 1.10, 1.20], ['collector', 'Collector', .95, 1.12], ['garage', 'Garage seller', .70, 1.05]];
   const out = [], n = SH.kind === 'national' ? 7 : SH.kind === 'regional' ? 5 : 3;
   for (let v = 0; v < n; v++){
@@ -1356,12 +1508,12 @@ function genVendors(){
 }
 function showRun(){
   const tabs = `<div class="tabs"><button data-a="stab" data-v="cust" class="${SH.tab === 'cust' ? 'on' : ''}">My table</button><button data-a="stab" data-v="floor" class="${SH.tab === 'floor' ? 'on' : ''}">Walk the floor</button><button data-a="vsell">Sell to vendors</button><button class="red" data-a="sclose">End show</button><span class="dim" style="margin-left:auto;align-self:center">sold ${SH.sold} · earned ${money(SH.earned)} · bought ${SH.bought}</span></div>`;
-  if (SH.tab === 'floor') return `<h2>The floor</h2>${tabs}<div class="dim" style="margin-bottom:6px">Click any card to haggle or trade. Prices are whatever the seller wants: you decide if it is a good deal.</div>` + SH.vendors.map((v, vi) => `<div class="box" style="margin-bottom:8px"><b style="font-size:24px">${v.face} ${v.name}</b> <span class="dim">${v.kind}</span>${v.items.length ? '' : ' <span class="dim">sold out</span>'}<div class="grid" style="margin-top:6px;padding-bottom:14px">${v.items.map((it, ii) => `<div style="margin-bottom:${it.c.g ? 6 : 14}px">${cardHTML(DEFS[it.c.d], { sm:true, c:it.c, tagText:money(it.ask), attr:`data-a="deal" data-vi="${vi}" data-ii="${ii}"` })}</div>`).join('')}</div></div>`).join('');
+  if (SH.tab === 'floor') return `<h2>The floor</h2>${tabs}<div class="dim" style="margin-bottom:6px">Click any card to haggle or trade. Prices are whatever the seller wants: you decide if it is a good deal.</div>` + SH.vendors.map((v, vi) => `<div class="box" style="margin-bottom:8px"><b style="font-size:20px;display:inline-flex;align-items:center;gap:8px">${av(v.face, 36)} ${v.name}</b> <span class="dim">${v.kind}</span>${v.items.length ? '' : ' <span class="dim">sold out</span>'}<div class="grid" style="margin-top:6px;padding-bottom:14px">${v.items.map((it, ii) => `<div style="margin-bottom:${it.c.g ? 6 : 14}px">${cardHTML(DEFS[it.c.d], { sm:true, c:it.c, tagText:money(it.ask), attr:`data-a="deal" data-vi="${vi}" data-ii="${ii}"` })}</div>`).join('')}</div></div>`).join('');
   const c = SH.cur;
   if (!c) return `<h2>My table</h2>${tabs}<div class="box">${SH.table.length ? 'No more customers right now. Walk the floor, or end the show when you are done.' : 'Your table is empty. Walk the floor to buy and trade.'}</div><div class="dim" style="margin-top:6px">${SH.log.slice(-4).reverse().join('<br>')}</div>`;
   const it = c.it;
   return `<h2>My table</h2>${tabs}
-    <div class="buyer"><div class="person">${c.b[1]}</div><div><div class="dim">${c.b[2]}</div><div class="bubble">${c.msg}</div></div><div>${it.sealed ? `<div class="box">${prodImg(...it.key.split(':'), 70)}<br>${prodName(...it.key.split(':'))}</div>` : cardHTML(it.def, { c:it.c, price:false })}</div></div>
+    <div class="buyer"><div class="person">${av(c.b[1], 76)}</div><div><div class="dim">${c.b[2]}</div><div class="bubble">${c.msg}</div></div><div>${it.sealed ? `<div class="box">${prodImg(...it.key.split(':'), 70)}<br>${prodName(...it.key.split(':'))}</div>` : cardHTML(it.def, { c:it.c, price:false })}</div></div>
     <div style="text-align:center;font-size:28px">They offer <b class="gold">${money(c.offer)}</b></div>
     <div style="text-align:center;margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="grn" data-a="sdeal" style="font-size:22px">Sell for ${money(c.offer)}</button><button class="gold" data-a="scounter" style="font-size:22px">Ask for more</button><button class="red" data-a="spass">No deal</button></div>
     <div class="dim" style="text-align:center;margin-top:8px">${SH.log.slice(-3).reverse().join('<br>')}</div>`;
@@ -1382,7 +1534,7 @@ function sellAt(price){
 function dealModal(){
   const D = SH.deal, v = SH.vendors[D.vi], it = v.items[D.ii]; if (!it){ closeOv(); return render(); }
   const def = DEFS[it.c.d];
-  overlay(`<div class="modal" style="width:min(720px,96vw)"><div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">${cardHTML(def, { c:it.c, price:false })}<div style="flex:1;min-width:240px"><h2>${def.name}</h2><div class="dim">${v.face} ${v.name} · ${cardLabel(it.c)} · patience ${'●'.repeat(D.pat)}${'○'.repeat(3 - D.pat)}</div>
+  overlay(`<div class="modal" style="width:min(720px,96vw)"><div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">${cardHTML(def, { c:it.c, price:false })}<div style="flex:1;min-width:240px"><h2>${def.name}</h2><div class="dim">${av(v.face, 22)} ${v.name} · ${cardLabel(it.c)} · patience ${'●'.repeat(D.pat)}${'○'.repeat(3 - D.pat)}</div>
     <div style="font-size:26px;margin:4px 0">Asking <b class="gold">${money(it.ask)}</b></div><div class="bubble" style="margin:6px 0">${D.msg}</div>
     ${D.counter ? `<button class="grn" data-a="dtake" style="margin:4px 0">Take it at ${money(D.counter)}</button><br>` : ''}
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"><button class="gold" data-a="dof" data-v="1" ${G.cash < it.ask ? 'disabled' : ''}>Pay ${money(it.ask)}</button>${[.9, .8, .7].map(f => `<button data-a="dof" data-v="${f}" ${D.dead ? 'disabled' : ''}>Offer ${money(r2(it.ask * f))}</button>`).join('')}<button data-a="dtrade">Trade cards</button><button data-a="dclose">Walk away</button></div></div></div></div>`);
@@ -1413,12 +1565,13 @@ function sellVendorModal(){
 // ───────────────────────── stats ─────────────────────────
 function scrStats(){
   const st = G.stats, nw = netWorth(), best = G.hof[0], rip = st.ripIn - st.ripOut;
-  let h = `<h2>Stats</h2><div class="cols"><div><div class="box"><div>Net worth <b class="gold">${money(nw)}</b> <span class="${col(nw - 150)}">${nw >= 150 ? '+' : ''}${money(nw - 150)} from the start</span></div><div>Cash ${money(G.cash)} · Cards and sealed ${money(invValue())}</div><div>Packs opened <b>${st.packs}</b> · Cards pulled <b>${st.cards}</b> · Shows <b>${st.shows}</b></div><div>Spent ${money(st.spent)} · Sold ${money(st.revenue)} · Biggest sale <b>${money(st.bigSale)}</b></div>
-    <div>Ripping profit/loss: <b class="${rip >= 0 ? 'up' : 'down'}">${rip >= 0 ? '+' : ''}${money(rip)}</b> <span class="dim">(pulled ${money(st.ripIn)} from ${money(st.ripOut)} of product)</span></div>
-    <div>Best pull: ${best ? `<b class="gold">${DEFS[best.d].name}</b> ${money(best.v)} (${best.set})` : 'none yet'}</div><div>Achievements ${ACH.filter(a => G.ach[a[0]]).length}/${ACH.length} · Trophies ${G.trophies.length}</div></div>
-    <h3>Net worth</h3><canvas class="ch" id="nwc" width="520" height="150"></canvas>
-    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button data-a="snd">Sound: ${G.snd ? 'ON' : 'OFF'}</button><button data-a="tab" data-v="jobs">Odd jobs</button><button class="red" data-a="newgame">${CONFIRM === 'ng' ? 'Click again to erase everything' : 'New game'}</button></div></div>
-    <div><h3 style="margin-top:0">Recent activity</h3>${G.ledger.slice(0, 18).map(l => `<div class="row"><span class="dim">D${l.day + 1}</span><div class="nm" style="font-size:18px">${l.text}</div><b class="${l.delta >= 0 ? 'up' : 'down'}">${l.delta >= 0 ? '+' : ''}${money(l.delta)}</b></div>`).join('') || '<span class="dim">Nothing yet.</span>'}</div></div>`;
+  const stat = (icon, label, val, cls) => `<div class="stat">${ico(icon, 28)}<div><small>${label}</small><b class="${cls || ''}">${val}</b></div></div>`;
+  let h = pageHead('bars', 'Stats', 'How your shop is doing.');
+  h += `<div class="stats">${stat('trend', 'Net worth', money(nw))}${stat('coin', 'Cash', money(G.cash), 'gold')}${stat('cards', 'Cards and sealed', money(invValue()))}${stat('shop', 'Shop sales', money(G.shop ? G.shop.earned : 0))}${stat('pack', 'Packs opened', st.packs)}${stat('cards', 'Cards pulled', st.cards)}${stat('ticket', 'Shows worked', st.shows)}${stat('coin', 'Spent', money(st.spent))}${stat('coin', 'Sold', money(st.revenue))}${stat('star', 'Biggest sale', money(st.bigSale))}${stat('pack', 'Ripping profit', (rip >= 0 ? '+' : '') + money(rip), rip >= 0 ? 'up' : 'down')}${stat('star', 'Achievements', ACH.filter(a => G.ach[a[0]]).length + ' / ' + ACH.length)}</div>`;
+  h += `<div class="cols"><div><h3>Net worth over time</h3><canvas class="ch" id="nwc" width="520" height="150"></canvas>
+    <div class="box" style="margin-top:10px">Best pull: ${best ? `<b class="gold">${DEFS[best.d].name}</b> ${money(best.v)}` : '<span class="dim">none yet</span>'}</div>
+    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button data-a="snd">Sound: ${G.snd ? 'ON' : 'OFF'}</button><button data-a="tab" data-v="jobs">Odd jobs</button><button class="red" data-a="newgame">${CONFIRM === 'ng' ? 'Click again to erase everything' : 'New game'}</button></div></div>
+    <div><h3>Recent activity</h3>${G.ledger.slice(0, 18).map(l => `<div class="row" style="padding:4px 10px"><span class="dim">D${l.day + 1}</span><div class="nm" style="font-size:15px;font-weight:400">${l.text}</div><b class="${l.delta >= 0 ? 'up' : 'down'}">${l.delta >= 0 ? '+' : ''}${money(l.delta)}</b></div>`).join('') || '<span class="dim">Nothing yet.</span>'}</div></div>`;
   return h;
 }
 
@@ -1429,7 +1582,7 @@ function startRip(key, n){
   const set = setOf(s), prod = prodOfSet(set, p), cost = basisPer(key) * n;
   addSealed(s, p, -n);
   let packs = []; for (let i = 0; i < n; i++) packs = packs.concat(rollProd(s, prod));
-  OP = { s, p, name:prod.name, set:set.name, packs, pi:0, ci:0, order:[], shown:[], vals:[], total:0, cost, big:null, summary:false, best:[], busy:false };
+  OP = { s, p, name:prod.name, set:set.name, packs, pi:0, ci:0, order:[], shown:[], vals:[], total:0, cost, big:null, summary:false, best:[], busy:false, intro:true };
   openPack(); sfx.click(); renderOp();
 }
 function stock(cards){ return cards.map(c => { const o = Object.assign({}, c); o.u = ++G.uid; delete o.slot; G.inv.cards.push(o); o.slot = c.slot; return o; }); }
@@ -1462,9 +1615,10 @@ function effects(c, lv){
 }
 function opNext(){
   if (!OP || OP.summary || OP.busy) return;
+  if (OP.intro) return opTear();
   if (OP.big && OP.ci < OP.order.length){
     OP.busy = true; const f = $('.stage .card:last-child'); if (f) f.classList.add('ripoff'); sfx.click();
-    setTimeout(() => { if (!OP) return; OP.busy = false; OP.big = null; renderOp(); }, 230); return;
+    setTimeout(() => { if (!OP) return; OP.busy = false; OP.big = null; renderOp(); opNext(); }, 230); return;      // one tap: rip this card off and flip the next one straight away
   }
   if (OP.ci >= OP.order.length) return;
   const c = OP.order[OP.ci], lv = hitLevel(c);
@@ -1475,7 +1629,12 @@ function opNext(){
   } else reveal();
 }
 function opAll(){ if (OP.busy) return; while (OP.ci < OP.order.length){ const c = OP.order[OP.ci++]; OP.shown.push(c); OP.big = c; noteCard(c); } sfx.flip(); renderOp(); }
-function opNextPack(){ if (OP.busy) return; OP.vals.push(OP.pv); OP.total += OP.pv; OP.pi++; openPack(); renderOp(); sfx.click(); }
+function opNextPack(){ if (OP.busy) return; OP.vals.push(OP.pv); OP.total += OP.pv; OP.pi++; openPack(); OP.intro = true; renderOp(); sfx.click(); }
+// tear the wrapper: it shakes, bursts, and the cards are there
+function opTear(){
+  if (!OP || !OP.intro || OP.busy) return; OP.busy = true; const st = $('.packstage'); if (st) st.classList.add('tearing'); sfx.tense(2);
+  setTimeout(() => { if (!OP) return; flash(false); sfx.hit(1); OP.busy = false; OP.intro = false; renderOp(); }, 560);
+}
 function opRipAll(){
   if (OP.busy) return; OP.vals.push(OP.pv); OP.total += OP.pv;
   OP.order.forEach((c, i) => { if (i >= OP.ci) noteCard(c); }); OP.ci = OP.order.length;
@@ -1486,6 +1645,10 @@ function opFinish(){ if (OP.busy) return; OP.vals.push(OP.pv); OP.total += OP.pv
 function finishRip(){ OP.summary = true; G.stats.ripIn += OP.total; G.stats.ripOut += OP.cost; checkAch(); renderOp(); }
 function renderOp(flip, lv){
   if (!OP) return;
+  if (OP.intro && !OP.summary){
+    overlay(`<div class="modal opn"><div class="dim">${OP.set} · ${OP.name} · pack ${OP.pi + 1} of ${OP.packs.length}</div><div class="stage packstage" data-a="optear">${prodImg(OP.s, OP.p, 210)}<div class="taphint">TAP TO TEAR IT OPEN</div></div><div style="display:flex;gap:8px;justify-content:center"><button data-a="opripall">Skip: reveal everything</button></div></div>`);
+    return;
+  }
   const last = OP.pi >= OP.packs.length - 1, doneCards = OP.ci >= OP.order.length, big = OP.big;
   if (OP.summary){
     const n = OP.packs.length, pl = OP.total - OP.cost;
@@ -1544,7 +1707,7 @@ const ACT = {
   gclear(){ GSEL = new Set(); render(); },
   gexp(d){ GEXP = d.v === '1'; render(); },
   gsend(){ if (startGrading([...GSEL], GEXP)){ toast('Sent ' + GSEL.size + ' to the grader'); sfx.buy(); GSEL = new Set(); } render(); },
-  opnext(){ opNext(); }, opall(){ opAll(); }, oppack(){ opNextPack(); }, opripall(){ opRipAll(); }, opfinish(){ opFinish(); }, opdone(){ closeOv(); recordNW(); render(); },
+  opnext(){ opNext(); }, opall(){ opAll(); }, oppack(){ opNextPack(); }, opripall(){ opRipAll(); }, opfinish(){ opFinish(); }, opdone(){ closeOv(); recordNW(); render(); }, optear(){ opTear(); },
   shhide(){ SH.hide = !SH.hide; render(); },
   shclear(){ SH.table = []; render(); },
   shon(d){ const inf = SHOWINFO[showKind(G.day)]; if (SH.table.length >= inf.slots) return toast('Table is full'); SH.table.push({ k:'c', u:+d.v }); sfx.click(); render(); },
