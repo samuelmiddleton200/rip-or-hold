@@ -337,6 +337,17 @@ canvas.ch{background:rgba(0,0,0,.4);border:2px solid var(--p3);border-radius:10p
 @media (max-height:520px){.guide select{font-size:13px;min-width:110px;padding:3px 6px}.gval{font-size:22px}.mgrid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}.mrow{font-size:13px}}
 
 @media (max-height:520px){.ph p,.help{display:none}.ph{margin-bottom:6px;gap:8px}.ph .ico{width:24px;height:24px;padding:4px}.ph h2{margin:0;font-size:14px}}
+
+/* ---- price tags sit inside their own spot, under the card, never over the frame or the next cubby ---- */
+.sl2{--tagh:max(12px,1.5cqw);flex-direction:column;justify-content:flex-start;gap:0}
+.sl2.empty{justify-content:center}
+.sl2 .card{--w:min(calc(var(--sw)*.98),calc((var(--sh) - var(--tagh) - 2px)*.98/1.4))}
+.sl2 .stag{position:static;left:auto;bottom:auto;transform:none;margin-top:2px;min-width:70%;max-width:100%;height:var(--tagh);line-height:calc(var(--tagh) - 2px);padding:0 3px;font-size:max(8px,1cqw);overflow:hidden;text-overflow:ellipsis}
+.sl2.big{--tagh:max(18px,2.2cqw)}.sl2.big .stag{font-size:max(11px,1.5cqw);bottom:auto}
+.sl2.z-pack .sealedimg{max-height:calc(100% - var(--tagh) - 3px)}
+.sl2.z-pack .stag,.sl2.z-wall .stag{bottom:auto}
+.sl2.z-pack .sealedimg{max-height:100%}
+.sl2.z-pack .stag{position:absolute;left:50%;bottom:-1px;transform:translateX(-50%);height:auto;line-height:1.15;font-size:max(8px,.9cqw);padding:0 3px;min-width:0;margin:0}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -572,7 +583,7 @@ const EDGE_RAR = { grey:'common', bronze:'uncommon', gold:'ultra', rainbow:'secr
 const TIER_RUN = [0, 1000, 100, 25];
 const TIER_MULT = [0, 1, Math.pow(TIER_RUN[1] / TIER_RUN[2], ALPHA), Math.pow(TIER_RUN[1] / TIER_RUN[3], ALPHA)], TIER_LABEL = ['', 'TIER 1', 'TIER 2', 'TIER 3'];
 const levelOfValue = v => v < 5 ? 0 : v < 20 ? 1 : v < 100 ? 2 : v < 500 ? 3 : v < 5000 ? 4 : 5;
-const GRADEM = { 10:1.8, 9:1, 8:.8, 7:.55 };
+const GRADEM = { 9:1.2, 8:.75, 7:.5 };      // a 10 is worth 3.5x to 5x (rolled per card when it comes back)
 const SET_COLORS = ['#ff7a2f', '#3fa3ff', '#8a5cd6', '#ffd23f', '#54d67a', '#ff7ac0', '#8fe3ff', '#ffa23f'];
 const PRINT_DAYS = 1e9, VX = 14;
 
@@ -709,10 +720,11 @@ function rollEvents(day){
 }
 
 // ───────────────────────── cards and values ─────────────────────────
-function gradeMult(c, def){ if (!c.g) return 1; return GRADEM[Math.max(7, c.g)] || .55; }
+function gradeMult(c, def){ if (!c.g) return 1; if (c.g === 10) return c.gm || 4.25; return GRADEM[Math.max(7, c.g)] || .5; }
 function cv(c){ if (c.bs) return c.cards.reduce((a, x) => a + cv(x), 0) * (1 + c.bonus); const d = DEFS[c.d]; return px(c.d) * gradeMult(c, d); }
 const cname = c => c.bs ? c.name : DEFS[c.d].name;
-function rawGrade(c, def){ const q = c.q == null ? .5 : c.q, t = def.vint ? [.98, .86, .58, .25] : [.70, .30, .12, 0]; return q > t[0] ? 10 : q > t[1] ? 9 : q > t[2] ? 8 : q > t[3] ? 7 : 5 + Math.floor(q * 8); }
+// grade odds: 25% each for 10, 9, 8 and 7, so a graded card averages 1.675x its raw value
+function rawGrade(c, def){ const q = c.q == null ? .5 : c.q, t = def.vint ? [.98, .86, .58, .25] : [.75, .5, .25, 0]; return q > t[0] ? 10 : q > t[1] ? 9 : q > t[2] ? 8 : q > t[3] ? 7 : 5 + Math.floor(q * 8); }
 // ───────────────────────── sales history ("last sold") ─────────────────────────
 const CITIES = ['Nashville', 'Denver', 'Austin', 'Portland', 'Columbus', 'Phoenix', 'Atlanta', 'Seattle', 'Chicago', 'Boston', 'Dallas', 'Orlando', 'Memphis', 'Tampa', 'Omaha', 'Raleigh'];
 const showName = n => CITIES[((n % CITIES.length) + CITIES.length) % CITIES.length] + ' Card Show';
@@ -905,7 +917,7 @@ function buyCollection(id){
 // ───────────────────────── grading ─────────────────────────
 // grading takes real time, longer for pricier cards (it keeps running while the game is closed)
 const gradeSecs = v => v < 10 ? 300 : v < 50 ? 900 : v < 100 ? 1800 : v < 250 ? 3600 : v < 500 ? 5400 : v < 1000 ? 7200 : v < 2500 ? 14400 : v < 10000 ? 21600 : v < 25000 ? 28800 : v < 100000 ? 50400 : 86400;
-const gradingFee = c => clamp(r2(cv(c) * .04), 5, 4000);
+const gradingFee = c => 10;
 function startGrading(uids){
   const cards = G.inv.cards.filter(c => uids.includes(c.u) && !c.g && !c.bs), fee = r2(cards.reduce((a, c) => a + gradingFee(c), 0));
   if (!cards.length || G.cash < fee) return false;
@@ -918,7 +930,7 @@ function processGrading(){
   const keep = [], now = Date.now(); let n = 0, tens = 0;
   for (const g of G.grading){
     if (g.ready > now){ keep.push(g); continue; }
-    const d = DEFS[g.c.d], gr = rawGrade(g.c, d); g.c.g = gr;
+    const d = DEFS[g.c.d], gr = rawGrade(g.c, d); g.c.g = gr; if (gr === 10) g.c.gm = r2(3.5 + rnd() * 1.5);
     const at = Math.floor(rnd() * 4); g.c.sub = [0, 1, 2, 3].map(i => gr === 10 ? 10 : i === at ? gr : Math.min(10, gr + ri(0, 1)));
     G.inv.cards.push(g.c); n++; if (gr === 10){ tens++; G.done.ten = 1; }
     postNews('Graded ' + d.name + ': ' + gr + (gr === 10 ? '! Gem mint.' : '.'), gr >= 9 ? 'up' : 'down');
@@ -1497,10 +1509,10 @@ function scrMarket(){
 
 // ───────────────────────── grading ─────────────────────────
 function scrGrade(){
-  let h = pageHead('grade', 'Grading', 'A graded card can be worth more, or less. It takes real time: 5 minutes for a cheap card, up to a day for a very expensive one. It keeps going while the game is closed.');
+  let h = pageHead('grade', 'Grading', 'It takes real time: 5 minutes for a cheap card, up to a day for a very expensive one. It keeps going while the game is closed.');
   const raw = G.inv.cards.filter(c => !c.g && !c.bs).sort((a, b) => cv(b) - cv(a)).slice(0, 60);
   const sel = raw.filter(c => GSEL.has(c.u)), n = sel.length, fee = r2(sel.reduce((a, c) => a + gradingFee(c), 0));
-  h += `<div class="dim help" style="margin-bottom:8px;font-size:14px">The fee is about 4% of the card's value (at least ${money(5)}). The hidden condition decides: a 10 is worth 1.8x, a 9 is the same, an 8 is 0.8x, a 7 or lower is 0.55x. Most cards are a 9 or better.</div>
+  h += `<div class="dim help" style="margin-bottom:8px;font-size:14px">Grading costs ${money(10)} a card and takes real time. The grade is hidden until it comes back: a 7 is worth 0.5x, an 8 is 0.75x, a 9 is 1.2x and a 10 is worth 3.5x to 5x. For a cheap card the fee and the wait are not worth it.</div>
     <div class="tabs"><button class="gold" data-a="gsend" ${!n || G.cash < fee ? 'disabled' : ''}>Send ${n} card${n === 1 ? '' : 's'} (${money(fee)})</button><button data-a="gclear">Clear</button></div>`;
   if (G.grading.length) h += `<h3>At the grader</h3><div class="grid" style="padding-bottom:12px">${G.grading.map(g => `<div class="gwait" style="margin-bottom:14px">${cardHTML(DEFS[g.c.d], { c:g.c, sm:true, price:false })}<b class="gtime" data-ready="${g.ready}">${fmtDur(g.ready - Date.now())}</b></div>`).join('')}</div>`;
   h += '<h3>Your raw cards</h3>' + (raw.length ? '<div class="grid" style="padding-bottom:16px">' + raw.map(c => `<div style="margin-bottom:14px;${GSEL.has(c.u) ? 'outline:3px solid var(--gold);outline-offset:3px;border-radius:6px' : ''}">${cardHTML(DEFS[c.d], { c, sm:true, attr:`data-a="gsel" data-v="${c.u}"` })}</div>`).join('') + '</div>' : '<div class="box">No raw cards.</div>');
