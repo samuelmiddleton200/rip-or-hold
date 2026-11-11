@@ -365,6 +365,7 @@ canvas.ch{background:rgba(0,0,0,.4);border:2px solid var(--p3);border-radius:10p
 /* ---- stats: best cards ---- */
 .bestrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px 8px;margin-top:6px}
 .bestc{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center}.bestc .card{--w:96px;margin-bottom:2px}.bestc b{font-size:15px}.bestc .bestn{height:134px;display:flex;align-items:center}
+.ebquick{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.ebquick .ebbuy{padding:5px 10px}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -1953,7 +1954,9 @@ const MKT_TIERS = [[0, 5, 300], [5, 10, 205], [10, 20, 140], [20, 40, 100], [40,
 const sellerOf = name => { const h = hash(name); return { name, fb:(95 + (h % 50) / 10).toFixed(1), sales:50 + (h >>> 3) % 6000 }; };
 let MKTP = null;
 const mktPools = () => MKTP || (MKTP = MKT_TIERS.map(t => LOOKS.filter(l => l.v0 >= t[0] && l.v0 < t[1])));
-const bidInc = b => b < 1 ? .05 : b < 5 ? .25 : b < 25 ? .5 : b < 100 ? 1 : b < 250 ? 2.5 : b < 500 ? 5 : b < 1000 ? 10 : b < 2500 ? 25 : b < 5000 ? 50 : 100;
+// every bid raises the price by at least 1%
+const bidInc = b => Math.max(.01, r2(b * .01));
+const bidUp = (L, pct) => r2(Math.max(ebPrice(L) * (1 + pct / 100), ebPrice(L) + .01));
 // where bidders stop: a fraction of value, between a floor that rises with value and 120%
 const stopFrac = v => { const lo = v < 25 ? .3 : v < 50 ? .4 : v < 100 ? .45 : v < 1000 ? .55 : v < 10000 ? .65 : .75; return lo + rnd() * (1.2 - lo); };
 // how likely bidders are to look at a card: full between $5 and $250, fading below and above
@@ -2076,7 +2079,8 @@ function ebPage(){
       ${L.mine ? `<div class="ebs" style="margin-top:4px;color:${L.lead === 'you' ? 'var(--grn)' : 'var(--red)'}"><b>${L.lead === 'you' ? 'You are the high bidder' : 'You were outbid'}</b> · your maximum ${money(L.mine)}</div>` : ''}
       <div class="ebs" style="margin-top:6px">Condition: raw, ungraded. You will not know how clean it is until you send it to a grader.</div>
       ${EB.msg ? `<div class="ebmsg">${EB.msg}</div>` : ''}
-      <div class="ebs" style="margin-top:8px">Your maximum bid (at least ${money(min)}). You only pay what it takes to win.</div>
+      <div class="ebs" style="margin-top:8px">Every bid raises the price by at least 1%. Tap a button or type a maximum (at least ${money(min)}). You only pay what it takes to win.</div>
+      <div class="ebquick">${[1, 2, 3].map(p => `<button class="ebbuy" data-a="eb" data-c="bq" data-v="${p}">+${p}% ${money(L.bids ? bidUp(L, p) : r2(Math.max(L.start * (1 + p / 100), L.start + .01)))}</button>`).join('')}</div><div class="ebs" style="margin-top:6px">Or type your own:</div>
       <div class="ebbid"><span class="ebamt">$${EB.bidTxt || '0'}</span><div class="ebkeys">${keys.map(k => `<button class="key" data-a="eb" data-c="bk" data-v="${k}">${k}</button>`).join('')}<button class="key" data-a="eb" data-c="bkb">⌫</button><button class="key" data-a="eb" data-c="bmin">Min</button></div><button class="ebbuy" data-a="eb" data-c="bid">Place bid</button></div></div></div></div>`;
   }
   if (EB.page === 'results'){
@@ -2129,6 +2133,7 @@ const EBACT = {
     else if (c === 'pg'){ EB.pg += +d.v; render(); }
     else if (c === 'tab'){ EB.tab = d.v; EB.kb = false; render(); }
     else if (c === 'bk'){ if (EB.bidTxt.length < 9 && !(d.v === '.' && EB.bidTxt.includes('.'))) EB.bidTxt += d.v; sfx.click(); render(); }
+    else if (c === 'bq'){ const L = G.mkt.list.find(l => l.id === EB.item); if (L){ const amt = L.bids ? bidUp(L, +d.v) : r2(Math.max(L.start * (1 + d.v / 100), L.start + .01)), r = placeBid(L.id, amt); if (r.ok){ sfx.buy(); EB.msg = 'Bid placed. ' + money(r.L.mine + r.L.ship) + ' is held until it ends.'; } else EB.msg = r.msg; } render(); }
     else if (c === 'bkb'){ EB.bidTxt = EB.bidTxt.slice(0, -1); sfx.click(); render(); }
     else if (c === 'bmin'){ const L = G.mkt.list.find(l => l.id === EB.item); if (L) EB.bidTxt = String(L.bids ? r2(L.bid + bidInc(L.bid)) : L.start); render(); }
     else if (c === 'bid'){ const r = placeBid(EB.item, parseFloat(EB.bidTxt)); if (r.ok){ sfx.buy(); EB.msg = 'Bid placed. ' + money(r.L.mine + r.L.ship) + ' is held until it ends.'; EB.bidTxt = ''; } else EB.msg = r.msg; render(); }
