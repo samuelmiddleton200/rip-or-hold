@@ -348,6 +348,23 @@ canvas.ch{background:rgba(0,0,0,.4);border:2px solid var(--p3);border-radius:10p
 .sl2.z-pack .stag,.sl2.z-wall .stag{bottom:auto}
 .sl2.z-pack .sealedimg{max-height:100%}
 .sl2.z-pack .stag{position:absolute;left:50%;bottom:-1px;transform:translateX(-50%);height:auto;line-height:1.15;font-size:max(8px,.9cqw);padding:0 3px;min-width:0;margin:0}
+
+/* ---- eBay bidding ---- */
+.ebbid{margin-top:6px;display:flex;flex-direction:column;gap:6px;max-width:260px}
+.ebamt{font-family:var(--pix);font-size:20px;color:#111;background:#fff;border:2px solid #888;border-radius:4px;padding:3px 8px;min-height:30px}
+.ebkeys{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.ebkeys .key{min-width:0;padding:5px 0}
+.ebp small{display:block}
+@media (max-height:520px){.ebamt{font-size:15px;min-height:22px;padding:1px 6px}.ebkeys .key{padding:2px 0;font-size:12px}.ebbid{max-width:210px;gap:3px}}
+
+/* ---- guide: big tiles that fill the page ---- */
+.ggrid{gap:6px 8px;justify-content:flex-start}.ggrid .card,.ggrid .card.sm{--w:var(--gw)}
+.ggrid .card .ptag{font-size:max(13px,calc(var(--w)*.14));bottom:calc(var(--w)*-.1)}
+.gt{text-align:center;margin-bottom:calc(var(--gw)*.2 + 6px)}.gt .gl{font-size:max(13px,calc(var(--gw)*.12));margin-top:calc(var(--gw)*.16)}
+.guidepg h3{margin:8px 0 4px}
+
+/* ---- stats: best cards ---- */
+.bestrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px 8px;margin-top:6px}
+.bestc{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center}.bestc .card{--w:96px;margin-bottom:2px}.bestc b{font-size:15px}.bestc .bestn{height:134px;display:flex;align-items:center}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -640,7 +657,7 @@ const setOf = id => G.sets.find(s => s.id === id);
 const DEFS = new Proxy({}, { get(t, id){ if (typeof id !== 'string') return undefined; return t[id] || (t[id] = parseDef(id)); } });
 function parseDef(id){
   const [set, cid, tier, fin, edge] = id.split('|'), cr = CRI[cid], T = +tier;
-  return { id, set, cat:'tcg', cr, cid, name:cr.name, type:cr.element, stage:cr.stage, tier:T, fin, edge, val:(LOOKI[id] || {}).v0, rar:EDGE_RAR[edge], run:TIER_RUN[T], chase:T === 3 && (fin === 'galaxy' || edge === 'rainbow'), vint:false, skey:set + '|' + cid + '|' + T };
+  return { id, set, cat:'tcg', cr, cid, name:cr.name, type:cr.element, stage:cr.stage, tier:T, fin, edge, val:(LOOKI[id] || {}).v0, rar:EDGE_RAR[edge], run:(LOOKI[id] || {}).copies || TIER_RUN[T], chase:T === 3 && (fin === 'galaxy' || edge === 'rainbow'), vint:false, skey:set + '|' + cid + '|' + T };
 }
 const defId = (setId, cid, tier, fin, edge) => setId + '|' + cid + '|' + tier + '|' + fin + '|' + (edge || 'grey');
 
@@ -756,8 +773,10 @@ const hitLevel = c => levelOfValue(cv(c));
 const remaining = l => l.copies - (G.taken[l.id] ? G.taken[l.id].length : 0);
 const worldLeft = () => { let n = 0; for (const k in G.taken) n += G.taken[k].length; return TOTAL_COPIES - n; };
 function takeLook(l){
-  const t = G.taken[l.id] || (G.taken[l.id] = []), run = TIER_RUN[l.tier]; let n, guard = 0;
-  do { n = 1 + Math.floor(rnd() * run); } while (t.includes(n) && guard++ < 5000);
+  // serial numbers run from 1 to however many copies of this card exist (4 copies means 1/4 to 4/4)
+  const t = G.taken[l.id] || (G.taken[l.id] = []), run = l.copies; let n, guard = 0;
+  do { n = 1 + Math.floor(rnd() * run); } while (t.includes(n) && guard++ < 25);
+  if (t.includes(n)){ const free = []; for (let k = 1; k <= run; k++) if (!t.includes(k)) free.push(k); n = free.length ? free[Math.floor(rnd() * free.length)] : Math.max(run, ...t) + 1; }
   t.push(n); return { d:l.id, n, q:Math.round(rnd() * 100) / 100 };
 }
 function releaseCard(c){ if (c.bs){ c.cards.forEach(releaseCard); return; } const t = G.taken[c.d]; if (!t) return; const i = t.indexOf(c.n); if (i >= 0) t.splice(i, 1); if (!t.length) delete G.taken[c.d]; }
@@ -836,6 +855,11 @@ function netWorth(){
   return v;
 }
 function invValue(){ return netWorth() - G.cash; }
+// remember the player's best sale and best purchase for the Stats page
+function noteDeal(kind, c, price, where){
+  if (!c || c.bs) return; const b = G.stats.best = G.stats.best || {};
+  if (!b[kind] || price > b[kind].v) b[kind] = { d:c.d, v:r2(price), where, g:c.g || 0 };
+}
 function recordNW(){ G.nw.push({ d:G.day, nw:Math.round(netWorth() * 100) / 100, cash:Math.round(G.cash * 100) / 100 }); if (G.nw.length > 400) G.nw.shift(); }
 function ledger(text, delta){ G.ledger.unshift({ day:G.day, text, delta:delta || 0 }); if (G.ledger.length > 60) G.ledger.pop(); }
 const DEALER_CARD = .8, DEALER_SEALED = .8, SHIP = 1.5, BULK_EACH = .005;
@@ -939,18 +963,25 @@ function processGrading(){
 }
 
 // ───────────────────────── eBay ─────────────────────────
-function listEbay(uid, mult){
+// the player's own auctions: pick a starting price and a length, bidders do the rest (same engine as the market, see ebay.js)
+const AUC = { start:.5, mins:60 };
+function listEbay(uid, startFrac, mins){
   if (G.ebay.length >= 20) return false;
   const i = G.inv.cards.findIndex(c => c.u === uid); if (i < 0) return false;
-  const c = G.inv.cards.splice(i, 1)[0]; c.ask = Math.max(.25, r2(cv(c) * mult)); c.listed = G.day; G.ebay.push(c); return true;
+  const c = G.inv.cards.splice(i, 1)[0], v = cv(c), a = auctionNew(v, Math.round(mins * 60000 / BEAT_MS));
+  a.start = Math.max(.01, r2(v * startFrac)); c.auc = a; c.listed = G.day; G.ebay.push(c); return true;
 }
-function cancelEbay(uid){ const i = G.ebay.findIndex(l => l.u === uid); if (i < 0) return; const c = G.ebay.splice(i, 1)[0]; delete c.ask; delete c.listed; G.inv.cards.push(c); }
+function cancelEbay(uid){ const i = G.ebay.findIndex(l => l.u === uid); if (i < 0 || G.ebay[i].auc.bids) return false; const c = G.ebay.splice(i, 1)[0]; delete c.auc; delete c.listed; G.inv.cards.push(c); return true; }
 function ebayHour(){
-  const keep = []; let n = 0, tot = 0;
+  const keep = [], beat = G.beat || 0;
   for (const c of G.ebay){
-    const mk = cv(c), p = clamp(.5 * Math.pow(mk / c.ask, 3), .02, .6);
-    if (rnd() < hp(p)){ const net = c.ask - SHIP; G.cash += net; G.stats.revenue += net; G.stats.bigSale = Math.max(G.stats.bigSale, c.ask); if (!c.bs) recordSale(c.d, c.ask, 'eBay'); releaseCard(c); n++; tot += net; ledger('eBay: sold ' + cname(c) + ' for ' + money(c.ask) + ' (-' + money(SHIP) + ' shipping)', net); G.rep = Math.min(100, G.rep + .1); note('eBay: sold ' + cname(c) + ' for ' + money(c.ask)); }
-    else keep.push(c);
+    const a = c.auc; if (!a){ delete c.ask; G.inv.cards.push(c); continue; }
+    const t = a.ends > beat ? auctionStep(a) : null; if (t != null){ a.bids++; a.bid = t; a.lead = 'bot'; }
+    if (a.ends > beat){ keep.push(c); continue; }
+    if (a.bids){
+      const net = r2(a.bid - SHIP); noteDeal('sale', c, a.bid, 'eBay'); G.cash += net; G.stats.revenue += net; G.stats.bigSale = Math.max(G.stats.bigSale, a.bid); if (!c.bs) recordSale(c.d, a.bid, 'eBay'); releaseCard(c);
+      ledger('eBay: sold ' + cname(c) + ' for ' + money(a.bid) + ' (-' + money(SHIP) + ' shipping)', net); G.rep = Math.min(100, G.rep + .1); note('eBay: sold ' + cname(c) + ' for ' + money(a.bid));
+    } else { delete c.auc; delete c.listed; G.inv.cards.push(c); note('eBay: no bids on ' + cname(c) + '. It is back in your collection.'); }
   }
   G.ebay = keep;
 }
@@ -1339,7 +1370,7 @@ const pageHead = (icon, title, sub) => `<div class="ph">${ico(icon, 32)}<div><h2
 function render(){
   if (!G) return;
   const nw = netWorth();
-  $('#top').innerHTML = `<h1>${ico('pack', 26)}<div><b>RIP</b> OR <b>HOLD</b><span>CARD SHOP SIM</span></div></h1><div class="st"><div class="chip">${ico('coin', 24)}<div><small>Cash</small><b class="gold">${money(G.cash)}</b></div></div><div class="chip">${ico('trend', 24)}<div><small>Net worth</small><b>${money(nw)}</b></div></div><div class="chip">${ico('star', 24)}<div><small>Rep</small><b>${Math.floor(G.rep)}</b></div></div></div>`;
+  $('#top').innerHTML = `<h1>${ico('pack', 26)}<div><b>RIP</b> OR <b>HOLD</b><span>CARD SHOP SIM</span></div></h1><div class="st"><div class="chip">${ico('coin', 24)}<div><small>Cash</small><b class="gold">${money(G.cash)}</b></div></div><div class="chip">${ico('trend', 24)}<div><small>Collection</small><b>${money(invValue())}</b></div></div><div class="chip">${ico('star', 24)}<div><small>Rep</small><b>${Math.floor(G.rep)}</b></div></div></div>`;
   const tabs = [['shop', 'Store', 'pack'], ['myshop', 'My Shop', 'shop'], ['orders', 'Customers', 'note'], ['inv', 'Sealed', 'box'], ['coll', 'Collection', 'cards'], ['grade', 'Grading', 'grade'], ['show', 'Card Show', 'ticket'], ['ebay', 'eBay', 'globe'], ['guide', 'Guide', 'book'], ['stats', 'Stats', 'bars']];
   $('#nav').innerHTML = tabs.map(t => `<button data-a="tab" data-v="${t[0]}" class="${SCREEN === t[0] ? 'on' : ''}">${ico(t[2], 26)}${t[1]}${t[0] === 'orders' && (G.orders.length + G.visitors.length) ? `<i class="bdg">${G.orders.length + G.visitors.length}</i>` : ''}</button>`).join('');
   const n = G.news[0];
@@ -1350,7 +1381,6 @@ function render(){
   m.innerHTML = ({ shop:scrShop, myshop:scrMyShop, orders:scrOrders, inv:scrInv, coll:scrColl, market:scrMarket, grade:scrGrade, show:scrShow, ebay:scrEbay, guide:scrGuide, jobs:scrOrders, stats:scrStats })[SCREEN]();
   if (G.broke && !$('#ov').classList.contains('on')) startOver();
   m.classList.toggle('fit', SCREEN === 'myshop' || SCREEN === 'ebay'); m.scrollTop = sc; paintCards(); if (SCREEN === 'ebay') liveCards();
-  if (SCREEN === 'stats') drawChart($('#nwc'), G.nw.map(x => Math.round(x.nw * MILL)), '#ffd23f');
 }
 
 // ───────────────────────── store ─────────────────────────
@@ -1454,7 +1484,7 @@ function showBound(c){
   overlay(`<div class="modal" style="width:min(1000px,96vw)"><div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start"><div class="bigcard">${cardHTML(DEFS[c.d], { c, price:false })}</div><div style="flex:1;min-width:280px"><h2>${c.name}</h2><div class="dim">Bound set · ${c.size} cards · ${c.sub} · bound day ${c.day + 1}</div><div style="font-size:30px;margin:4px 0">${money(cv(c))}</div>
     <div class="grid" style="margin:8px 0;padding-bottom:12px">${c.cards.map(x => `<div style="margin-bottom:10px">${cardHTML(DEFS[x.d], { sm:true, c:x })}</div>`).join('')}</div>
     <div class="dim" style="font-size:17px">The cards stay together for good. Sell it to the dealer, list it on eBay, or put it on a show table.</div>
-    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="gold" data-a="dsellcard" data-v="${c.u}">Sell to dealer ${money(dealerOffer(c))}</button><button class="grn" data-a="ebay" data-u="${c.u}" data-v="1">List on eBay ${money(cv(c))}</button><button data-a="ebay" data-u="${c.u}" data-v="1.15">+15% ${money(cv(c) * 1.15)}</button><button data-a="ebay" data-u="${c.u}" data-v=".9">-10% ${money(cv(c) * .9)}</button><button data-a="close">Close</button></div></div></div></div>`);
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="gold" data-a="dsellcard" data-v="${c.u}">Sell to dealer ${money(dealerOffer(c))}</button><button data-a="close">Close</button></div>${aucControls(c)}</div></div></div>`);
 }
 function showInst(u){
   const c = instOf(u) || G.ebay.find(x => x.u === u); if (!c) return;
@@ -1464,10 +1494,9 @@ function showInst(u){
     <div class="dim">${setName(d.set)} · ${cardLabel(c)} · ${cap(d.type)} · ${d.stage === 'evolved' ? 'stage 2' : 'basic'} · HP ${d.cr.hp}</div>
     <div style="font-size:30px;margin:4px 0">${money(v)}</div>
     ${lastSoldHTML(c)}
-    <div class="dim" style="margin-top:4px;font-size:17px">${c.g ? 'Graded ' + c.g + ' (' + (c.sub ? c.sub.join(' / ') : '') + '). ' : 'Condition is a mystery until it is graded. '}Dealer pays ${money(dealerOffer(c))} (50%).</div>
+    <div class="dim" style="margin-top:4px;font-size:17px">${c.g ? 'Graded ' + c.g + ' (' + (c.sub ? c.sub.join(' / ') : '') + '). ' : 'Condition is a mystery until it is graded. '}Dealer pays ${money(dealerOffer(c))} (80%).</div>
     <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button class="gold" data-a="dsellcard" data-v="${c.u}">Sell to dealer ${money(dealerOffer(c))}</button>${same.length ? `<button data-a="dsellsame" data-v="${c.u}">Sell ${same.length} dupes</button>` : ''}${!c.g ? `<button data-a="gradeone" data-v="${c.u}">Grade it...</button>` : ''}</div>
-    <div class="dim" style="margin-top:8px;font-size:17px">Or list on eBay (sells over a few days, ${money(SHIP)} shipping each):</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px"><button class="grn" data-a="ebay" data-u="${c.u}" data-v="1">List at ${money(v)}</button><button data-a="ebay" data-u="${c.u}" data-v="1.15">+15% ${money(v * 1.15)}</button><button data-a="ebay" data-u="${c.u}" data-v=".9">-10% ${money(v * .9)}</button></div>
+    ${aucControls(c)}
     <div style="margin-top:8px"><button data-a="close">Close</button></div></div></div></div>`);
 }
 // a market listing = one creature at one background tier in one set; the modal shows every finish
@@ -1508,12 +1537,19 @@ function scrMarket(){
 }
 
 // ───────────────────────── grading ─────────────────────────
+function gradeChart(){
+  const T = [[10, 'under $10'], [50, '$10 to $50'], [100, '$50 to $100'], [250, '$100 to $250'], [500, '$250 to $500'], [1000, '$500 to $1,000'], [2500, '$1,000 to $2,500'], [10000, '$2,500 to $10,000'], [25000, '$10,000 to $25,000'], [100000, '$25,000 to $100,000'], [1e12, 'over $100,000']];
+  const G_ = [['10 Gem Mint', '3.5x to 5x'], ['9 Mint', '1.2x'], ['8 Near Mint', '0.75x'], ['7 or lower', '0.5x']];
+  overlay(`<div class="modal" style="width:min(760px,96vw)"><h2>Grading chart</h2><div class="dim" style="margin-bottom:6px">Grading costs ${money(10)} a card. The grade stays hidden until the card comes back. Each grade is equally likely.</div>
+    <div class="cols"><div><h3 style="margin-top:4px">Value after grading</h3>${G_.map(g => `<div class="mrow"><span>${g[0]}</span><b>${g[1]}</b></div>`).join('')}<div class="mrow"><span class="dim">Average</span><b class="gold">about 1.67x</b></div></div>
+    <div><h3 style="margin-top:4px">How long it takes</h3>${T.map(t => `<div class="mrow"><span>${t[1]}</span><b>${fmtDur(gradeSecs(t[0] - .01) * 1000)}</b></div>`).join('')}</div></div>
+    <div style="margin-top:10px"><button data-a="close">Close</button></div></div>`);
+}
 function scrGrade(){
-  let h = pageHead('grade', 'Grading', 'It takes real time: 5 minutes for a cheap card, up to a day for a very expensive one. It keeps going while the game is closed.');
+  let h = pageHead('grade', 'Grading', 'Send cards off and they come back with a grade. It keeps going while the game is closed.');
   const raw = G.inv.cards.filter(c => !c.g && !c.bs).sort((a, b) => cv(b) - cv(a)).slice(0, 60);
   const sel = raw.filter(c => GSEL.has(c.u)), n = sel.length, fee = r2(sel.reduce((a, c) => a + gradingFee(c), 0));
-  h += `<div class="dim help" style="margin-bottom:8px;font-size:14px">Grading costs ${money(10)} a card and takes real time. The grade is hidden until it comes back: a 7 is worth 0.5x, an 8 is 0.75x, a 9 is 1.2x and a 10 is worth 3.5x to 5x. For a cheap card the fee and the wait are not worth it.</div>
-    <div class="tabs"><button class="gold" data-a="gsend" ${!n || G.cash < fee ? 'disabled' : ''}>Send ${n} card${n === 1 ? '' : 's'} (${money(fee)})</button><button data-a="gclear">Clear</button></div>`;
+  h += `<div class="tabs"><button class="gold" data-a="gsend" ${!n || G.cash < fee ? 'disabled' : ''}>Send ${n} card${n === 1 ? '' : 's'} (${money(fee)})</button><button data-a="gclear">Clear</button><button data-a="gchart">Grading chart</button></div>`;
   if (G.grading.length) h += `<h3>At the grader</h3><div class="grid" style="padding-bottom:12px">${G.grading.map(g => `<div class="gwait" style="margin-bottom:14px">${cardHTML(DEFS[g.c.d], { c:g.c, sm:true, price:false })}<b class="gtime" data-ready="${g.ready}">${fmtDur(g.ready - Date.now())}</b></div>`).join('')}</div>`;
   h += '<h3>Your raw cards</h3>' + (raw.length ? '<div class="grid" style="padding-bottom:16px">' + raw.map(c => `<div style="margin-bottom:14px;${GSEL.has(c.u) ? 'outline:3px solid var(--gold);outline-offset:3px;border-radius:6px' : ''}">${cardHTML(DEFS[c.d], { c, sm:true, attr:`data-a="gsel" data-v="${c.u}"` })}</div>`).join('') + '</div>' : '<div class="box">No raw cards.</div>');
   return h;
@@ -1542,13 +1578,22 @@ function newRound(){ const j = JOB; j.zw = Math.max(12, 26 - j.round * 3); j.z0 
 
 // ───────────────────────── eBay ─────────────────────────
 function scrEbaySelling(){
-  let h = `<h2>Your listings <span class="dim" style="font-size:18px">${G.ebay.length}/20 listed</span></h2><div class="dim" style="margin-bottom:6px">List any card from its Collection popup. Listed cards sell by themselves over the next few days: the closer to market price, the faster. You pay ${money(SHIP)} shipping per sale. You get full market price instead of the dealer's 50%.</div>`;
+  let h = `<h2>Your auctions <span class="dim" style="font-size:18px">${G.ebay.length}/20 listed</span></h2><div class="dim" style="margin-bottom:6px">Auction any card from its Collection popup. Pick a starting price and a length. Bidders come by on their own and push the price up to what they think it is worth. No bids means the card comes back. You pay ${money(SHIP)} shipping per sale. You get the full price instead of the dealer's 80%.</div>`;
   if (!G.ebay.length) return h + '<div class="box">Nothing listed.</div>';
+  const endTs = a => G.last + (a.ends - G.beat) * BEAT_MS;
   for (const c of G.ebay){
-    const mk = cv(c), p = clamp(.5 * Math.pow(mk / c.ask, 3), .02, .6);
-    h += `<div class="row">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}<div class="nm"><b>${cname(c)}</b><small>listed day ${c.listed + 1}</small></div><div class="ev">Asking ${money(c.ask)}<br>Market ${money(mk)}</div><div class="ev ${p > .3 ? 'up' : p > .12 ? 'gold' : 'down'}">${Math.round(p * 100)}% to sell today</div><button data-a="ecancel" data-v="${c.u}">Cancel</button></div>`;
+    const a = c.auc;
+    h += `<div class="row">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}<div class="nm"><b>${cname(c)}</b><small>${a.bids ? a.bids + ' bid' + (a.bids > 1 ? 's' : '') : 'no bids yet'}</small></div><div class="ev">${a.bids ? 'Bid ' + money(a.bid) : 'Starts ' + money(a.start)}<br>Value ${money(cv(c))}</div><div class="ev gold"><b data-ready="${endTs(a)}">${fmtDur(endTs(a) - Date.now())}</b> left</div><button data-a="ecancel" data-v="${c.u}" ${a.bids ? 'disabled' : ''}>Cancel</button></div>`;
   }
   return h;
+}
+// start price and length picker shown in the card popups
+function aucControls(c){
+  const v = cv(c), chip = (k, val, label) => `<button class="${AUC[k] === val ? 'gold' : ''}" data-a="aset" data-k="${k}" data-v="${val}" data-u="${c.u}">${label}</button>`;
+  return `<div class="dim" style="margin-top:8px;font-size:17px">Or auction it on eBay (the shipping is ${money(SHIP)}). Start at:</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${[[.02, '2%'], [.25, '25%'], [.5, '50%'], [.75, '75%'], [1, '100%']].map(x => chip('start', x[0], x[1] + ' ' + money(Math.max(.01, v * x[0])))).join('')}</div>
+    <div class="dim" style="margin-top:4px;font-size:17px">Runs for:</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${[[10, '10 min'], [30, '30 min'], [60, '1 hour'], [120, '2 hours'], [180, '3 hours']].map(x => chip('mins', x[0], x[1])).join('')}<button class="grn" data-a="ebay" data-u="${c.u}">Start auction</button></div>`;
 }
 
 // ───────────────────────── card shows ─────────────────────────
@@ -1629,7 +1674,7 @@ function showDone(){
 function sellAt(price){
   const c = SH.cur, it = c.it;
   G.cash += price; G.stats.revenue += price; G.stats.bigSale = Math.max(G.stats.bigSale, price); SH.earned += price; SH.sold++;
-  if (!it.sealed && !it.c.bs) recordSale(it.c.d, price, SH.name);
+  if (!it.sealed && !it.c.bs){ recordSale(it.c.d, price, SH.name); noteDeal('sale', it.c, price, 'a card show'); }
   if (it.sealed){ const [s, p] = it.key.split(':'); addSealed(s, p, -1); } else { G.inv.cards.splice(G.inv.cards.findIndex(x => x.u === it.c.u), 1); releaseCard(it.c); }
   SH.table.splice(SH.table.findIndex(t => t === it.t), 1);
   G.rep = clamp(G.rep + (price >= it.v * .95 ? .5 : price >= it.v * .8 ? .25 : .05), 0, 100);
@@ -1647,7 +1692,7 @@ function dealModal(){
 function buyFromVendor(price){
   const D = SH.deal, v = SH.vendors[D.vi], it = v.items[D.ii];
   if (G.cash < price){ D.msg = 'You can\'t afford that.'; return dealModal(); }
-  G.cash -= price; G.stats.spent += price; SH.bought++; recordSale(it.c.d, price, SH.name); addCards([it.c]); v.items.splice(D.ii, 1);
+  G.cash -= price; G.stats.spent += price; SH.bought++; recordSale(it.c.d, price, SH.name); noteDeal('buy', it.c, price, 'a card show'); addCards([it.c]); v.items.splice(D.ii, 1);
   SH.log.push('Bought ' + DEFS[it.c.d].name + ' for ' + money(price)); ledger('Show: bought ' + DEFS[it.c.d].name, -price); sfx.buy();
   SH.deal = null; closeOv(); render();
 }
@@ -1669,14 +1714,17 @@ function sellVendorModal(){
 
 // ───────────────────────── stats ─────────────────────────
 function scrStats(){
-  const st = G.stats, nw = netWorth(), best = G.hof[0], rip = st.ripIn - st.ripOut;
+  const st = G.stats, rip = st.ripIn - st.ripOut, best = st.best || {}, profit = st.revenue - st.spent;
   const stat = (icon, label, val, cls) => `<div class="stat">${ico(icon, 28)}<div><small>${label}</small><b class="${cls || ''}">${val}</b></div></div>`;
+  const owned = [].concat(G.inv.cards.filter(c => !c.bs), shopCards(), G.ebay.filter(c => !c.bs)), cnt = G.inv.cards.reduce((a, c) => a + (c.bs ? c.cards.length : 1), 0) + shopCards().length;
+  const graded = owned.filter(c => c.g), tens = graded.filter(c => c.g === 10).length;
+  const top = owned.slice().sort((a, b) => cv(b) - cv(a))[0], topG = graded.slice().sort((a, b) => cv(b) - cv(a))[0];
+  const rare = owned.slice().sort((a, b) => LOOKI[a.d].copies - LOOKI[b.d].copies || cv(b) - cv(a))[0], pull = G.hof[0];
+  const pic = (title, c, d, v, sub) => `<div class="bestc"><div class="dim">${title}</div>${c || d ? cardHTML(DEFS[d || c.d], { sm:true, c:c || { d }, price:false }) : '<div class="bestn dim">none yet</div>'}<b class="gold">${v == null ? '' : money(v)}</b><small class="dim">${sub || ''}</small></div>`;
   let h = pageHead('bars', 'Stats', 'How your shop is doing.');
-  h += `<div class="stats">${stat('trend', 'Net worth', money(nw))}${stat('coin', 'Cash', money(G.cash), 'gold')}${stat('cards', 'Cards and sealed', money(invValue()))}${stat('shop', 'Shop sales', money(G.shop ? G.shop.earned : 0))}${stat('pack', 'Packs opened', st.packs)}${stat('cards', 'Cards pulled', st.cards)}${stat('ticket', 'Shows worked', st.shows)}${stat('coin', 'Spent', money(st.spent))}${stat('coin', 'Sold', money(st.revenue))}${stat('star', 'Biggest sale', money(st.bigSale))}${stat('pack', 'Ripping profit', (rip >= 0 ? '+' : '') + money(rip), rip >= 0 ? 'up' : 'down')}${stat('star', 'Achievements', ACH.filter(a => G.ach[a[0]]).length + ' / ' + ACH.length)}</div>`;
-  h += `<div class="cols"><div><h3>Net worth over time</h3><canvas class="ch" id="nwc" width="520" height="150"></canvas>
-    <div class="box" style="margin-top:10px">Best pull: ${best ? `<b class="gold">${DEFS[best.d].name}</b> ${money(best.v)}` : '<span class="dim">none yet</span>'}</div>
-    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button data-a="snd">Sound: ${G.snd ? 'ON' : 'OFF'}</button><button data-a="tab" data-v="jobs">Odd jobs</button><button class="red" data-a="newgame">${CONFIRM === 'ng' ? 'Click again to erase everything' : 'New game'}</button></div></div>
-    <div><h3>Recent activity</h3>${G.ledger.slice(0, 18).map(l => `<div class="row" style="padding:4px 10px"><div class="nm" style="font-size:15px;font-weight:400">${l.text}</div><b class="${l.delta >= 0 ? 'up' : 'down'}">${l.delta >= 0 ? '+' : ''}${money(l.delta)}</b></div>`).join('') || '<span class="dim">Nothing yet.</span>'}</div></div>`;
+  h += `<div class="stats">${stat('trend', 'Collection value', money(invValue()))}${stat('coin', 'Cash', money(G.cash), 'gold')}${stat('cards', 'Cards owned', cnt)}${stat('shop', 'Shop sales', money(G.shop ? G.shop.earned : 0))}${stat('pack', 'Packs opened', st.packs)}${stat('cards', 'Cards pulled', st.cards)}${stat('star', 'Hits pulled', st.hits)}${stat('grade', 'Graded cards', graded.length)}${stat('star', 'Gem mint 10s', tens)}${stat('case', 'Sets bound', st.bound || 0)}${stat('ticket', 'Shows worked', st.shows)}${stat('coin', 'Spent', money(st.spent))}${stat('coin', 'Earned', money(st.revenue))}${stat('trend', 'Profit', (profit >= 0 ? '+' : '') + money(profit), profit >= 0 ? 'up' : 'down')}${stat('pack', 'Ripping profit', (rip >= 0 ? '+' : '') + money(rip), rip >= 0 ? 'up' : 'down')}${stat('star', 'Achievements', ACH.filter(a => G.ach[a[0]]).length + ' / ' + ACH.length)}</div>`;
+  h += `<h3>Best cards</h3><div class="bestrow">${pic('Best pull', null, pull && pull.d, pull && pull.v, pull && pull.prod)}${pic('Biggest sale', null, best.sale && best.sale.d, best.sale && best.sale.v, best.sale && 'to ' + best.sale.where)}${pic('Biggest buy', null, best.buy && best.buy.d, best.buy && best.buy.v, best.buy && 'from ' + best.buy.where)}${pic('Most valuable owned', top, null, top && cv(top), '')}${pic('Best graded', topG, null, topG && cv(topG), topG && 'grade ' + topG.g)}${pic('Rarest owned', rare, null, rare && cv(rare), rare && LOOKI[rare.d].copies + ' in the world')}</div>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap"><button data-a="snd">Sound: ${G.snd ? 'ON' : 'OFF'}</button><button class="red" data-a="newgame">${CONFIRM === 'ng' ? 'Click again to erase everything' : 'New game'}</button></div>`;
   return h;
 }
 
@@ -1800,14 +1848,16 @@ const ACT = {
   setmore(){ SETN += 30; render(); },
   claimset(d){ if (claimSet(d.v)){ sfx.hit(4); flash(true); confetti(40); toast('Set complete!'); } render(); },
   mk(d){ MK = d.v; render(); }, mkset(d){ MKSET = d.v; render(); }, mksort(d){ MKSORT = d.v; render(); },
-  dsellcard(d){ const c = instOf(+d.v); if (!c) return; const v = dealerOffer(c); G.inv.cards.splice(G.inv.cards.indexOf(c), 1); releaseCard(c); G.cash += v; G.stats.revenue += v; G.stats.bigSale = Math.max(G.stats.bigSale, v); ledger('Sold ' + cname(c) + ' to dealer', v); sfx.sell(); closeOv(); render(); },
+  dsellcard(d){ const c = instOf(+d.v); if (!c) return; const v = dealerOffer(c); noteDeal('sale', c, v, 'the dealer'); G.inv.cards.splice(G.inv.cards.indexOf(c), 1); releaseCard(c); G.cash += v; G.stats.revenue += v; G.stats.bigSale = Math.max(G.stats.bigSale, v); ledger('Sold ' + cname(c) + ' to dealer', v); sfx.sell(); closeOv(); render(); },
   dsellsame(d){ const c = instOf(+d.v); if (!c) return; let tot = 0; G.inv.cards = G.inv.cards.filter(x => { if (x.d === c.d && !x.g && !x.bs && x.u !== c.u){ tot += dealerOffer(x); releaseCard(x); return false; } return true; }); G.cash += tot; G.stats.revenue += tot; ledger('Sold dupes of ' + DEFS[c.d].name, tot); sfx.sell(); closeOv(); render(); },
   bulk(){ const bulk = G.inv.cards.filter(isBulk), tot = bulk.length * BULK_EACH; const set = new Set(bulk); bulk.forEach(releaseCard); G.inv.cards = G.inv.cards.filter(c => !set.has(c)); G.cash += tot; G.stats.revenue += tot; ledger('Sold ' + bulk.length + ' bulk cards', tot); toast('Sold ' + bulk.length + ' bulk cards for ' + money(tot)); sfx.sell(); render(); },
-  ebay(d){ if (listEbay(+d.u, +d.v)){ sfx.buy(); toast('Listed on eBay'); } else toast('Listing limit reached (20)'); closeOv(); render(); },
+  ebay(d){ if (listEbay(+d.u, AUC.start, AUC.mins)){ sfx.buy(); toast('Auction started'); } else toast('Listing limit reached (20)'); closeOv(); render(); },
+  aset(d){ AUC[d.k] = +d.v; const c = instOf(+d.u); if (c) showInst(c.u); sfx.click(); },
   ecancel(d){ cancelEbay(+d.v); render(); },
   gradeone(d){ GSEL = new Set([+d.v]); SCREEN = 'grade'; closeOv(); render(); },
   gsel(d){ const u = +d.v; GSEL.has(u) ? GSEL.delete(u) : GSEL.add(u); sfx.click(); render(); },
   gclear(){ GSEL = new Set(); render(); },
+  gchart(){ gradeChart(); },
   gsend(){ if (startGrading([...GSEL])){ toast('Sent ' + GSEL.size + ' to the grader'); sfx.buy(); GSEL = new Set(); } render(); },
   opnext(){ opNext(); }, opall(){ opAll(); }, oppack(){ opNextPack(); }, opripall(){ opRipAll(); }, opfinish(){ opFinish(); }, opdone(){ closeOv(); recordNW(); render(); }, optear(){ opTear(); },
   shhide(){ SH.hide = !SH.hide; render(); },
@@ -1860,7 +1910,7 @@ const ACT = {
   },
   vsell(){ sellVendorModal(); },
   vsold(d){
-    const i = G.inv.cards.findIndex(c => c.u === +d.v); if (i < 0) return; const c = G.inv.cards.splice(i, 1)[0], v = r2(cv(c) * SH.buyRate); if (!c.bs) recordSale(c.d, v, SH.name); releaseCard(c);
+    const i = G.inv.cards.findIndex(c => c.u === +d.v); if (i < 0) return; const c = G.inv.cards.splice(i, 1)[0], v = r2(cv(c) * SH.buyRate); if (!c.bs){ recordSale(c.d, v, SH.name); noteDeal('sale', c, v, 'a card show vendor'); } releaseCard(c);
     G.cash += v; G.stats.revenue += v; G.stats.bigSale = Math.max(G.stats.bigSale, v); SH.earned += v; SH.sold++; SH.log.push('Sold ' + cname(c) + ' to a vendor for ' + money(v)); G.rep = clamp(G.rep + .05, 0, 100); sfx.sell(); sellVendorModal(); render();
   },
   job(d){ JOB = { id:d.v, round:0, earn:0, msg:'' }; newRound(); render(); jobLoop(); },
@@ -1893,57 +1943,117 @@ window.RH = { get G(){ return G; }, ACT, startRip, opNext, opAll, opRipAll, opNe
 // ───────────────────────── eBay: a website on a computer ─────────────────────────
 // Listings are real cards taken out of the world pool. Sellers list them for about what they are worth, a few cheap, a few greedy. You pay, the card ships in a couple of days.
 const SELLER_NAMES = ['cardbarn22', 'slab_shack', 'flip4cash', 'pixelpulls', 'binderbob', 'mintcondition_mia', 'rip_n_ship', 'holo_hank', 'tinyvault', 'pack_attack', 'dusty_longbox', 'foilfiend', 'the_card_cellar', 'gradeA_greg', 'monsterhoard', 'cozycards', 'nightowl_tcg', 'sparkshop', 'garage_gems', 'bulkbin_bill', 'cardcornerco', 'shinyseeker', 'rare_ronnie', 'vaultvic', 'lootlady'];
-const MKT_TARGET = 180;
+// ───────────────────────── the auction engine ─────────────────────────
+// Every listing is an auction (10 minutes to 3 hours). Bidders show up at random; cheap cards and very expensive cards draw fewer of them.
+// Each auction has a hidden stopping point (30%-120% of the card's value, tighter for pricier cards): bidders push the price toward it and then stop.
+// A beat is 15 seconds, so 40 beats = 10 minutes and 720 beats = 3 hours.
+const MIN_BEATS = 40, MAX_BEATS = 720;
+// listing counts by card value: each tier down has about 1.45x as many cards. [low, high, average count]
+const MKT_TIERS = [[0, 5, 300], [5, 10, 205], [10, 20, 140], [20, 40, 100], [40, 80, 70], [80, 160, 48], [160, 320, 33], [320, 640, 22], [640, 1250, 15], [1250, 2500, 10], [2500, 5000, 7], [5000, Infinity, 5]];
 const sellerOf = name => { const h = hash(name); return { name, fb:(95 + (h % 50) / 10).toFixed(1), sales:50 + (h >>> 3) % 6000 }; };
 let MKTP = null;
-function mktPools(){ return MKTP || (MKTP = [LOOKS.filter(l => l.v0 < 5), LOOKS.filter(l => l.v0 >= 5 && l.v0 < 50), LOOKS.filter(l => l.v0 >= 50 && l.v0 < 500), LOOKS.filter(l => l.v0 >= 500)]); }
-const mktPrice = (c, m) => { const v = px(c.d); return v >= 100 ? Math.round(v * m) - .01 : r2(Math.max(.25, v * m)); };
-function mktAdd(){
-  const r = rnd(), pools = mktPools(), p = r < .5 ? 0 : r < .8 ? 1 : r < .95 ? 2 : 3;
-  const c = drawFrom(pools[p]) || drawFrom(pools[0]); if (!c) return;
-  const x = rnd(), mult = x < .26 ? .42 + rnd() * .43 : x < .46 ? 1.2 + rnd() * .85 : .9 + rnd() * .25, v = px(c.d);      // sellers guess: about a quarter ask far too little, a fifth far too much
-  const ask = mktPrice(c, mult);
-  G.mkt.list.push({ id:++G.mkt.n, c, m:mult, ask, ship:v >= 100 ? 6.5 : v >= 20 ? 3.5 : 1.5, seller:pick(SELLER_NAMES), ends:(G.beat || 0) + ri(200, 700) });
+const mktPools = () => MKTP || (MKTP = MKT_TIERS.map(t => LOOKS.filter(l => l.v0 >= t[0] && l.v0 < t[1])));
+const bidInc = b => b < 1 ? .05 : b < 5 ? .25 : b < 25 ? .5 : b < 100 ? 1 : b < 250 ? 2.5 : b < 500 ? 5 : b < 1000 ? 10 : b < 2500 ? 25 : b < 5000 ? 50 : 100;
+// where bidders stop: a fraction of value, between a floor that rises with value and 120%
+const stopFrac = v => { const lo = v < 25 ? .3 : v < 50 ? .4 : v < 100 ? .45 : v < 1000 ? .55 : v < 10000 ? .65 : .75; return lo + rnd() * (1.2 - lo); };
+// how likely bidders are to look at a card: full between $5 and $250, fading below and above
+const popOf = v => v < 5 ? Math.max(.2, v / 5) : v > 250 ? Math.max(.15, Math.sqrt(250 / v)) : 1;
+const BID_RATE = .07;
+function auctionNew(v, beats){
+  const cap = r2(v * stopFrac(v));
+  return { cap, start:r2(Math.max(.01, cap * (.02 + rnd() * .23))), bid:0, bids:0, pop:popOf(v), ends:(G.beat || 0) + beats, lead:'' };
 }
-function ensureMkt(){ if (!G.mkt) G.mkt = { list:[], mail:[], n:0 }; G.mkt.list.forEach(L => { if (L.m == null) L.m = L.ask / Math.max(.01, px(L.c.d)); }); while (G.mkt.list.length < MKT_TARGET) mktAdd(); }
-// every day: listings end or sell to other buyers (the card goes back in the pool), new ones appear, parcels arrive
-function mktDay(){}
-// other buyers snap listings up and listings run their course (the card goes back to the pool); parcels arrive after a few minutes
-function mktHour(){
-  const keep = [];
-  for (const L of G.mkt.list){
-    const v = px(L.c.d), p = L.ask < v * .9 ? .22 : L.ask > v * 1.3 ? .01 : .05;
-    if (L.ends < (G.beat || 0) || rnd() < hp(p)){ if (L.ends >= (G.beat || 0)) recordSale(L.c.d, L.ask, 'eBay'); releaseCard(L.c); } else keep.push(L);
+// one beat of bidding on an auction: maybe a bidder raises it toward the hidden stopping point
+function auctionStep(L){
+  if (rnd() > BID_RATE * L.pop) return null;
+  let target;
+  if (!L.bids){ if (L.start > L.cap) return null; target = L.start; }
+  else { if (L.bid + bidInc(L.bid) > L.cap) return null; target = r2(Math.min(L.cap, L.bid + Math.max(bidInc(L.bid), (L.cap - L.bid) * (.1 + rnd() * .35)))); }
+  return target;
+}
+// returns true if the player's high bid was just beaten
+function auctionBid(L, target){
+  L.bids++;
+  if (L.lead === 'you'){
+    if (target > L.mine){ L.bid = r2(Math.min(target, L.mine + bidInc(L.mine))); L.lead = 'bot'; return true; }
+    L.bid = r2(Math.min(L.mine, target + bidInc(target))); return false;
   }
-  G.mkt.list = keep; ensureMkt();
+  L.bid = target; L.lead = 'bot'; return false;
+}
+function mktAdd(tier, fresh){
+  const c = drawFrom(mktPools()[tier]); if (!c) return;
+  const v = px(c.d), L = Object.assign(auctionNew(v, ri(MIN_BEATS, MAX_BEATS)), { id:++G.mkt.n, c, tier, ship:v >= 100 ? 6.5 : v >= 20 ? 3.5 : 1.5, seller:pick(SELLER_NAMES) });
+  if (!fresh){      // the market is already mid-auction when the game starts
+    const el = Math.floor(rnd() * (L.ends - G.beat)); L.ends -= el;
+    for (let i = 0; i < el; i++){ const t = auctionStep(L); if (t != null) auctionBid(L, t); }
+  }
+  G.mkt.list.push(L);
+}
+const tierOfValue = v => MKT_TIERS.findIndex(t => v >= t[0] && v < t[1]);
+// about 950 cards in all, each tier wandering +-25% around its average
+function mktTargets(){
+  if (!G.mkt.tt) G.mkt.tt = MKT_TIERS.map(t => Math.round(t[2] * (.75 + rnd() * .5)));
+  MKT_TIERS.forEach((t, i) => { if (rnd() < .02) G.mkt.tt[i] = Math.round(t[2] * (.75 + rnd() * .5)); });
+}
+function mktFill(fresh){
+  mktTargets(); const have = MKT_TIERS.map(() => 0); G.mkt.list.forEach(L => { have[L.tier]++; });
+  MKT_TIERS.forEach((t, i) => { const need = G.mkt.tt[i] - have[i]; for (let k = 0; k < (fresh ? Math.min(need, 6) : need); k++) mktAdd(i, fresh); });
+}
+function ensureMkt(){
+  if (!G.mkt) G.mkt = { list:[], mail:[], n:0 };
+  if (G.mkt.list.some(L => L.cap == null)){ G.mkt.list.forEach(L => releaseCard(L.c)); G.mkt.list = []; }       // old buy-it-now listings: start the market over
+  for (const c of G.ebay || []) if (!c.auc){ delete c.ask; delete c.listed; G.inv.cards.push(c); G.ebay = G.ebay.filter(x => x !== c); }
+  if (!G.mkt.list.length) mktFill(false);
+}
+const mktDay = () => {};
+// each beat: bidders raise auctions, finished auctions pay out (the card goes back into the pool), new ones open, parcels arrive
+function mktHour(){
+  const keep = [], beat = G.beat || 0;
+  for (const L of G.mkt.list){
+    const t = L.ends > beat ? auctionStep(L) : null;
+    if (t != null && auctionBid(L, t) && L.esc){ G.cash += L.esc; L.esc = 0; L.mine = 0; note('You were outbid on ' + ebTitle(L.c) + '.'); }
+    if (L.ends > beat){ keep.push(L); continue; }
+    if (L.lead === 'you' && L.mine){
+      const tot = r2(L.bid + L.ship); noteDeal('buy', L.c, L.bid, 'eBay'); G.cash += r2(L.esc - tot); G.stats.spent += tot; recordSale(L.c.d, L.bid, 'eBay');
+      G.mkt.mail.push({ c:L.c, arrive:beat + ri(8, 16), paid:tot }); ledger('eBay: won ' + cname(L.c) + ' for ' + money(L.bid), -tot); note('You won ' + ebTitle(L.c) + ' for ' + money(L.bid) + '.');
+    } else { if (L.bids) recordSale(L.c.d, L.bid, 'eBay'); releaseCard(L.c); }
+  }
+  G.mkt.list = keep; mktFill(true);
   const still = [];
-  for (const m of G.mkt.mail){ if (m.arrive <= (G.beat || 0)){ addCards([m.c]); note('Your eBay order arrived: ' + cname(m.c)); } else still.push(m); }
+  for (const m of G.mkt.mail){ if (m.arrive <= beat){ addCards([m.c]); note('Your eBay order arrived: ' + cname(m.c)); } else still.push(m); }
   G.mkt.mail = still;
 }
-function buyListing(id){
-  const i = G.mkt.list.findIndex(l => l.id === id); if (i < 0) return { ok:false, msg:'This listing has ended.' };
-  const L = G.mkt.list[i], tot = r2(L.ask + L.ship); if (G.cash < tot) return { ok:false, msg:'Not enough cash.' };
-  G.cash -= tot; G.stats.spent += tot; G.mkt.list.splice(i, 1); recordSale(L.c.d, L.ask, 'eBay');
-  G.mkt.mail.push({ c:L.c, arrive:(G.beat || 0) + ri(8, 16), paid:tot });
-  ledger('eBay: bought ' + cname(L.c) + ' from ' + L.seller, -tot);
+// the player bids a maximum; the price only climbs as far as it needs to. The whole maximum (plus shipping) is held until the auction is decided.
+function placeBid(id, max){
+  const L = G.mkt.list.find(l => l.id === id); if (!L || L.ends <= (G.beat || 0)) return { ok:false, msg:'This auction has ended.' };
+  max = r2(max); const min = L.bids ? r2(L.bid + bidInc(L.bid)) : L.start;
+  if (!(max >= min)) return { ok:false, msg:'Bid at least ' + money(min) + '.' };
+  if (L.mine && max <= L.mine) return { ok:false, msg:'Your maximum is already ' + money(L.mine) + '.' };
+  const need = r2(max + L.ship - (L.esc || 0)); if (G.cash < need) return { ok:false, msg:'Not enough cash (a bid holds ' + money(max + L.ship) + ').' };
+  G.cash = r2(G.cash - need); L.esc = r2((L.esc || 0) + need); L.mine = max;
+  if (L.lead !== 'you'){ L.bid = min; L.lead = 'you'; L.bids++; }
   return { ok:true, L };
 }
 
 // ───────────────────────── the page ─────────────────────────
-const EB = { page:'home', tab:'browse', q:'', typed:'', kb:false, load:0, sort:'best', f:{ type:'', tier:0, fin:'', edge:'' }, pg:0, item:null, confirm:false, msg:'' };
+const EB = { page:'home', tab:'browse', q:'', typed:'', kb:false, load:0, sort:'end', bidTxt:'', f:{ type:'', tier:0, fin:'', edge:'' }, pg:0, item:null, confirm:false, msg:'' };
 const ebTitle = c => { const d = DEFS[c.d]; return d.name + ' #' + c.n + '/' + d.run; };
 const ebDetail = c => { const d = DEFS[c.d]; return [cap(d.type), d.stage === 'evolved' ? 'Evolved' : 'Basic', TIER_LABEL[d.tier].toLowerCase().replace(/^./, m => m.toUpperCase()), FIN_LABEL[d.fin] ? cap(d.fin) + ' finish' : 'No finish', cap(d.edge) + ' edge'].join(' · '); };
 const ebHay = c => { const d = DEFS[c.d]; return [d.name, d.type, d.stage === 'evolved' ? 'evolved stage' : 'basic', 'tier ' + d.tier, 'tier' + d.tier, d.fin, d.fin !== 'none' ? 'foil' : '', d.edge, d.edge + ' edge', c.n].join(' ').toLowerCase(); };
 function ebResults(){
   const toks = EB.q.toLowerCase().split(/\s+/).filter(Boolean), f = EB.f;
   let r = G.mkt.list.filter(L => { const d = DEFS[L.c.d], h = ebHay(L.c); return toks.every(t => h.includes(t)) && (!f.type || d.type === f.type) && (!f.tier || d.tier === f.tier) && (!f.fin || d.fin === f.fin) && (!f.edge || d.edge === f.edge); });
-  if (EB.sort === 'low') r.sort((a, b) => a.ask - b.ask); else if (EB.sort === 'high') r.sort((a, b) => b.ask - a.ask); else if (EB.sort === 'end') r.sort((a, b) => a.ends - b.ends || a.id - b.id); else r.sort((a, b) => hash('s' + a.id) - hash('s' + b.id));
+  const price = L => L.bids ? L.bid : L.start;
+  if (EB.sort === 'low') r.sort((a, b) => price(a) - price(b)); else if (EB.sort === 'high') r.sort((a, b) => price(b) - price(a)); else if (EB.sort === 'long') r.sort((a, b) => b.ends - a.ends || a.id - b.id); else r.sort((a, b) => a.ends - b.ends || a.id - b.id);
   return r;
 }
-const ebDays = L => '';
+const ebPrice = L => L.bids ? L.bid : L.start;
+const ebEndTs = L => (G.last || Date.now()) + (L.ends - (G.beat || 0)) * BEAT_MS;
+const ebLeft = L => `<b data-ready="${ebEndTs(L)}">${fmtDur(ebEndTs(L) - Date.now())}</b>`;
+const ebBidTxt = L => L.bids ? L.bids + ' bid' + (L.bids > 1 ? 's' : '') : 'no bids';
 function ebRow(L){
   const c = L.c, d = DEFS[c.d];
-  return `<div class="ebrow" data-a="eb" data-c="item" data-v="${L.id}"><div class="ebimg">${cardHTML(d, { sm:true, c, price:false })}</div><div class="ebtx"><div class="ebt">${ebTitle(c)}</div><div class="ebd">${ebDetail(c)}</div><div class="ebs">Seller: ${L.seller} (${sellerOf(L.seller).fb}%)</div></div><div class="ebp"><b>${money(L.ask)}</b><small>+ ${money(L.ship)} shipping</small><span class="ebbtn">Buy It Now</span></div></div>`;
+  return `<div class="ebrow" data-a="eb" data-c="item" data-v="${L.id}"><div class="ebimg">${cardHTML(d, { sm:true, c, price:false })}</div><div class="ebtx"><div class="ebt">${ebTitle(c)}</div><div class="ebd">${ebDetail(c)}</div><div class="ebs">Seller: ${L.seller} (${sellerOf(L.seller).fb}%)</div></div><div class="ebp"><small>${L.bids ? 'Current bid' : 'Starting bid'}</small><b>${money(ebPrice(L))}</b><small>${ebBidTxt(L)} · ${ebLeft(L)} left</small>${L.mine ? `<small style="color:${L.lead === 'you' ? 'var(--grn)' : 'var(--red)'}">${L.lead === 'you' ? 'You are winning' : 'Outbid'}</small>` : ''}<span class="ebbtn">Bid</span></div></div>`;
 }
 function ebKeyboard(){
   const rows = ['1234567890', 'qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
@@ -1960,30 +2070,33 @@ function ebPage(){
   if (EB.page === 'item'){
     const L = G.mkt.list.find(l => l.id === EB.item);
     if (!L) return `<div class="ebpad"><h2>This listing has ended</h2><button data-a="eb" data-c="back2">Back to results</button></div>`;
-    const c = L.c, d = DEFS[c.d], tot = r2(L.ask + L.ship), s = sellerOf(L.seller);
+    const c = L.c, d = DEFS[c.d], s = sellerOf(L.seller), min = L.bids ? r2(L.bid + bidInc(L.bid)) : L.start, keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0'];
     return `<div class="ebpad"><div class="ebcrumb" data-a="eb" data-c="back2">◀ Back to results</div><div class="ebitem"><div>${cardHTML(d, { c, price:false, live:true })}</div><div class="ebinfo"><h2>${ebTitle(c)}</h2><div class="ebd">${ebDetail(c)}</div><div class="ebs">Seller: <b>${L.seller}</b> · ${s.fb}% positive feedback · ${s.sales.toLocaleString()} items sold</div>
-      <div class="ebbig">${money(L.ask)}</div><div class="ebs">+ ${money(L.ship)} shipping · ships right away</div>
+      <div class="ebs" style="margin-top:6px">${L.bids ? 'Current bid' : 'Starting bid'}</div><div class="ebbig">${money(ebPrice(L))}</div><div class="ebs">${ebBidTxt(L)} · ${ebLeft(L)} left · + ${money(L.ship)} shipping</div>
+      ${L.mine ? `<div class="ebs" style="margin-top:4px;color:${L.lead === 'you' ? 'var(--grn)' : 'var(--red)'}"><b>${L.lead === 'you' ? 'You are the high bidder' : 'You were outbid'}</b> · your maximum ${money(L.mine)}</div>` : ''}
       <div class="ebs" style="margin-top:6px">Condition: raw, ungraded. You will not know how clean it is until you send it to a grader.</div>
       ${EB.msg ? `<div class="ebmsg">${EB.msg}</div>` : ''}
-      ${EB.confirm ? `<div class="ebconf">Pay ${money(tot)} from your ${money(G.cash)}?<div style="margin-top:6px"><button class="ebbuy" data-a="eb" data-c="pay">Confirm and pay</button> <button data-a="eb" data-c="nopay">Cancel</button></div></div>` : `<button class="ebbuy" data-a="eb" data-c="buy" ${G.cash < tot ? 'disabled' : ''}>Buy It Now</button>`}</div></div></div>`;
+      <div class="ebs" style="margin-top:8px">Your maximum bid (at least ${money(min)}). You only pay what it takes to win.</div>
+      <div class="ebbid"><span class="ebamt">$${EB.bidTxt || '0'}</span><div class="ebkeys">${keys.map(k => `<button class="key" data-a="eb" data-c="bk" data-v="${k}">${k}</button>`).join('')}<button class="key" data-a="eb" data-c="bkb">⌫</button><button class="key" data-a="eb" data-c="bmin">Min</button></div><button class="ebbuy" data-a="eb" data-c="bid">Place bid</button></div></div></div></div>`;
   }
   if (EB.page === 'results'){
     const all = ebResults(), per = 12, pages = Math.max(1, Math.ceil(all.length / per)); EB.pg = Math.min(EB.pg, pages - 1);
     const rows = all.slice(EB.pg * per, EB.pg * per + per), f = EB.f;
     const chip = (k, v, label, on) => `<button class="ebchip ${on ? 'on' : ''}" data-a="eb" data-c="f" data-k="${k}" data-v="${v}">${label}</button>`;
     return `<div class="ebpad"><div class="ebres"><div class="ebside"><b>Type</b><div>${TYPES.map(t => chip('type', f.type === t ? '' : t, t, f.type === t)).join('')}</div><b>Tier</b><div>${[1, 2, 3].map(t => chip('tier', f.tier === t ? 0 : t, 'tier ' + t, f.tier === t)).join('')}</div><b>Finish</b><div>${FIN_KEYS.map(x => chip('fin', f.fin === x ? '' : x, x === 'none' ? 'no finish' : x, f.fin === x)).join('')}</div><b>Edge</b><div>${EDGE_KEYS.map(x => chip('edge', f.edge === x ? '' : x, x, f.edge === x)).join('')}</div></div>
-      <div class="ebmain"><div class="ebhead"><span>${all.length} result${all.length === 1 ? '' : 's'}${EB.q ? ' for <b>' + EB.q.replace(/</g, '&lt;') + '</b>' : ''}</span><span>Sort: ${[['best', 'Best match'], ['low', 'Price: low'], ['high', 'Price: high'], ['end', 'Ending soon']].map(s => `<button class="ebchip ${EB.sort === s[0] ? 'on' : ''}" data-a="eb" data-c="sort" data-v="${s[0]}">${s[1]}</button>`).join('')}</span></div>
+      <div class="ebmain"><div class="ebhead"><span>${all.length} result${all.length === 1 ? '' : 's'}${EB.q ? ' for <b>' + EB.q.replace(/</g, '&lt;') + '</b>' : ''}</span><span>Sort: ${[['end', 'Ending soonest'], ['long', 'Most time'], ['low', 'Price: low'], ['high', 'Price: high']].map(s => `<button class="ebchip ${EB.sort === s[0] ? 'on' : ''}" data-a="eb" data-c="sort" data-v="${s[0]}">${s[1]}</button>`).join('')}</span></div>
       ${rows.map(ebRow).join('') || '<div class="ebpad">No listings match. Try fewer words, or clear a filter.</div>'}
       ${pages > 1 ? `<div class="ebpager"><button data-a="eb" data-c="pg" data-v="-1" ${EB.pg === 0 ? 'disabled' : ''}>◀ Prev</button> page ${EB.pg + 1} of ${pages} <button data-a="eb" data-c="pg" data-v="1" ${EB.pg >= pages - 1 ? 'disabled' : ''}>Next ▶</button></div>` : ''}</div></div></div>`;
   }
   // home
-  const feat = G.mkt.list.slice().sort((a, b) => hash('h' + G.day + a.id) - hash('h' + G.day + b.id)).slice(0, 6);
+  const feat = G.mkt.list.slice().sort((a, b) => a.ends - b.ends).slice(0, 6);
   const cats = [['Fire', 'fire'], ['Water', 'water'], ['Grass', 'grass'], ['Electric', 'electric'], ['Psychic', 'psychic'], ['Rock', 'rock'], ['Dark', 'dark'], ['Sky', 'sky'], ['Shiny', 'shiny'], ['Gold edge', 'gold edge'], ['Rainbow edge', 'rainbow edge'], ['Tier 3', 'tier 3'], ['Evolved', 'evolved']];
-  return `<div class="ebpad"><div class="ebhero"><h1>Find your next pull</h1><div>${G.mkt.list.length} live listings from collectors all over</div></div><div class="ebcats">${cats.map(c => `<button class="ebchip" data-a="eb" data-c="cat" data-v="${c[1]}">${c[0]}</button>`).join('')}</div><h3>Featured listings</h3>${feat.map(ebRow).join('')}</div>`;
+  return `<div class="ebpad"><div class="ebhero"><h1>Find your next pull</h1><div>${G.mkt.list.length} live auctions from collectors all over</div></div><div class="ebcats">${cats.map(c => `<button class="ebchip" data-a="eb" data-c="cat" data-v="${c[1]}">${c[0]}</button>`).join('')}</div><h3>Ending soon</h3>${feat.map(ebRow).join('')}</div>`;
 }
 function ebMine(){
   const mail = G.mkt.mail;
-  return `<div class="ebpad">${mail.length ? `<h3>On the way (${mail.length})</h3>${mail.map(m => `<div class="ebrow"><div class="ebimg">${cardHTML(DEFS[m.c.d], { sm:true, c:m.c, price:false })}</div><div class="ebtx"><div class="ebt">${ebTitle(m.c)}</div><div class="ebs">Paid ${money(m.paid)} · arriving soon</div></div></div>`).join('')}` : ''}${scrEbaySelling()}</div>`;
+  const bids = G.mkt.list.filter(L => L.mine);
+  return `<div class="ebpad">${bids.length ? `<h3>Your bids (${bids.length})</h3>${bids.map(ebRow).join('')}` : ''}${mail.length ? `<h3>On the way (${mail.length})</h3>${mail.map(m => `<div class="ebrow"><div class="ebimg">${cardHTML(DEFS[m.c.d], { sm:true, c:m.c, price:false })}</div><div class="ebtx"><div class="ebt">${ebTitle(m.c)}</div><div class="ebs">Paid ${money(m.paid)} · arriving soon</div></div></div>`).join('')}` : ''}${scrEbaySelling()}</div>`;
 }
 function scrEbay(){
   const url = EB.tab === 'mine' ? 'ebay.com/my' : EB.page === 'results' ? 'ebay.com/sch?q=' + encodeURIComponent(EB.q).replace(/%20/g, '+') : EB.page === 'item' ? 'ebay.com/itm/' + EB.item : 'ebay.com';
@@ -2008,16 +2121,17 @@ const EBACT = {
     else if (c === 'go'){ sfx.click(); ebGo(); }
     else if (c === 'home'){ EB.tab = 'browse'; EB.page = 'home'; EB.kb = false; EB.confirm = false; ebLoad(350); }
     else if (c === 'cat'){ EB.typed = d.v; ebGo(); }
-    else if (c === 'item'){ EB.page = 'item'; EB.item = +d.v; EB.confirm = false; EB.msg = ''; ebLoad(300); }
+    else if (c === 'item'){ EB.page = 'item'; EB.item = +d.v; EB.confirm = false; EB.msg = ''; EB.bidTxt = ''; ebLoad(300); }
     else if (c === 'back2'){ EB.page = EB.q || EB.f.type ? 'results' : 'home'; EB.confirm = false; ebLoad(250); }
     else if (c === 'back'){ EB.page = EB.page === 'item' ? 'results' : 'home'; ebLoad(250); }
     else if (c === 'f'){ EB.f[d.k] = d.k === 'tier' ? +d.v : d.v; EB.pg = 0; render(); }
     else if (c === 'sort'){ EB.sort = d.v; EB.pg = 0; render(); }
     else if (c === 'pg'){ EB.pg += +d.v; render(); }
     else if (c === 'tab'){ EB.tab = d.v; EB.kb = false; render(); }
-    else if (c === 'buy'){ EB.confirm = true; render(); }
-    else if (c === 'nopay'){ EB.confirm = false; render(); }
-    else if (c === 'pay'){ const r = buyListing(EB.item); EB.confirm = false; if (r.ok){ sfx.buy(); toast('Order placed. Arrives in 2-3 days.'); EB.page = EB.q ? 'results' : 'home'; EB.msg = ''; } else EB.msg = r.msg; render(); }
+    else if (c === 'bk'){ if (EB.bidTxt.length < 9 && !(d.v === '.' && EB.bidTxt.includes('.'))) EB.bidTxt += d.v; sfx.click(); render(); }
+    else if (c === 'bkb'){ EB.bidTxt = EB.bidTxt.slice(0, -1); sfx.click(); render(); }
+    else if (c === 'bmin'){ const L = G.mkt.list.find(l => l.id === EB.item); if (L) EB.bidTxt = String(L.bids ? r2(L.bid + bidInc(L.bid)) : L.start); render(); }
+    else if (c === 'bid'){ const r = placeBid(EB.item, parseFloat(EB.bidTxt)); if (r.ok){ sfx.buy(); EB.msg = 'Bid placed. ' + money(r.L.mine + r.L.ship) + ' is held until it ends.'; EB.bidTxt = ''; } else EB.msg = r.msg; render(); }
   },
 };
 Object.assign(ACT, EBACT);
@@ -2079,7 +2193,7 @@ function shopHour(){
     G.cash += it.price; G.stats.revenue += it.price; G.stats.bigSale = Math.max(G.stats.bigSale, it.price);
     G.shop.sold++; G.shop.earned += it.price; G.rep = Math.min(100, G.rep + .1);
     if (it.k === 's'){ ledger('Shop: sold ' + prodName(...it.key.split(':')) + ' for ' + money(it.price), it.price); note('Shop sold ' + prodName(...it.key.split(':')) + ' for ' + money(it.price)); }
-    else { if (!it.c.bs) recordSale(it.c.d, it.price, 'Your Shop'); ledger('Shop: sold ' + cname(it.c) + ' for ' + money(it.price), it.price); note('Shop sold ' + cname(it.c) + ' for ' + money(it.price)); releaseCard(it.c); }
+    else { if (!it.c.bs){ recordSale(it.c.d, it.price, 'Your Shop'); noteDeal('sale', it.c, it.price, 'your shop'); } ledger('Shop: sold ' + cname(it.c) + ' for ' + money(it.price), it.price); note('Shop sold ' + cname(it.c) + ' for ' + money(it.price)); releaseCard(it.c); }
     G.shop.slots[i] = null;
   });
 }
@@ -2209,7 +2323,7 @@ function fillOrder(oid, uid){
   const o = G.orders[oi], c = G.inv.cards[ci]; if (!orderMatch(o.w, c)) return false;
   const pay = orderPay(o, c); G.inv.cards.splice(ci, 1); releaseCard(c); G.orders.splice(oi, 1);
   G.cash += pay; G.stats.revenue += pay; G.stats.bigSale = Math.max(G.stats.bigSale, pay); G.rep = Math.min(100, G.rep + .4);
-  recordSale(c.d, pay, 'Your Shop'); ledger('Order for ' + o.name + ': ' + cname(c), pay);
+  recordSale(c.d, pay, 'Your Shop'); noteDeal('sale', c, pay, 'a customer order'); ledger('Order for ' + o.name + ': ' + cname(c), pay);
   return pay;
 }
 // people who walk in wanting to SELL you a card: they guess at what it is worth, mostly they want quick cash, a few ask too much
@@ -2228,7 +2342,7 @@ function buyVisitor(id, mult){
   const v = G.visitors[i], price = r2(v.ask * mult);
   if (price < v.floor) return { ok:false, msg:v.name + ' says no to that.' };
   if (G.cash < price) return { ok:false, msg:'Not enough cash.' };
-  G.cash -= price; G.stats.spent += price; G.visitors.splice(i, 1); addCards([v.c]); ledger('Bought ' + cname(v.c) + ' from ' + v.name, -price);
+  G.cash -= price; G.stats.spent += price; noteDeal('buy', v.c, price, v.name); G.visitors.splice(i, 1); addCards([v.c]); ledger('Bought ' + cname(v.c) + ' from ' + v.name, -price);
   return { ok:true, price };
 }
 function showPreview(v){
@@ -2270,7 +2384,7 @@ const GUIDE = { cid:null, edge:null, tier:null, fin:null };
 const guideId = (cid, tier, fin, edge) => SET_ID + '|' + cid + '|' + tier + '|' + fin + '|' + edge;
 const FIN_NAME = { none:'No finish', shiny:'Shiny', gold:'Gold', etched:'Etched', rainbow:'Rainbow', galaxy:'Galaxy' };
 function guideTile(id, label, attrs){
-  return `<div style="margin-bottom:30px;text-align:center">${cardHTML(DEFS[id], { sm:true, tagText:money(LOOKI[id].v0), attr:attrs })}<div class="dim" style="font-size:13px;margin-top:20px">${label}</div></div>`;
+  return `<div class="gt">${cardHTML(DEFS[id], { tagText:money(LOOKI[id].v0), attr:attrs })}<div class="dim gl">${label}</div></div>`;
 }
 function scrGuide(){
   const G_ = GUIDE, cr = G_.cid && CRI[G_.cid];
@@ -2283,20 +2397,20 @@ function scrGuide(){
     h += `<div class="tabs"><button data-a="gback" data-v="all">All creatures</button>${crumbs.join('')}</div>`;
   }
   if (!cr){
-    h += '<div class="dim" style="margin-bottom:8px">Tap a creature.</div>' + TYPES.map(t => `<h3>${cap(t)}</h3><div class="grid" style="padding-bottom:6px">${CR.filter(c => c.element === t).map(c => guideTile(guideId(c.id, 1, 'none', 'grey'), c.name, `data-a="gpick" data-k="cid" data-v="${c.id}"`)).join('')}</div>`).join('');
+    h += '<div class="dim" style="margin-bottom:8px">Tap a creature.</div>' + TYPES.map(t => `<h3>${cap(t)}</h3><div class="grid ggrid" style="--gw:clamp(70px,10.6vw,170px)">${CR.filter(c => c.element === t).map(c => guideTile(guideId(c.id, 1, 'none', 'grey'), c.name, `data-a="gpick" data-k="cid" data-v="${c.id}"`)).join('')}</div>`).join('');
   } else if (!G_.edge){
-    h += `<div class="dim" style="margin-bottom:8px">${cr.name} · ${cap(cr.element)} · ${cr.stage === 'evolved' ? 'evolved' : 'basic'}. Pick an edge.</div><div class="grid">${EDGE_KEYS.map(e => guideTile(guideId(cr.id, 1, 'none', e), cap(e) + ' edge', `data-a="gpick" data-k="edge" data-v="${e}"`)).join('')}</div>`;
+    h += `<div class="dim" style="margin-bottom:8px">${cr.name} · ${cap(cr.element)} · ${cr.stage === 'evolved' ? 'evolved' : 'basic'}. Pick an edge.</div><div class="grid ggrid" style="--gw:clamp(90px,20vw,300px)">${EDGE_KEYS.map(e => guideTile(guideId(cr.id, 1, 'none', e), cap(e) + ' edge', `data-a="gpick" data-k="edge" data-v="${e}"`)).join('')}</div>`;
   } else if (!G_.tier){
-    h += `<div class="dim" style="margin-bottom:8px">${cap(G_.edge)} edge. Pick a tier.</div><div class="grid">${[1, 2, 3].map(t => guideTile(guideId(cr.id, t, 'none', G_.edge), 'Tier ' + t, `data-a="gpick" data-k="tier" data-v="${t}"`)).join('')}</div>`;
+    h += `<div class="dim" style="margin-bottom:8px">${cap(G_.edge)} edge. Pick a tier.</div><div class="grid ggrid" style="--gw:clamp(90px,24vw,340px)">${[1, 2, 3].map(t => guideTile(guideId(cr.id, t, 'none', G_.edge), 'Tier ' + t, `data-a="gpick" data-k="tier" data-v="${t}"`)).join('')}</div>`;
   } else if (!G_.fin){
-    h += `<div class="dim" style="margin-bottom:8px">${cap(G_.edge)} edge · tier ${G_.tier}. Pick a finish.</div><div class="grid">${FIN_KEYS.map(f => guideTile(guideId(cr.id, G_.tier, f, G_.edge), FIN_NAME[f], `data-a="gpick" data-k="fin" data-v="${f}"`)).join('')}</div>`;
+    h += `<div class="dim" style="margin-bottom:8px">${cap(G_.edge)} edge · tier ${G_.tier}. Pick a finish.</div><div class="grid ggrid" style="--gw:clamp(70px,14.5vw,230px)">${FIN_KEYS.map(f => guideTile(guideId(cr.id, G_.tier, f, G_.edge), FIN_NAME[f], `data-a="gpick" data-k="fin" data-v="${f}"`)).join('')}</div>`;
   } else {
     const id = guideId(cr.id, G_.tier, G_.fin, G_.edge), l = LOOKI[id], rows = lastSold(id).slice(0, 5);
     const evo = cr.stage === 'evolved', base = evo ? BASEVAL[cr.evolves_from] : BASEVAL[cr.id];
     h += `<div style="display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start"><div class="bigcard">${cardHTML(DEFS[id], { price:false })}</div><div style="flex:1;min-width:230px">
       <h2 style="margin:0">${cr.name}</h2><div class="dim">${cap(cr.element)} · ${evo ? 'evolved' : 'basic'} · tier ${G_.tier} · ${FIN_NAME[G_.fin].toLowerCase()} · ${G_.edge} edge</div>
       <div class="dim" style="margin-top:8px">Value</div><div class="gval" style="font-family:var(--pix);font-size:32px;color:var(--gold)">${money(l.v0)}</div>
-      <div class="dim" style="font-size:14px;margin-top:4px">${l.copies} cop${l.copies === 1 ? 'y exists' : 'ies exist'} in the world, numbered up to ${TIER_RUN[G_.tier]}</div>
+      <div class="dim" style="font-size:14px;margin-top:4px">${l.copies} cop${l.copies === 1 ? 'y exists' : 'ies exist'} in the world, numbered 1 to ${l.copies}</div>
       <h3>Last sold</h3>${rows.map(r => `<div class="mrow"><span>${r.w === 'eBay' ? 'On eBay' : r.w === 'Your Shop' ? 'In your shop' : 'At the ' + r.w}</span><b>${money(r.p)}</b></div>`).join('')}</div></div>`;
   }
   return h;
