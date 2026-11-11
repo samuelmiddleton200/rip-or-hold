@@ -2263,23 +2263,47 @@ Object.assign(ACT, {
   ofill(d){ const pay = fillOrder(+d.o, +d.u); if (pay){ sfx.sell(); toast('Order filled: +' + money(pay)); } closeOv(); render(); },
 });
 
-// ───────────────────────── price guide ─────────────────────────
-// Every card has ONE fixed value: its creature's base value x stage x tier x finish x edge. Sellers (eBay, walk-ins, collections) guess, so the skill is
-// knowing what a card is really worth. This page is the whole rulebook, plus a calculator.
-const GUIDE = { cid:'fire_01', tier:1, fin:'none', edge:'grey' };
+// ───────────────────────── guide ─────────────────────────
+// An information page. Every card has ONE fixed value, so this just lets you look it up by drilling down:
+// creature -> edge -> tier -> finish -> that card's value and last sold prices.
+const GUIDE = { cid:null, edge:null, tier:null, fin:null };
+const guideId = (cid, tier, fin, edge) => SET_ID + '|' + cid + '|' + tier + '|' + fin + '|' + edge;
+const FIN_NAME = { none:'No finish', shiny:'Shiny', gold:'Gold', etched:'Etched', rainbow:'Rainbow', galaxy:'Galaxy' };
+function guideTile(id, label, attrs){
+  return `<div style="margin-bottom:30px;text-align:center">${cardHTML(DEFS[id], { sm:true, tagText:money(LOOKI[id].v0), attr:attrs })}<div class="dim" style="font-size:13px;margin-top:20px">${label}</div></div>`;
+}
 function scrGuide(){
-  const l = LOOKI[SET_ID + '|' + GUIDE.cid + '|' + GUIDE.tier + '|' + GUIDE.fin + '|' + GUIDE.edge], cr = CRI[GUIDE.cid], evo = cr.stage === 'evolved', base = evo ? BASEVAL[cr.evolves_from] : BASEVAL[cr.id];
-  const sel = (key, opts) => `<select data-chg="gset" data-k="${key}">${opts.map(o => `<option value="${o[0]}" ${String(GUIDE[key]) === String(o[0]) ? 'selected' : ''}>${o[1]}</option>`).join('')}</select>`;
-  const creatures = TYPES.map(t => `<optgroup label="${cap(t)}">${CR.filter(c => c.element === t).map(c => `<option value="${c.id}" ${GUIDE.cid === c.id ? 'selected' : ''}>${c.name} (${c.stage === 'evolved' ? 'evolved' : 'basic'})</option>`).join('')}</optgroup>`).join('');
-  let h = pageHead('book', 'Price guide', 'Every card has one fixed value that never changes. Sellers guess at prices, so look up the real one before you buy.');
-  h += `<div class="box guide"><h3 style="margin-top:0">Calculator</h3><div class="gsel"><label>Creature<select data-chg="gset" data-k="cid">${creatures}</select></label><label>Tier${sel('tier', [[1, 'Tier 1'], [2, 'Tier 2'], [3, 'Tier 3']])}</label><label>Finish${sel('fin', FIN_KEYS.map(f => [f, f === 'none' ? 'no finish' : f]))}</label><label>Edge${sel('edge', EDGE_KEYS.map(e => [e, e + ' edge']))}</label></div>
-    <div class="gres"><div class="dim">${cr.name} · ${cap(cr.element)} · ${evo ? 'evolved' : 'basic'}</div><div class="gval">${money(l.v0)}</div>
-    <div class="dim" style="font-size:14px">base ${money(base)} ${evo ? '× stage 2 ×' + STAGE_MULT : ''} ${GUIDE.tier > 1 ? '× tier ' + GUIDE.tier + ' ×' + (+TIER_MULT[GUIDE.tier].toFixed(2)) : ''} ${GUIDE.fin !== 'none' ? '× ' + GUIDE.fin + ' ×' + FIN_MULT[GUIDE.fin] : ''} ${GUIDE.edge !== 'grey' ? '× ' + GUIDE.edge + ' edge ×' + EDGE_MULT[GUIDE.edge] : ''}</div>
-    <div class="dim" style="font-size:14px">${l.copies} cop${l.copies === 1 ? 'y exists' : 'ies exist'} in the world · numbered up to ${TIER_RUN[GUIDE.tier]}</div></div></div>`;
-  const row = (k, v) => `<div class="mrow"><span>${k}</span><b>x${+v.toFixed(2)}</b></div>`;
-  h += `<h3>The multipliers</h3><div class="mgrid"><div class="box"><b>Stage</b>${row('Basic', 1)}${row('Evolved', STAGE_MULT)}</div><div class="box"><b>Tier</b>${[1, 2, 3].map(t => row('Tier ' + t, TIER_MULT[t])).join('')}</div><div class="box"><b>Finish</b>${FIN_KEYS.map(f => row(f === 'none' ? 'None' : cap(f), FIN_MULT[f])).join('')}</div><div class="box"><b>Edge</b>${EDGE_KEYS.map(e => row(cap(e), EDGE_MULT[e])).join('')}</div></div>`;
-  h += '<h3>Base values (tier 1, no finish, grey edge)</h3><div class="mgrid">' + TYPES.map(t => `<div class="box"><b>${cap(t)}</b>${CR.filter(c => c.element === t && c.stage === 'basic').map(c => `<div class="mrow"><span>${c.name}</span><b>${money(BASEVAL[c.id])}</b></div>`).join('')}<div class="dim" style="font-size:12px;margin-top:2px">its evolution is x${STAGE_MULT}</div></div>`).join('') + '</div>';
+  const G_ = GUIDE, cr = G_.cid && CRI[G_.cid];
+  const step = (k, label) => `<button data-a="gback" data-v="${k}">${label}</button>`;
+  let h = pageHead('book', 'Guide', 'Every card has one fixed value that never changes. Look any card up here.');
+  if (cr){
+    const crumbs = [step('cid', cr.name)];
+    if (G_.edge) crumbs.push(step('edge', cap(G_.edge) + ' edge'));
+    if (G_.tier) crumbs.push(step('tier', 'Tier ' + G_.tier));
+    h += `<div class="tabs"><button data-a="gback" data-v="all">All creatures</button>${crumbs.join('')}</div>`;
+  }
+  if (!cr){
+    h += '<div class="dim" style="margin-bottom:8px">Tap a creature.</div>' + TYPES.map(t => `<h3>${cap(t)}</h3><div class="grid" style="padding-bottom:6px">${CR.filter(c => c.element === t).map(c => guideTile(guideId(c.id, 1, 'none', 'grey'), c.name, `data-a="gpick" data-k="cid" data-v="${c.id}"`)).join('')}</div>`).join('');
+  } else if (!G_.edge){
+    h += `<div class="dim" style="margin-bottom:8px">${cr.name} · ${cap(cr.element)} · ${cr.stage === 'evolved' ? 'evolved' : 'basic'}. Pick an edge.</div><div class="grid">${EDGE_KEYS.map(e => guideTile(guideId(cr.id, 1, 'none', e), cap(e) + ' edge', `data-a="gpick" data-k="edge" data-v="${e}"`)).join('')}</div>`;
+  } else if (!G_.tier){
+    h += `<div class="dim" style="margin-bottom:8px">${cap(G_.edge)} edge. Pick a tier.</div><div class="grid">${[1, 2, 3].map(t => guideTile(guideId(cr.id, t, 'none', G_.edge), 'Tier ' + t, `data-a="gpick" data-k="tier" data-v="${t}"`)).join('')}</div>`;
+  } else if (!G_.fin){
+    h += `<div class="dim" style="margin-bottom:8px">${cap(G_.edge)} edge · tier ${G_.tier}. Pick a finish.</div><div class="grid">${FIN_KEYS.map(f => guideTile(guideId(cr.id, G_.tier, f, G_.edge), FIN_NAME[f], `data-a="gpick" data-k="fin" data-v="${f}"`)).join('')}</div>`;
+  } else {
+    const id = guideId(cr.id, G_.tier, G_.fin, G_.edge), l = LOOKI[id], rows = lastSold(id).slice(0, 5);
+    const evo = cr.stage === 'evolved', base = evo ? BASEVAL[cr.evolves_from] : BASEVAL[cr.id];
+    h += `<div style="display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start"><div class="bigcard">${cardHTML(DEFS[id], { price:false })}</div><div style="flex:1;min-width:230px">
+      <h2 style="margin:0">${cr.name}</h2><div class="dim">${cap(cr.element)} · ${evo ? 'evolved' : 'basic'} · tier ${G_.tier} · ${FIN_NAME[G_.fin].toLowerCase()} · ${G_.edge} edge</div>
+      <div class="dim" style="margin-top:8px">Value</div><div class="gval" style="font-family:var(--pix);font-size:32px;color:var(--gold)">${money(l.v0)}</div>
+      <div class="dim" style="font-size:14px;margin-top:4px">${l.copies} cop${l.copies === 1 ? 'y exists' : 'ies exist'} in the world, numbered up to ${TIER_RUN[G_.tier]}</div>
+      <h3>Last sold</h3>${rows.map(r => `<div class="mrow"><span>${r.w === 'eBay' ? 'On eBay' : r.w === 'Your Shop' ? 'In your shop' : 'At the ' + r.w}</span><b>${money(r.p)}</b></div>`).join('')}</div></div>`;
+  }
   return h;
 }
-ACT.gset = d => { if (d.k === 'tier') GUIDE.tier = +d.v; else GUIDE[d.k] = d.v; render(); };
+ACT.gpick = d => { GUIDE[d.k] = d.k === 'tier' ? +d.v : d.v; sfx.click(); render(); };
+ACT.gback = d => {
+  const order = ['cid', 'edge', 'tier', 'fin'], i = d.v === 'all' ? 0 : order.indexOf(d.v) + 1;
+  order.slice(i).forEach(k => { GUIDE[k] = null; }); render();
+};
 </script></body></html>
