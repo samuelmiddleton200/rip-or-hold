@@ -422,6 +422,14 @@ canvas.ch{background:rgba(0,0,0,.4);border:2px solid var(--p3);border-radius:10p
 .mkpage{flex:1;min-height:0;overflow:auto;background:#fff}
 @media (min-height:521px){.mkh{padding:10px 16px}.mkfl{padding:0 14px}.mkgrid{padding:0 14px;gap:10px}.mkt .card{--w:84px}.mkn{font-size:15px}.mks{font-size:12px}.mkp b{font-size:20px}.mkp small{font-size:12px}.mkb{font-size:14px;padding:3px 18px}.mkdd{font-size:14px;padding:6px 12px}.mkdd small{font-size:13px}.mksrch{font-size:15px;padding:7px 14px}.mkgo{font-size:15px}.mklogo{font-size:28px}.mkpg{font-size:13px}.mkt{padding:10px;gap:10px}}
 .mkpage .ebcrumb{display:none}
+
+/* ---- the bell in the shop, and trade offers ---- */
+.shopbell{position:absolute;cursor:pointer;z-index:6}
+.shopbell .bang{position:absolute;left:50%;top:-52%;transform:translateX(-50%);width:max(18px,2.4cqw);height:max(18px,2.4cqw);border-radius:50%;background:#ffd23f;color:#14141f;border:2px solid #14141f;font-style:normal;font-weight:700;font-size:max(12px,1.8cqw);display:flex;align-items:center;justify-content:center;animation:bangbob 1s ease-in-out infinite}
+@keyframes bangbob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-18%)}}
+.tradebox{margin-bottom:10px}.tradecols{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.tarrow{font-size:28px;color:var(--gold)}
+.tg{gap:6px}.tg .card{--w:56px}
+@media (min-height:521px){.tg .card{--w:74px}}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -765,7 +773,7 @@ const defId = (setId, cid, tier, fin, edge) => setId + '|' + cid + '|' + tier + 
 
 function newGameState(){
   const seed = Math.floor(Math.random() * 1e9);
-  G = { v:4, taken:{}, orders:[], visitors:[], beat:0, last:Date.now(), showN:0, showAt:8, hour:9, seed, day:0, cash:150, rep:0, uid:0, sets:[], inv:{ cards:[], sealed:{} }, basis:{}, ent:{}, lp:{}, hist:{}, lps:{}, shist:{}, news:[], bought:{}, ledger:[], ebay:[], grading:[], coll:[], hof:[], ach:{}, trophies:[], done:{},
+  G = { v:4, taken:{}, orders:[], visitors:[], trades:[], mtk:0, mlast:Date.now(), beat:0, last:Date.now(), showN:0, showAt:8, hour:9, seed, day:0, cash:150, rep:0, uid:0, sets:[], inv:{ cards:[], sealed:{} }, basis:{}, ent:{}, lp:{}, hist:{}, lps:{}, shist:{}, news:[], bought:{}, ledger:[], ebay:[], grading:[], coll:[], hof:[], ach:{}, trophies:[], done:{},
         nw:[], stats:{ packs:0, cards:0, spent:0, revenue:0, shows:0, best:null, hits:0, ripIn:0, ripOut:0, bigSale:0 }, snd:true, tutorial:true, broke:false, wasBroke:false, chores:0 };
   BIAS = {}; initSets(); buildWorld();
   for (let d = -60; d <= 0; d++){ ensureSets(d); tick(d); }
@@ -1008,7 +1016,7 @@ let NOTES = [];
 const note = t => { NOTES.push(t); };
 function hourTick(){
   G.beat = (G.beat || 0) + 1; HARD = hardOf(); G.hour = (G.hour == null ? 9 : G.hour) + 1; PXC = {}; EVC = {};
-  shopHour(); ebayHour(); mktHour(); ordersHour(); visitorsHour(); collectionsHour(); processGrading();
+  shopHour(); ebayHour(); mailHour(); tradesHour(); ordersHour(); visitorsHour(); collectionsHour(); processGrading();
   if (G.hour >= 24){ G.hour = 0; nextDay(); }
 }
 const skipHours = n => { for (let i = 0; i < n; i++) hourTick(); };
@@ -1090,6 +1098,7 @@ function ebayHour(){
   const keep = [], beat = G.beat || 0;
   for (const c of G.ebay){
     const a = c.auc; if (!a){ delete c.ask; G.inv.cards.push(c); continue; }
+    a.comp = compOf(compKey(c.d), ((G.mkt && G.mkt.cnt && G.mkt.cnt[compKey(c.d)]) || 0) + 1);       // what else is listed on eBay right now sets how high bidders go
     if (!auctionTick(a, beat)){ keep.push(c); continue; }
     if (a.bids){
       const net = a.bid; noteDeal('sale', c, a.bid, 'eBay'); G.cash += net; G.stats.revenue += net; G.stats.bigSale = Math.max(G.stats.bigSale, a.bid); if (!c.bs) recordSale(c.d, a.bid, 'eBay'); releaseCard(c);
@@ -1182,7 +1191,7 @@ function claimSet(setId){
 // ───────────────────────── save / load ─────────────────────────
 function save(){ try { localStorage.setItem(SAVEKEY, JSON.stringify(G)); } catch (e){} }
 function load(){
-  try { const s = localStorage.getItem(SAVEKEY); if (!s) return false; G = JSON.parse(s); if (!G || G.v !== 4) return false; G.visitors = G.visitors || []; G.orders = G.orders || []; G.sets.forEach(x => { if (x.name === 'Ember Isles') x.name = 'Rip or Hold'; }); ensureMkt(); ensureShop(); BIAS = {}; G.sets.forEach(x => { x.ready = false; }); buildWorld(); ensureSets(G.day); HARD = hardOf(); return true; } catch (e){ return false; }
+  try { const s = localStorage.getItem(SAVEKEY); if (!s) return false; G = JSON.parse(s); if (!G || G.v !== 4) return false; G.visitors = G.visitors || []; G.orders = G.orders || []; G.trades = G.trades || []; G.sets.forEach(x => { if (x.name === 'Ember Isles') x.name = 'Rip or Hold'; }); ensureMkt(); ensureShop(); BIAS = {}; G.sets.forEach(x => { x.ready = false; }); buildWorld(); ensureSets(G.day); HARD = hardOf(); return true; } catch (e){ return false; }
 }
 function resetGame(){ try { localStorage.removeItem(SAVEKEY); } catch (e){} newGameState(); save(); }
 
@@ -1473,14 +1482,14 @@ function flushNotes(){
 // the world steps forward on its own, quietly (see worldCatchUp in data.js). Grading countdowns tick every second.
 function worldLoop(){
   if (!G) return;
-  const ran = worldCatchUp(), before = G.grading.length; processGrading();
+  const ran = worldCatchUp(), mran = marketCatchUp(), before = G.grading.length; processGrading();
   const finished = G.grading.length !== before;
   document.querySelectorAll('[data-ready]').forEach(e => { e.textContent = fmtDur(+e.dataset.ready - Date.now()); });
   if (ran || finished){
     flushNotes(); if (G.hour % 3 === 0) save();
     const ov = $('#ov').classList.contains('on'), typing = SCREEN === 'ebay' && EB.kb, show = SH && SH.stage === 'run';
     if (!ov && !typing && !show) render();
-  }
+  } else if (mran && SCREEN === 'ebay' && !$('#ov').classList.contains('on')) render();        // the auction list keeps changing every few seconds
 }
 const SHOWINFO = { local:{ fee:25, slots:20, buyers:8, rep:0, label:'LOCAL SHOW' }, regional:{ fee:150, slots:40, buyers:14, rep:15, label:'REGIONAL SHOW' }, national:{ fee:800, slots:80, buyers:24, rep:40, label:'NATIONAL SHOW' } };
 function toast(t){ const e = document.createElement('div'); e.className = 'toast'; e.textContent = t; e.style.top = (70 + document.querySelectorAll('.toast').length * 40) + 'px'; document.body.appendChild(e); setTimeout(() => e.remove(), 2200); }
@@ -1496,8 +1505,8 @@ function render(){
   if (!G) return;
   const nw = netWorth();
   $('#top').innerHTML = `<h1>${ico('pack', 26)}<div><b>RIP</b> OR <b>HOLD</b><span>CARD SHOP SIM</span></div></h1><div class="st"><div class="chip">${ico('coin', 24)}<div><small>Cash</small><b class="gold">${money(G.cash)}</b></div></div><div class="chip">${ico('trend', 24)}<div><small>Collection</small><b>${money(invValue())}</b></div></div><div class="chip">${ico('star', 24)}<div><small>Rep</small><b>${Math.floor(G.rep)}</b></div></div></div><button class="bulkbtn gold" data-a="bulkopen">${ico('cards', 20)}<span>Bulk sell</span></button>`;
-  const tabs = [['shop', 'Store', 'pack'], ['myshop', 'My Shop', 'shop'], ['orders', 'Customers', 'note'], ['inv', 'Sealed', 'box'], ['coll', 'Collection', 'cards'], ['grade', 'Grading', 'grade'], ['show', 'Card Show', 'ticket'], ['ebay', 'eBay', 'globe'], ['guide', 'Guide', 'book'], ['stats', 'Stats', 'bars']];
-  $('#nav').innerHTML = tabs.map(t => `<button data-a="tab" data-v="${t[0]}" class="${SCREEN === t[0] ? 'on' : ''}">${ico(t[2], 26)}${t[1]}${t[0] === 'orders' && G.orders.length ? `<i class="bdg">${G.orders.length}</i>` : ''}</button>`).join('');
+  const tabs = [['shop', 'Store', 'pack'], ['myshop', 'My Shop', 'shop'], ['inv', 'Packs', 'box'], ['coll', 'Collection', 'cards'], ['grade', 'Grading', 'grade'], ['show', 'Card Show', 'ticket'], ['ebay', 'eBay', 'globe'], ['guide', 'Guide', 'book'], ['stats', 'Stats', 'bars']];
+  $('#nav').innerHTML = tabs.map(t => `<button data-a="tab" data-v="${t[0]}" class="${SCREEN === t[0] ? 'on' : ''}">${ico(t[2], 26)}${t[1]}${t[0] === 'myshop' && bellCount() ? `<i class="bdg">${bellCount()}</i>` : ''}</button>`).join('');
   const n = G.news[0];
   if (typeof LASTNEWS !== 'undefined' && n && n !== LASTNEWS && window.matchMedia('(max-height:520px)').matches) toast(n.text.length > 72 ? n.text.slice(0, 70) + '...' : n.text);
   LASTNEWS = n;
@@ -1541,14 +1550,14 @@ function shopVintage(){
 // ───────────────────────── sealed inventory ─────────────────────────
 function scrInv(){
   const keys = sealedKeys();
-  let h = pageHead('box', 'Sealed product', 'Rip it for the cards, hold it and hope it goes up, or sell it.');
+  let h = pageHead('box', 'Packs', 'Rip one open for the cards, hold it and hope it goes up, or sell it.');
   if (!keys.length) return h + `<div class="box" style="display:flex;gap:14px;align-items:center">${ico('box', 48)}<div><b>Nothing sealed.</b><div class="dim">Visit the Store to buy packs and boxes.</div></div></div>`;
   h += '<div class="tiles wide">';
   for (const k of keys){
     const [s, p] = k.split(':'), n = G.inv.sealed[k], set = setOf(s), prod = prodOfSet(set, p), mk = sealedPx(s, p), ev = productEV(s, p), paid = basisPer(k);
     h += `<div class="tile" style="--c:${prod.color || set.color}"><div class="timg">${prodImg(s, p, 96)}</div><div class="tn">${prod.name} <span class="tag">x${n}</span></div><div class="td">you paid ${money(paid)} each</div>
       <div class="tev">worth ${money(mk)} sealed<small>cards inside average ${money(ev)}</small></div>
-      <div class="tb"><button class="gold" data-a="rip" data-k="${k}" data-n="1">RIP 1</button>${n > 1 ? `<button data-a="rip" data-k="${k}" data-n="${n}">ALL</button>` : ''}</div>
+      <div class="tb"><button class="gold" data-a="rip" data-k="${k}" data-n="1">RIP IT</button></div>
       <div class="tb" style="margin-top:6px"><button data-a="dsell" data-k="${k}">Sell ${money(mk * dealerRate())}</button></div></div>`;
   }
   return h + '</div>';
@@ -1970,7 +1979,7 @@ const ACT = {
   buy(d){ const r = buyProduct(d.s, d.p, +d.n); if (!r.ok) toast(r.msg); else sfx.buy(); render(); },
   coll(d){ const cards = buyCollection(+d.id); if (!cards) return; sfx.buy(); const got = stock(cards), v = got.reduce((a, c) => a + cv(c), 0); G.stats.cards += got.length;
     overlay(`<div class="modal opn"><h2>The collection had ${got.length} cards</h2><div style="font-size:26px">Worth <b class="gold">${money(v)}</b> at market.</div><h3>Best cards</h3><div class="rev">${got.sort((a, b) => cv(b) - cv(a)).slice(0, 6).map(c => `<div style="margin-bottom:14px">${cardHTML(DEFS[c.d], { sm:true, c })}</div>`).join('')}</div><button class="gold" data-a="close">Nice</button></div>`); render(); },
-  rip(d){ startRip(d.k, +d.n); },
+  rip(d){ startRip(d.k, 1); },
   dsell(d){ const [s, p] = d.k.split(':'), v = sealedPx(s, p) * dealerRate(); addSealed(s, p, -1); G.cash += v; G.stats.revenue += v; ledger('Sold sealed to dealer', v); sfx.sell(); render(); },
   chart(d){ showSealedChart(d.k); },
   close(){ closeOv(); render(); },
@@ -2094,7 +2103,8 @@ const SELLER_NAMES = ['cardbarn22', 'slab_shack', 'flip4cash', 'pixelpulls', 'bi
 // Every listing is an auction (5 minutes to 1 hour). Bidders show up at random; cheap cards and very expensive cards draw fewer of them.
 // Each auction has a hidden stopping point (30%-120% of the card's value, tighter for pricier cards): bidders push the price toward it and then stop.
 // A beat is 15 seconds, so 20 beats = 5 minutes and 240 beats = 1 hour.
-const MIN_BEATS = 20, MAX_BEATS = 240;
+// The market runs on its own fast clock: one tick every 3 seconds (G.mtk). 100 ticks = 5 minutes, 1200 ticks = 1 hour. A few auctions end and a few new ones open on every tick.
+const MKT_TICK_MS = 3000, MIN_T = 100, MAX_T = 1200, MKT_EXT = 10000 / 3000, MKT_RATE_DIV = 3.2;
 // listing counts by card value: each tier down has about 1.45x as many cards. [low, high, average count]
 const MKT_TIERS = [[0, 5, 300], [5, 10, 205], [10, 20, 140], [20, 40, 100], [40, 80, 70], [80, 160, 48], [160, 320, 33], [320, 640, 22], [640, 1250, 15], [1250, 2500, 10], [2500, 5000, 7], [5000, Infinity, 5]];
 const sellerOf = name => { const h = hash(name); return { name, fb:(95 + (h % 50) / 10).toFixed(1), sales:50 + (h >>> 3) % 6000 }; };
@@ -2108,24 +2118,28 @@ const stopFrac = v => { const lo = Math.min(.95, (v < 25 ? .3 : v < 50 ? .4 : v 
 // how likely bidders are to look at a card: full between $5 and $250, fading below and above
 const popOf = v => v < 5 ? Math.max(.2, v / 5) : v > 250 ? Math.max(.15, Math.sqrt(250 / v)) : 1;
 const BID_RATE = .07;
-function auctionNew(v, beats){
+function auctionNew(v, units, base){
   const cap = r2(v * stopFrac(v));
-  return { cap, start:r2(Math.max(.01, cap * (.02 + rnd() * .23))), bid:0, bids:0, pop:popOf(v), ends:(G.beat || 0) + beats, lead:'' };
+  return { cap, start:r2(Math.max(.01, cap * (.02 + rnd() * .23))), bid:0, bids:0, pop:popOf(v), ends:(base == null ? (G.beat || 0) : base) + units, lead:'' };
 }
 // one beat of bidding on an auction: maybe a bidder raises it toward the hidden stopping point
-function auctionStep(L, mult){
+// eBay is the market. Set values are only a starting point: when lots of the same card are listed at once bidders spread out and prices sag, a card with no competition goes for a little more.
+const compKey = d => { const x = DEFS[d]; return x.cid + '|' + x.tier; };          // all the tier 3 Hypnosloths compete with each other, whatever their finish or edge
+// "popular" means more listed than usual: compared with how many of that creature and tier are normally for sale (a running average), a crowded group sags and a thin one goes for a bit more
+const compOf = (key, n) => { const avg = (G.mkt && G.mkt.avgc && G.mkt.avgc[key]) != null ? G.mkt.avgc[key] : n; return clamp(1 - .3 * ((n + 1) / (avg + 1) - 1), .55, 1.15); };
+function auctionStep(L, mult, rate){
   const heat = Math.min(2, (L.bids || 0) / 8);            // lots of bids means lots of people watching: they jump in more
-  if (rnd() > BID_RATE * L.pop * (1 + heat) * (mult || 1)) return null;
-  let target;
-  if (!L.bids){ if (L.start > L.cap) return null; target = L.start; }
-  else { if (L.bid + bidInc(L.bid) > L.cap) return null; target = r2(Math.min(L.cap, L.bid + Math.max(bidInc(L.bid), (L.cap - L.bid) * (.1 + rnd() * .35)))); }
+  if (rnd() > (rate || BID_RATE) * L.pop * (1 + heat) * (mult || 1)) return null;
+  let target; const cap = L.cap * (L.comp || 1);
+  if (!L.bids){ if (L.start > cap) return null; target = L.start; }
+  else { if (L.bid + bidInc(L.bid) > cap) return null; target = r2(Math.min(cap, L.bid + Math.max(bidInc(L.bid), (cap - L.bid) * (.1 + rnd() * .35)))); }
   return target;
 }
 // One beat of an auction. Time running out is not the end: bidders get one last, keener look, and a bid in that last moment
 // buys another 15 seconds, so a bidding war keeps an auction open. Returns true once it is really over.
-function auctionTick(L, beat, onBid){
-  const live = L.ends > beat, t = auctionStep(L, live ? 1 : 3);
-  if (t != null){ const beaten = auctionBid(L, t); if (onBid) onBid(beaten); if (!live || L.ends - beat <= 1) L.ends = Math.max(L.ends, beat + 1); return false; }
+function auctionTick(L, now, onBid, ext, rate){
+  ext = ext || 1; const live = L.ends > now, t = auctionStep(L, live ? 1 : 3, rate);
+  if (t != null){ const beaten = auctionBid(L, t); if (onBid) onBid(beaten); if (!live || L.ends - now <= ext) L.ends = Math.max(L.ends, now + ext); return false; }
   return !live;
 }
 // returns true if the player's high bid was just beaten
@@ -2139,10 +2153,11 @@ function auctionBid(L, target){
 }
 function mktAdd(tier, fresh){
   const c = drawFrom(mktPools()[tier]); if (!c) return;
-  const v = px(c.d), L = Object.assign(auctionNew(v, ri(MIN_BEATS, MAX_BEATS)), { id:++G.mkt.n, c, tier, ship:v >= 100 ? 6.5 : v >= 20 ? 3.5 : 1.5, seller:pick(SELLER_NAMES) });
+  const v = px(c.d), dur = MIN_T + (MAX_T - MIN_T) * Math.pow(rnd(), 1.3), tk = G.mtk || 0;      // most auctions are short
+  const L = Object.assign(auctionNew(v, dur, tk), { id:++G.mkt.n, c, tier, ship:v >= 100 ? 6.5 : v >= 20 ? 3.5 : 1.5, seller:pick(SELLER_NAMES) });
   if (!fresh){      // the market is already mid-auction when the game starts
-    const el = Math.floor(rnd() * (L.ends - G.beat)); L.ends -= el;
-    for (let i = 0; i < el; i++){ const t = auctionStep(L); if (t != null) auctionBid(L, t); }
+    const el = rnd() * dur; L.ends -= el; G.mkt.cnt = G.mkt.cnt || {}; const ck = compKey(c.d); L.comp = 1; G.mkt.cnt[ck] = (G.mkt.cnt[ck] || 0) + 1;
+    for (let i = 0, nn = Math.floor(el); i < nn; i++){ const t = auctionStep(L, 1, BID_RATE / MKT_RATE_DIV); if (t != null) auctionBid(L, t); }
   }
   G.mkt.list.push(L);
 }
@@ -2150,7 +2165,7 @@ const tierOfValue = v => MKT_TIERS.findIndex(t => v >= t[0] && v < t[1]);
 // about 950 cards in all, each tier wandering +-25% around its average
 function mktTargets(){
   if (!G.mkt.tt) G.mkt.tt = MKT_TIERS.map(t => Math.round(t[2] * (.75 + rnd() * .5)));
-  MKT_TIERS.forEach((t, i) => { if (rnd() < .02) G.mkt.tt[i] = Math.round(t[2] * (.75 + rnd() * .5)); });
+  MKT_TIERS.forEach((t, i) => { if (rnd() < .004) G.mkt.tt[i] = Math.round(t[2] * (.75 + rnd() * .5)); });
 }
 function mktFill(fresh){
   mktTargets(); const have = MKT_TIERS.map(() => 0); G.mkt.list.forEach(L => { have[L.tier]++; });
@@ -2158,30 +2173,46 @@ function mktFill(fresh){
 }
 function ensureMkt(){
   if (!G.mkt) G.mkt = { list:[], mail:[], n:0 };
+  if (G.mtk == null){ G.mkt.list.forEach(L => releaseCard(L.c)); G.mkt.list = []; G.mtk = 0; G.mlast = Date.now(); }
   if (G.mkt.list.some(L => L.cap == null)){ G.mkt.list.forEach(L => releaseCard(L.c)); G.mkt.list = []; }       // old buy-it-now listings: start the market over
   for (const c of G.ebay || []) if (!c.auc){ delete c.ask; delete c.listed; G.inv.cards.push(c); G.ebay = G.ebay.filter(x => x !== c); }
   if (!G.mkt.list.length) mktFill(false);
 }
 const mktDay = () => {};
 // each beat: bidders raise auctions, finished auctions pay out (the card goes back into the pool), new ones open, parcels arrive
-function mktHour(){
-  const keep = [], beat = G.beat || 0;
+function mktTick(){
+  const keep = [], tk = G.mtk = (G.mtk || 0) + 1, cnt = {};
+  for (const L of G.mkt.list) cnt[compKey(L.c.d)] = (cnt[compKey(L.c.d)] || 0) + 1;
+  G.mkt.cnt = cnt; const av = G.mkt.avgc = G.mkt.avgc || {};
+  for (const k in cnt) av[k] = av[k] == null ? cnt[k] : av[k] * .997 + cnt[k] * .003;
   for (const L of G.mkt.list){
-    const over = auctionTick(L, beat, beaten => { if (beaten && L.esc){ G.cash += L.esc; L.esc = 0; L.mine = 0; note('You were outbid on ' + ebTitle(L.c) + '.'); } });
+    L.comp = compOf(compKey(L.c.d), cnt[compKey(L.c.d)]);
+    const over = auctionTick(L, tk, beaten => { if (beaten && L.esc){ G.cash += L.esc; L.esc = 0; L.mine = 0; note('You were outbid on ' + ebTitle(L.c) + '.'); } }, MKT_EXT, BID_RATE / MKT_RATE_DIV);
     if (!over){ keep.push(L); continue; }
     if (L.lead === 'you' && L.mine){
       const tot = r2(L.bid + L.ship); noteDeal('buy', L.c, L.bid, 'eBay'); L.c.paid = tot; G.cash += r2(L.esc - tot); G.stats.spent += tot; recordSale(L.c.d, L.bid, 'eBay');
-      G.mkt.mail.push({ c:L.c, arrive:beat + ri(8, 16), paid:tot }); ledger('eBay: won ' + cname(L.c) + ' for ' + money(L.bid), -tot); note('You won ' + ebTitle(L.c) + ' for ' + money(L.bid) + '.');
+      G.mkt.mail.push({ c:L.c, arrive:(G.beat || 0) + ri(8, 16), paid:tot }); ledger('eBay: won ' + cname(L.c) + ' for ' + money(L.bid), -tot); note('You won ' + ebTitle(L.c) + ' for ' + money(L.bid) + '.');
     } else { if (L.bids) recordSale(L.c.d, L.bid, 'eBay'); releaseCard(L.c); }
   }
   G.mkt.list = keep; mktFill(true);
-  const still = [];
+}
+// the market keeps its own time: a tick every 3 seconds, caught up when the game was closed (up to an hour of it)
+function marketCatchUp(){
+  const now = Date.now(); if (!G.mlast) G.mlast = now;
+  const due = Math.floor((now - G.mlast) / MKT_TICK_MS); if (due <= 0) return 0;
+  const run = Math.min(due, 1200); G.mlast = due > 1200 ? now : G.mlast + due * MKT_TICK_MS;
+  for (let i = 0; i < run; i++) mktTick();
+  return run;
+}
+// parcels arrive after a few minutes (world beats)
+function mailHour(){
+  const beat = G.beat || 0, still = [];
   for (const m of G.mkt.mail){ if (m.arrive <= beat){ addCards([m.c]); note('Your eBay order arrived: ' + cname(m.c)); } else still.push(m); }
   G.mkt.mail = still;
 }
 // the player bids a maximum; the price only climbs as far as it needs to. The whole maximum (plus shipping) is held until the auction is decided.
 function placeBid(id, max){
-  const L = G.mkt.list.find(l => l.id === id); if (!L || L.ends <= (G.beat || 0)) return { ok:false, msg:'This auction has ended.' };
+  const L = G.mkt.list.find(l => l.id === id); if (!L || L.ends <= (G.mtk || 0)) return { ok:false, msg:'This auction has ended.' };
   max = r2(max); const min = L.bids ? r2(L.bid + bidInc(L.bid)) : L.start;
   if (!(max >= min)) return { ok:false, msg:'Bid at least ' + money(min) + '.' };
   if (L.mine && max <= L.mine) return { ok:false, msg:'Your maximum is already ' + money(L.mine) + '.' };
@@ -2189,12 +2220,12 @@ function placeBid(id, max){
   G.cash = r2(G.cash - need); L.esc = r2((L.esc || 0) + need); L.mine = max;
   if (L.lead !== 'you'){ L.bid = min; L.lead = 'you'; L.bids++; }
   let ext = false;           // a bid with under 10 seconds left puts the clock back to 10 seconds
-  if (ebEndTs(L) - Date.now() <= 10000){ L.ends = (G.beat || 0) + Math.max(0, Date.now() + 10000 - (G.last || Date.now())) / BEAT_MS; ext = true; }
+  if (ebEndTs(L) - Date.now() <= 10000){ L.ends = (G.mtk || 0) + Math.max(0, Date.now() + 10000 - (G.mlast || Date.now())) / MKT_TICK_MS; ext = true; }
   return { ok:true, L, ext };
 }
 
 // ───────────────────────── the page ─────────────────────────
-const EB = { page:'results', tab:'browse', q:'', typed:'', kb:false, load:0, sort:'end', bidTxt:'', dd:'', f:{ type:'', stage:'', tier:0, fin:'', edge:'' }, pg:0, item:null, confirm:false, msg:'' };
+const EB = { page:'results', tab:'browse', q:'', typed:'', kb:false, load:0, sort:'end', bidTxt:'', dd:'', f:{ type:'', stage:'', tier:0, fin:'', edge:'' }, fp:{ type:'', stage:'', tier:0, fin:'', edge:'', sort:'end' }, pg:0, item:null, confirm:false, msg:'' };
 const ebTitle = c => { const d = DEFS[c.d]; return d.name + ' #' + c.n + '/' + d.run; };
 const ebDetail = c => { const d = DEFS[c.d]; return [cap(d.type), d.stage === 'evolved' ? 'Evolved' : 'Basic', TIER_LABEL[d.tier].toLowerCase().replace(/^./, m => m.toUpperCase()), FIN_LABEL[d.fin] ? cap(d.fin) + ' finish' : 'No finish', cap(d.edge) + ' edge'].join(' · '); };
 const ebHay = c => { const d = DEFS[c.d]; return [d.name, d.type, d.stage === 'evolved' ? 'evolved stage' : 'basic', 'tier ' + d.tier, 'tier' + d.tier, d.fin, d.fin !== 'none' ? 'foil' : '', d.edge, d.edge + ' edge', c.n].join(' ').toLowerCase(); };
@@ -2206,7 +2237,7 @@ function ebResults(){
   return r;
 }
 const ebPrice = L => L.bids ? L.bid : L.start;
-const ebEndTs = L => (G.last || Date.now()) + (L.ends - (G.beat || 0)) * BEAT_MS;
+const ebEndTs = L => (G.mlast || Date.now()) + (L.ends - (G.mtk || 0)) * MKT_TICK_MS;
 const ebLeft = L => `<b data-ready="${ebEndTs(L)}">${fmtDur(ebEndTs(L) - Date.now())}</b>`;
 const ebBidTxt = L => L.bids ? L.bids + ' bid' + (L.bids > 1 ? 's' : '') : 'no bids';
 function ebRow(L){
@@ -2230,7 +2261,7 @@ function ebPage(){
     if (!L) return `<div class="ebpad"><h2>This listing has ended</h2><button data-a="eb" data-c="back2">Back to results</button></div>`;
     const c = L.c, d = DEFS[c.d], s = sellerOf(L.seller), min = L.bids ? r2(L.bid + bidInc(L.bid)) : L.start, keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0'];
     return `<div class="ebpad"><div class="ebcrumb" data-a="eb" data-c="back2">◀ Back to results</div><div class="ebitem"><div>${cardHTML(d, { c, price:false, live:true })}</div><div class="ebinfo"><h2>${ebTitle(c)}</h2><div class="ebd">${ebDetail(c)}</div><div class="ebs">Seller: <b>${L.seller}</b> · ${s.fb}% positive feedback · ${s.sales.toLocaleString()} items sold</div>
-      <div class="ebs" style="margin-top:6px">${L.bids ? 'Current bid' : 'Starting bid'}</div><div class="ebbig">${money(ebPrice(L))}</div><div class="ebs">${ebBidTxt(L)} · ${ebLeft(L)} left · + ${money(L.ship)} shipping</div>
+      <div class="ebs" style="margin-top:6px">${L.bids ? 'Current bid' : 'Starting bid'}</div><div class="ebbig">${money(ebPrice(L))}</div><div class="ebs">${ebBidTxt(L)} · ${ebLeft(L)} left · + ${money(L.ship)} shipping</div><div class="ebs">${((G.mkt.cnt || {})[compKey(c.d)] || 1) - 1 ? ((G.mkt.cnt || {})[compKey(c.d)] - 1) + ' other ' + cap(d.name) + ' tier ' + d.tier + ' auction' + (((G.mkt.cnt || {})[compKey(c.d)] - 1) > 1 ? 's' : '') + ' right now' : 'No other ' + d.name + ' tier ' + d.tier + ' auctions right now'}</div>
       ${L.mine ? `<div class="ebs" style="margin-top:4px;color:${L.lead === 'you' ? 'var(--grn)' : 'var(--red)'}"><b>${L.lead === 'you' ? 'You are the high bidder' : 'You were outbid'}</b> · your maximum ${money(L.mine)}</div>` : ''}
       <div class="ebs" style="margin-top:6px">Condition: raw, ungraded. You will not know how clean it is until you send it to a grader.</div>
       ${EB.msg ? `<div class="ebmsg">${EB.msg}</div>` : ''}
@@ -2277,23 +2308,23 @@ function ebTile(L){
 }
 function ebHeader(extra){
   const mail = G.mkt.mail.length;
-  return `<div class="mkh"><span class="mklogo" data-a="eb" data-c="home">eBay</span>${extra || `<div class="mksrch" data-a="eb" data-c="open"><span id="ebq">${EB.typed.replace(/</g, '&lt;')}</span><i class="caret"></i>${EB.typed ? '' : '<span class="ph">Search for anything (try "water shiny")</span>'}</div><button class="mkgo" data-a="eb" data-c="go">Go</button>`}<button class="mkmine" data-a="eb" data-c="tab" data-v="${EB.tab === 'mine' ? 'browse' : 'mine'}">${EB.tab === 'mine' ? '&#9664; Auctions' : 'My eBay' + (mail ? ' (' + mail + ')' : '')}</button></div>`;
+  return `<div class="mkh"><span class="mklogo" data-a="eb" data-c="home">eBay</span>${extra || '<span class="grow"></span>'}<button class="mkmine" data-a="eb" data-c="tab" data-v="${EB.tab === 'mine' ? 'browse' : 'mine'}">${EB.tab === 'mine' ? '&#9664; Auctions' : 'My eBay' + (mail ? ' (' + mail + ')' : '')}</button></div>`;
 }
 function ebMain(){
   if (EB.tab === 'mine') return `<div class="mk2">${ebHeader('<span class="grow"></span>')}<div class="mkpage">${ebMine()}</div></div>`;
   if (EB.load > 0 || EB.page === 'item') return `<div class="mk2">${ebHeader(EB.page === 'item' ? '<button class="mkmine" data-a="eb" data-c="back2">&#9664; Back to results</button><span class="grow"></span>' : null)}<div class="mkpage">${ebPage()}</div></div>`;
   const all = ebResults(), per = 6, pages = Math.max(1, Math.ceil(all.length / per)); EB.pg = Math.max(0, Math.min(EB.pg, pages - 1));
   const rows = all.slice(EB.pg * per, EB.pg * per + per);
-  return `<div class="mk2">${ebHeader()}<div class="mkfl">${DD_DEFS.map(x => ebDropdown(x[0], x[1], x[2](), EB.f[x[0]])).join('')}${ebDropdown('sort', 'Sort', SORT_OPTS, EB.sort).replace('class="mkdd', 'class="mkdd mksort')}</div>${EB.dd ? '<div class="mkscrim" data-a="eb" data-c="ddx"></div>' : ''}
+  return `<div class="mk2">${ebHeader()}<div class="mkfl">${DD_DEFS.map(x => ebDropdown(x[0], x[1], x[2](), EB.fp[x[0]])).join('')}${ebDropdown('sort', 'Sort', SORT_OPTS, EB.fp.sort).replace('class="mkdd', 'class="mkdd mksort')}<button class="mkgo" data-a="eb" data-c="go">Go</button></div>${EB.dd ? '<div class="mkscrim" data-a="eb" data-c="ddx"></div>' : ''}
     <div class="mkgrid">${rows.map(ebTile).join('') || '<div class="mkempty">No auctions match. Try fewer words or set a dropdown back to Any.</div>'}</div>
     <div class="mkpg"><button data-a="eb" data-c="pg" data-v="-1" ${EB.pg === 0 ? 'disabled' : ''}>&#9664; Prev</button><span>page ${EB.pg + 1} of ${pages}</span><button data-a="eb" data-c="pg" data-v="1" ${EB.pg >= pages - 1 ? 'disabled' : ''}>Next &#9654;</button><span class="cnt">${all.length} auction${all.length === 1 ? '' : 's'}</span></div></div>`;
 }
 function scrEbay(){
-  return `<div class="pc${EB.kb ? ' kbopen' : ''}"><div class="pcscreen"><div class="pcpage">${ebMain()}</div>${EB.kb ? ebKeyboard() : ''}</div></div>`;
+  return `<div class="pc"><div class="pcscreen"><div class="pcpage">${ebMain()}</div></div></div>`;
 }
-function ebGo(){
-  EB.q = EB.typed.trim(); EB.page = 'results'; EB.pg = 0; EB.kb = false; EB.confirm = false; EB.msg = ''; EB.f = { type:'', stage:'', tier:0, fin:'', edge:'' };
-  ebLoad(650);
+function ebGo(){          // Go: apply the dropdowns that are picked
+  const p = EB.fp; EB.f = { type:p.type, stage:p.stage, tier:p.tier, fin:p.fin, edge:p.edge }; EB.sort = p.sort; EB.q = ''; EB.page = 'results'; EB.pg = 0; EB.confirm = false; EB.msg = '';
+  render();
 }
 function ebLoad(ms){ EB.load = ms; render(); setTimeout(() => { EB.load = 0; if (SCREEN === 'ebay') render(); }, ms); }
 const EBACT = {
@@ -2302,7 +2333,7 @@ const EBACT = {
     if (c !== 'dd' && c !== 'ddset' && c !== 'key' && c !== 'bksp') EB.dd = '';
     if (c === 'dd'){ EB.dd = EB.dd === d.v ? '' : d.v; sfx.click(); render(); }
     else if (c === 'ddx'){ render(); }
-    else if (c === 'ddset'){ if (d.k === 'sort') EB.sort = d.v; else EB.f[d.k] = d.k === 'tier' ? +d.v : d.v; EB.pg = 0; EB.dd = ''; sfx.click(); render(); }
+    else if (c === 'ddset'){ EB.fp[d.k] = d.k === 'tier' ? +d.v : d.v; EB.dd = ''; sfx.click(); render(); }
     else if (c === 'open'){ EB.kb = true; render(); }
     else if (c === 'key'){ if (EB.typed.length < 40){ EB.typed += d.v; const e = document.getElementById('ebq'); if (e) e.textContent = EB.typed; document.querySelectorAll('.ebsearch .ph').forEach(x => x.remove()); } sfx.click(); }
     else if (c === 'bksp'){ if (EB.typed){ EB.typed = EB.typed.slice(0, -1); const e = document.getElementById('ebq'); if (e) e.textContent = EB.typed; } sfx.click(); }
@@ -2428,6 +2459,7 @@ function scrMyShop(){
   let h = `<div class="shophead"><b>MY SHOP</b><span>${items.length}/${SHOP_SLOTS} on display · worth ${money(val)} · ${priced} priced · sold ${G.shop.sold} for ${money(G.shop.earned)}</span></div>
     <div class="dim shophelp" style="margin:4px 0 8px">Click an empty spot to put something there, click it to set a price or take it down, or drag things between spots. The cubbies take any card, the feature wall (the big frame and the glass counter) is for cards worth ${money(VAULT_MIN)} or more (or graded 9+), and the shelf on the right is for packs and boxes. Pick one of four prices for each thing: the higher the price, the longer you wait between shoppers, and some shoppers pass. No price means it is for show only.</div>
     <div class="showroom" style="background-image:url(${SHOWROOM_BG})">`;
+  h += `<div class="shopbell" data-a="bell" title="Customers" style="left:${(310 / SR_W * 100).toFixed(3)}%;top:${(547 / SR_H * 100).toFixed(3)}%;width:${(62 / SR_W * 100).toFixed(3)}%;height:${(51 / SR_H * 100).toFixed(3)}%">${bellCount() ? '<i class="bang">!</i>' : ''}</div>`;
   h += `<div class="signtxt"><b>MY SHOP</b><small>${items.length}/${SHOP_SLOTS} · ${money(val)}</small></div>`;
   for (let i = 0; i < SHOP_SLOTS; i++) h += slotHTML(i);
   return h + '</div>';
@@ -2558,16 +2590,69 @@ function buyVisitor(id, mult){
 function showPreview(v){
   overlay(`<div class="modal" style="width:min(900px,96vw)"><div style="display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start"><div class="bigcard">${cardHTML(DEFS[v.c.d], { c:v.c, price:false, live:true })}</div><div style="flex:1;min-width:240px"><h2>${cname(v.c)}</h2><div class="dim">${cardLabel(v.c)}</div><div style="font-size:24px;margin:8px 0">${v.name} asks <b class="gold">${money(v.ask)}</b></div><div class="dim">What it is worth is up to you. Check the Guide.</div><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="grn" data-a="vbuy" data-v="${v.id}" data-m="1" ${G.cash < v.ask ? 'disabled' : ''}>Buy ${money(v.ask)}</button><button data-a="vbuy" data-v="${v.id}" data-m=".85">Offer ${money(r2(v.ask * .85))}</button><button data-a="close">Close</button></div></div></div></div>`);
 }
-function scrOrders(){
-  let h = pageHead('note', 'Customers', 'Customers ask for cards and pay a premium. Collections for sale hide their values, so check the Guide.');
-  h += '<h3 style="margin-top:0">Orders: people who want to buy</h3>';
+function ordersSection(){
+  let h = '<h3 style="margin-top:0">Orders: people who want to buy</h3>';
   if (!G.orders.length) h += `<div class="box" style="display:flex;gap:12px;align-items:center">${ico('note', 36)}<div class="dim">No orders right now. Customers ask for cards as you play.</div></div>`;
   for (const o of G.orders){
     const ms = orderMatches(o), best = ms.length ? orderPay(o, ms[ms.length - 1]) : 0;
     h += `<div class="row">${av(o.face, 52)}<div class="nm"><b>${o.name}</b> wants ${orderLabel(o.w)}<small>${ms.length ? ms.length + ' of your cards match' : 'you have no match yet'}</small></div>
       <div class="pr">${ms.length ? '<small class="dim">up to</small><br><b class="gold">' + money(best) + '</b>' : ''}</div><button class="grn" data-a="oopen" data-o="${o.id}" ${ms.length ? '' : 'disabled'}>Fill order</button></div>`;
   }
-  return h + collectionsHTML();
+  return h;
+}
+function scrOrders(){ return pageHead('note', 'Customers', 'Customers ask for cards and pay a premium.') + ordersSection() + collectionsHTML(); }
+// ───────────────────────── the bell: everyone who wants something from you ─────────────────────────
+// Trade offers only ever involve cards on display in your shop. Either many small cards for your one, or one big card for several of yours.
+const bellCount = () => (G.trades || []).length + (G.orders || []).length + (G.coll || []).length;
+const displayedCards = () => shopCards().map(it => it.c).filter(c => !c.bs);
+const tradeMineOk = t => t.mine.every(u => displayedCards().some(c => c.u === u));
+function dropTrade(t){ G.trades = G.trades.filter(x => x !== t); t.theirs.forEach(releaseCard); }
+function makeTradeOffer(){
+  const mine = displayedCards().filter(c => cv(c) >= 1.5); if (!mine.length) return;
+  const f = (.8 + rnd() * .55) * (1 - .12 * HARD), id = ++G.uid;
+  if (rnd() < .5 || mine.length < 2){            // many small cards for one of yours
+    const c = pick(mine), v = cv(c), target = v * f; let theirs = [], ok = false;
+    for (let attempt = 0; attempt < 8 && !ok; attempt++){
+      const n = 3 + Math.floor(rnd() * 6), per = target / n; let sum = 0; theirs = [];
+      for (let k = 0; k < n; k++) for (let g = 0; g < 40; g++){ const x = sampleCard(), xv = cv(x); if (xv < per * .4 || xv > per * 1.8){ releaseCard(x); continue; } theirs.push(x); sum += xv; break; }
+      if (theirs.length === n && sum >= target * .85 && sum <= target * 1.25) ok = true; else { theirs.forEach(releaseCard); theirs = []; }
+    }
+    if (!ok) return;
+    G.trades.push({ id, kind:'many', mine:[c.u], theirs, exp:(G.beat || 0) + 240 });
+  } else {                                       // one big card for several of yours
+    const n = Math.min(mine.length, 2 + Math.floor(rnd() * 4)), pickd = mine.slice().sort(() => rnd() - .5).slice(0, n), S = pickd.reduce((a, c) => a + cv(c), 0), target = S * f;
+    const pool = LOOKS.filter(l => l.v0 >= target * .9 && l.v0 <= target * 1.12 && remaining(l) > 0); const card = pool.length ? drawFrom(pool) : null; if (!card) return;
+    G.trades.push({ id, kind:'one', mine:pickd.map(c => c.u), theirs:[card], exp:(G.beat || 0) + 240 });
+  }
+  note('A customer rang the bell with a trade offer');
+}
+function tradesHour(){
+  G.trades = G.trades || [];
+  for (const t of G.trades.slice()) if ((G.beat || 0) > t.exp || !tradeMineOk(t)) dropTrade(t);
+  if (G.trades.length < 3 && rnd() < .015 * (1 - .5 * HARD)) makeTradeOffer();
+}
+function acceptTrade(id){
+  const t = G.trades.find(x => x.id === id); if (!t) return false; if (!tradeMineOk(t)){ dropTrade(t); return false; }
+  const mine = displayedCards().filter(c => t.mine.includes(c.u));
+  G.shop.slots.forEach((it, i) => { if (it && it.c && t.mine.includes(it.c.u)) G.shop.slots[i] = null; });
+  mine.forEach(releaseCard); addCards(t.theirs); G.trades = G.trades.filter(x => x !== t);
+  ledger('Trade at the shop: ' + mine.length + ' for ' + t.theirs.length, 0); addRep(.3); return true;
+}
+const tradeTile = c => `<div style="margin-bottom:14px">${cardHTML(DEFS[c.d], { sm:true, c, tagText:money(cv(c)) })}</div>`;
+function tradesHTML(){
+  if (!G.trades.length) return '';
+  let h = '<h3 style="margin-top:0">Trade offers</h3>';
+  for (const t of G.trades){
+    const mine = displayedCards().filter(c => t.mine.includes(c.u)), give = mine.reduce((a, c) => a + cv(c), 0), get = t.theirs.reduce((a, c) => a + cv(c), 0);
+    h += `<div class="box tradebox"><div class="dim">${t.kind === 'many' ? 'Wants your card from the shop for all of these' : 'Wants these cards from your shop for one of theirs'}</div>
+      <div class="tradecols"><div><div class="dim">You give &middot; ${money(give)}</div><div class="grid tg">${mine.map(tradeTile).join('')}</div></div><div class="tarrow">&rarr;</div><div><div class="dim">You get &middot; ${money(get)}</div><div class="grid tg">${t.theirs.map(tradeTile).join('')}</div></div></div>
+      <div style="display:flex;gap:8px;margin-top:4px"><button class="grn" data-a="tradeyes" data-t="${t.id}">Accept</button><button data-a="tradeno" data-t="${t.id}">No thanks</button></div></div>`;
+  }
+  return h;
+}
+function showBell(){
+  const h = tradesHTML() + ordersSection() + collectionsHTML();
+  overlay(`<div class="modal" style="width:min(1000px,96vw);max-height:92vh;overflow:auto"><h2>Customers at the bell</h2>${bellCount() ? h : '<div class="box dim">Nobody is waiting right now. They ring the bell when they want something.</div>'}<div style="margin-top:8px"><button class="gold" data-a="close">Close</button></div></div>`);
 }
 function showOrderPicker(oid){
   const o = G.orders.find(x => x.id === oid); if (!o) return closeOv();
@@ -2576,6 +2661,9 @@ function showOrderPicker(oid){
     <div class="grid" style="margin:10px 0;padding-bottom:18px;max-height:56vh;overflow:auto">${ms.map(c => `<div style="margin-bottom:14px">${cardHTML(DEFS[c.d], { sm:true, c, tagText:money(orderPay(o, c)), attr:`data-a="ofill" data-o="${o.id}" data-u="${c.u}"` })}</div>`).join('') || '<span class="dim">No matching cards.</span>'}</div><button data-a="close">Cancel</button></div>`);
 }
 Object.assign(ACT, {
+  bell(){ showBell(); sfx.click(); },
+  tradeyes(d){ if (acceptTrade(+d.t)){ sfx.buy(); toast('Trade done'); } else toast('That offer is gone'); showBell(); render(); },
+  tradeno(d){ const t = G.trades.find(x => x.id === +d.t); if (t) dropTrade(t); showBell(); render(); },
   oopen(d){ showOrderPicker(+d.o); },
   vbuy(d){ const r = buyVisitor(+d.v, +d.m); if (r.ok){ sfx.buy(); toast('Bought for ' + money(r.price)); closeOv(); } else toast(r.msg); render(); },
   vpass(d){ const i = G.visitors.findIndex(v => v.id === +d.v); if (i >= 0){ releaseCard(G.visitors[i].c); G.visitors.splice(i, 1); } render(); },
