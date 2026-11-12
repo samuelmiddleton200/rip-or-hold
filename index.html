@@ -2779,7 +2779,7 @@ const SHPACT = {
     else if (c === 'placep'){ if (!G.inv.sealed[d.k] || G.shop.slots[i]) return; const [a, b] = d.k.split(':'), cost = basisPer(d.k); addSealed(a, b, -1); G.shop.slots[i] = { k:'s', key:d.k, cost, price:0 }; sfx.click(); closeOv(); render(); showShelfItem(i); }
     else if (c === 'popt'){ const it = G.shop.slots[i]; if (!it) return; setShopOption(it, +d.v); sfx.click(); showShelfItem(i); render(); }
     else if (c === 'psave'){ const it = G.shop.slots[i], el = document.getElementById('shpPrice'); if (!it || !el) return; const val = r2(+el.value); if (!(val > 0)){ toast('Type a price first'); return; }
-      const v = itemVal(it), m = shopMults(v), r = val / v, k = m.reduce((best, x, n) => Math.abs(x - r) < Math.abs(m[best] - r) ? n : best, 0); it.price = val; it.opt = k; it.next = (G.beat || 0) + shopWaitBeats(k); sfx.buy(); showShelfItem(i); render(); }
+      const v = itemVal(it), m = shopMults(v), r = val / v, k = m.reduce((best, x, n) => Math.abs(x - r) < Math.abs(m[best] - r) ? n : best, 0); it.price = val; it.opt = k; it.next = (G.beat || 0) + shopWaitBeats(k); sfx.buy(); closeOv(); render(); }
     else if (c === 'punset'){ const it = G.shop.slots[i]; if (!it) return; clearShopPrice(it); sfx.click(); showShelfItem(i); render(); }
     else if (c === 'down'){ const it = G.shop.slots[i]; if (!it) return; if (it.k === 's'){ const [a, b] = it.key.split(':'); addSealed(a, b, 1, it.cost); } else G.inv.cards.push(it.c); G.shop.slots[i] = null; closeOv(); render(); }
   },
