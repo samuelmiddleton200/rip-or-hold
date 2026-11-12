@@ -105,18 +105,16 @@ h3{margin:14px 0 6px;font-family:var(--pix);font-size:12px;letter-spacing:1.5px;
 @keyframes spin3d{0%{transform:rotateY(0) scale(.8)}100%{transform:rotateY(720deg) scale(1)}}
 .card.ripoff{animation:rip .23s ease-in forwards}
 @keyframes rip{to{transform:translate(300px,-40px) rotate(22deg);opacity:0}}
-/* graded slab */
-.slab{position:relative;display:inline-block;background:linear-gradient(#e9edf2,#c7cdd6);border:3px solid #8b94a3;border-radius:8px;padding:34px 6px 22px;margin-bottom:8px}
-.slab.sm{padding:26px 4px 18px}
-.slab .sl{position:absolute;top:3px;left:3px;right:3px;height:25px;background:#fff;border:1px solid #888;color:#111;display:flex;align-items:center;gap:5px;padding:0 5px;overflow:hidden;line-height:1}
-.slab .sl .gn{font-size:19px;font-weight:700;font-family:var(--pix)}.slab .sl .gt{font-size:10px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;color:#333}
-.slab .sl small{margin-left:auto;font-size:10px;color:#555;white-space:nowrap}
-.slab.sm .sl{height:21px}.slab.sm .sl .gn{font-size:15px}.slab.sm .sl .gt{font-size:8px}
-.slab.g10 .sl{background:linear-gradient(90deg,#ffe58a,#fff6c8);border-color:#c9a000}
-.slab.g10{box-shadow:0 0 14px #ffd23f;border-color:#e0b800}
-.slab.g9 .sl{background:#e6f1ff}
-.slab .card{margin:0 auto}
-.slab>.ptag{position:absolute;left:50%;bottom:2px;transform:translateX(-50%);background:#070b18;border:1px solid var(--p3);border-radius:3px;padding:0 5px;font-size:16px;color:var(--grn);white-space:nowrap}
+/* graded slab: clear plastic case, printed label on top, the card inset below (all sizes follow the card's --w) */
+.card.slabbed{height:auto;border-radius:calc(var(--w)*.07);padding:calc(var(--w)*.045);background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(196,204,218,.92) 45%,rgba(240,244,250,.96));box-shadow:inset 0 0 0 calc(var(--w)*.022) #9aa4b5,0 3px 8px rgba(0,0,0,.4);font-size:calc(var(--w)*.12);display:flex;flex-direction:column;gap:calc(var(--w)*.04);--rc:#9aa4b5}
+.slabbed .slabtop{display:flex;justify-content:space-between;gap:.4em;background:#fff;border:calc(var(--w)*.028) solid #d8323a;border-radius:calc(var(--w)*.02);padding:.22em .35em;color:#111;line-height:1.05}
+.slabbed.g10 .slabtop{border-color:#d9a400;background:#fffbe6}.slabbed.g10{box-shadow:inset 0 0 0 calc(var(--w)*.022) #e0b800,0 0 14px #ffd23f}.slabbed.g9 .slabtop{border-color:#2f6fd0;background:#f1f7ff}
+.sltxt{display:flex;flex-direction:column;min-width:0;flex:1;justify-content:center}.sltxt b{font-size:.7em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sltxt span{font-size:.62em;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-transform:uppercase}
+.barcode{display:block;height:.5em;margin-top:.25em;background:repeating-linear-gradient(90deg,#111 0 1px,transparent 1px 2px,#111 2px 4px,transparent 4px 5px)}
+.slgr{text-align:right;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;flex:none}.slgr small{font-size:.58em;font-weight:700;text-transform:uppercase;white-space:nowrap}.slgr b{font-size:1.45em;font-family:var(--pix);line-height:1}
+.card.sm.slabbed .sltxt span,.card.sm.slabbed .barcode{display:none}
+.slin{width:100%;aspect-ratio:120/168;position:relative;background:#111;border-radius:calc(var(--w)*.02);overflow:hidden;box-shadow:0 0 0 calc(var(--w)*.015) #aab3c2}
+.slin canvas.cv{position:absolute;inset:0;width:100%;height:100%}
 /* ───── overlays ───── */
 #ov{position:fixed;inset:0;background:radial-gradient(circle at 50% 38%,rgba(36,84,124,.9),rgba(5,12,20,.97) 72%);display:none;z-index:50;overflow:auto}
 #ov.on{display:flex;align-items:center;justify-content:center}
@@ -1336,9 +1334,9 @@ function cardHTML(def, o){
   const cls = ['card', 'r-' + def.rar, o.sm ? 'sm' : '', o.back ? 'back' : '', o.flip ? 'flip' : ''].join(' ');
   const inner = o.back ? '<div class="cback"><span>RIP<br>OR<br>HOLD</span></div>' : `<canvas class="cv" width="120" height="168" data-spec="${spec}"${o.live ? ' data-live="1"' : ''}></canvas>`;
   const tagHtml = o.tagText ? `<div class="ptag">${o.tagText}</div>` : o.price === false ? '' : `<div class="ptag">${money(price)}${o.count > 1 ? ' <u>x' + o.count + '</u>' : ''}</div>`;
-  if (c && c.g){
-    const gl = { 10:'Gem mint', 9:'Mint', 8:'NM-MT' }[c.g] || 'Graded';
-    return `<div class="slab g${c.g >= 10 ? 10 : c.g >= 9 ? 9 : 0} ${o.sm ? 'sm' : ''}" ${o.attr || ''}><div class="sl"><b class="gn">${c.g}</b><span class="gt">${gl}</span></div><div class="${cls}">${inner}</div>${tagHtml}</div>`;
+  if (c && c.g){        // a graded card sits in a clear plastic slab with a printed label, like the real thing
+    const gl = { 10:'Gem mint', 9:'Mint', 8:'NM-MT', 7:'Near mint' }[c.g] || 'Good', l2 = [FIN_LABEL[def.fin], EDGE_LABEL[def.edge]].filter(Boolean).join(' · ') || 'Rip or Hold';
+    return `<div class="${cls} slabbed g${c.g >= 10 ? 10 : c.g >= 9 ? 9 : 0}" ${o.attr || ''}><div class="slabtop"><div class="sltxt"><b>${def.name}</b><span>${l2}</span><i class="barcode"></i></div><div class="slgr"><small>${gl}</small><b>${c.g}</b></div></div><div class="slin">${inner}</div>${tagHtml}</div>`;
   }
   const badge = c && c.bs ? `<div class="setbadge">SET ${c.size}</div>` : '';
   return `<div class="${cls}" ${o.attr || ''}>${inner}${badge}${tagHtml}</div>`;
