@@ -112,7 +112,7 @@ h3{margin:14px 0 6px;font-family:var(--pix);font-size:12px;letter-spacing:1.5px;
 .sltxt{display:flex;flex-direction:column;min-width:0;flex:1;justify-content:center}.sltxt b{font-size:.62em;text-transform:uppercase;line-height:1.05}.sltxt span{font-size:.5em;color:#333;line-height:1.1;margin-top:.14em}
 .barcode{display:block;height:.5em;margin-top:.25em;background:repeating-linear-gradient(90deg,#111 0 1px,transparent 1px 2px,#111 2px 4px,transparent 4px 5px)}
 .slgr{text-align:right;display:flex;flex-direction:column;justify-content:center;align-items:flex-end;flex:none}.slgr small{font-size:.46em;font-weight:700;text-transform:uppercase;white-space:nowrap}.slgr b{font-size:1.25em;font-family:var(--pix);line-height:1}
-.card.sm.slabbed .sltxt span{display:none}
+.card.sm.slabbed .sltxt span,.card.sm.slabbed .barcode{display:none}
 .slin{width:100%;aspect-ratio:120/168;position:relative;background:#111;border-radius:calc(var(--w)*.02);overflow:hidden;box-shadow:0 0 0 calc(var(--w)*.015) #aab3c2}
 .slin canvas.cv{position:absolute;inset:0;width:100%;height:100%}
 /* ───── overlays ───── */
@@ -1337,7 +1337,7 @@ function cardHTML(def, o){
   if (c && c.g){        // a graded card sits in a clear plastic slab with a printed label, like the real thing
     const gl = { 10:'Gem mint', 9:'Mint', 8:'NM-MT', 7:'Near mint' }[c.g] || 'Good';
     const l2 = [c.n ? '#' + c.n + '/' + def.run : '', def.edge !== 'grey' ? cap(def.edge) + ' edge' : '', def.stage === 'evolved' ? 'Stage 1' : 'Basic'].filter(Boolean).join(' · '), l3 = 'Tier ' + def.tier + ' · ' + cap(def.type);
-    return `<div class="${cls} slabbed g${c.g >= 10 ? 10 : c.g >= 9 ? 9 : 0}" ${o.attr || ''}><div class="slabtop"><div class="sltxt"><b style="${def.name.length > 9 ? 'font-size:.5em' : ''}">${def.name}</b><span>${l2}</span><span>${l3}</span></div><div class="slgr"><small>${gl}</small><b>${c.g}</b></div></div><div class="slin">${inner}</div>${tagHtml}</div>`;
+    return `<div class="${cls} slabbed g${c.g >= 10 ? 10 : c.g >= 9 ? 9 : 0}" ${o.attr || ''}><div class="slabtop"><div class="sltxt"><b style="${def.name.length > 9 ? 'font-size:.5em' : ''}">${def.name}</b><span>${l2}</span><span>${l3}</span><i class="barcode"></i></div><div class="slgr"><small>${gl}</small><b>${c.g}</b></div></div><div class="slin">${inner}</div>${tagHtml}</div>`;
   }
   const badge = c && c.bs ? `<div class="setbadge">SET ${c.size}</div>` : '';
   return `<div class="${cls}" ${o.attr || ''}>${inner}${badge}${tagHtml}</div>`;
