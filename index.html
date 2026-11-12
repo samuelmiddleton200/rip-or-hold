@@ -541,6 +541,14 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
   .modal.opn{padding-top:4px;padding-bottom:4px}
 }
 @media (max-height:520px){.modal.opn{overflow:hidden}.modal.opn .rev{margin:6px 0 4px;min-height:0}}
+
+/* ---- a slimmer bottom bar on phones: smaller buttons, and only half the home-bar space under them, so the page gets the height ---- */
+@media (max-height:520px){
+  #nav{padding-top:2px;padding-bottom:max(6px,calc(env(safe-area-inset-bottom) * .45));gap:2px;border-top-width:2px}
+  #nav button{padding:2px 2px 1px;gap:0;font-size:10px;line-height:1.1}
+  #nav button .ico{width:20px;height:20px}
+  .bdg{top:-1px}
+}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -2625,7 +2633,8 @@ const SR = [];                      // slot rectangles in picture pixels (1920 x
 const STAND_CX = [782, 934, 1080, 1226, 1362, 1497, 1634, 1774];                      // centres of the 8 stands on each shelf
 const SLOT_W = 92, SLOT_H = 166;
 [322, 518].forEach(bottom => STAND_CX.forEach(cx => SR.push({ z:'wall', x:cx - SLOT_W / 2, y:bottom - SLOT_H, w:SLOT_W, h:SLOT_H })));   // 0-15  the two long shelves
-[915, 1132, 1350, 1558].forEach(cx => SR.push({ z:'vault', x:cx - SLOT_W / 2, y:737 - SLOT_H, w:SLOT_W, h:SLOT_H }));                       // 16-19 the glass case
+const VAULT_H = 120;
+[915, 1132, 1350, 1558].forEach(cx => SR.push({ z:'vault', x:cx - SLOT_W / 2, y:737 - VAULT_H, w:SLOT_W, h:VAULT_H }));                       // 16-19 the glass case
 [173, 266, 358, 451, 546].forEach(cx => SR.push({ z:'pack', x:cx - 25, y:354, w:50, h:76 }));                                              // 20-24 pack shelf
 [377, 517].forEach(cx => SR.push({ z:'box', x:cx - 52, y:258, w:104, h:72 }));                                                             // 25-26 box shelf
 const SHOP_SLOTS = SR.length;
