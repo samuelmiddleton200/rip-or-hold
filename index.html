@@ -390,6 +390,38 @@ canvas.ch{background:rgba(0,0,0,.4);border:2px solid var(--p3);border-radius:10p
 .pcpage .row .ev,.pcpage .row .pr{color:var(--ink)}.pcpage .row .ev.gold{color:var(--gold)}.pcpage>.ebpad>.dim,.pcpage .ebpad>div.dim{color:#4a5568}
 /* graded slabs are taller than plain cards, so they get a smaller card width inside a shop spot */
 .sl2 .card.slabbed{--w:min(calc(var(--sw)*.98),calc((var(--sh) - var(--tagh) - 2px)*.98/1.85))}
+
+/* ---- eBay auction screen ---- */
+.pcpage:has(.mk2){display:flex;flex-direction:column;overflow:hidden;background:#f4f5f9}
+.pcscreen{font-family:Fredoka,sans-serif}
+.mk2{flex:1;min-height:0;display:flex;flex-direction:column;background:#f4f5f9;color:#1b2437;gap:6px;padding-bottom:6px;position:relative}
+.mkh{background:#fff;display:flex;align-items:center;gap:8px;padding:6px 10px;flex:none;box-shadow:0 1px 0 #dfe3ec}
+.mklogo{font-weight:700;font-size:22px;font-style:italic;color:#e53238;cursor:pointer;letter-spacing:-1px}
+.mksrch{flex:1;display:flex;align-items:center;background:#fff;color:#8a93a6;border-radius:16px;padding:5px 12px;font-size:13px;border:1px solid #cfd6e4;cursor:text;min-width:0}.mksrch .ph{color:#9aa3b5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mksrch #ebq{color:#1b2437;white-space:nowrap}
+.mkgo{background:#e53238;color:#fff;border:0;border-radius:14px;padding:5px 14px;font-weight:600;font-size:13px;cursor:pointer}
+.mkmine{background:#fff;color:#1b2437;border:1.5px solid #cfd6e4;border-radius:14px;padding:4px 10px;font-weight:600;font-size:12px;cursor:pointer;white-space:nowrap}
+.mkh .grow{flex:1}
+.mkfl{display:flex;gap:6px;padding:0 8px;flex:none;position:relative;z-index:6}
+.mkdd{position:relative;display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid #c4cbda;border-radius:7px;padding:4px 9px;font-size:12px;white-space:nowrap;cursor:pointer;min-width:0}
+.mkdd small{color:#6b7690;font-size:11px}.mkdd b{font-weight:600;color:#1b2437}.mkdd i{font-style:normal;color:#6b7690;font-size:10px;margin-left:2px}.mkdd.open{border-color:#e53238}.mkdd.mksort{margin-left:auto}
+.mkmenu{position:absolute;top:100%;left:0;margin-top:2px;background:#fff;color:#1b2437;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.35);z-index:30;min-width:116px;padding:3px;display:flex;flex-direction:column;max-height:70vh;overflow:auto}
+.mkdd.mksort .mkmenu{left:auto;right:0}.mkmenu span{padding:4px 9px;font-size:13px;border-radius:5px}.mkmenu span:hover{background:#eef1f7}.mkmenu .sel{background:#e53238;color:#fff;font-weight:600}
+.mkscrim{position:absolute;inset:0;z-index:5}
+.mkgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:6px;padding:0 8px;flex:1;min-height:0}
+.kbopen .mkgrid{grid-template-rows:none;grid-auto-rows:minmax(104px,1fr);overflow:auto}
+.mkt{background:#fff;border-radius:10px;padding:6px;display:flex;gap:7px;min-height:0;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.12);cursor:pointer}
+.mkt .card{--w:62px;flex:none;margin:0}
+.mkx{display:flex;flex-direction:column;min-width:0;flex:1;gap:1px}
+.mkn{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#2447c4}
+.mks{font-size:10px;color:#6b7690;line-height:1.15}
+.mkp{display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;gap:4px}.mkp b{font-size:16px;color:#1b2437}.mkp small{display:block;font-size:9.5px;color:#6b7690}.mkp small b{font-size:inherit;color:inherit}
+.mkr{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.mkb{background:#e53238;color:#fff;border-radius:12px;padding:2px 14px;font-weight:600;font-size:12px}.mkb.win{background:#1fa37a}.mkb.lose{background:#6b7690}
+.mkempty{grid-column:1/-1;display:flex;align-items:center;justify-content:center;color:#6b7690;font-size:14px}
+.mkpg{display:flex;gap:14px;justify-content:center;align-items:center;font-size:11px;color:#6b7690;flex:none}.mkpg button{background:none;border:0;color:#1b2437;font:inherit;font-size:12px;cursor:pointer}.mkpg button:disabled{opacity:.35}.mkpg .cnt{margin-left:auto;margin-right:10px}
+.mkpage{flex:1;min-height:0;overflow:auto;background:#fff}
+@media (min-height:521px){.mkh{padding:10px 16px}.mkfl{padding:0 14px}.mkgrid{padding:0 14px;gap:10px}.mkt .card{--w:84px}.mkn{font-size:15px}.mks{font-size:12px}.mkp b{font-size:20px}.mkp small{font-size:12px}.mkb{font-size:14px;padding:3px 18px}.mkdd{font-size:14px;padding:6px 12px}.mkdd small{font-size:13px}.mksrch{font-size:15px;padding:7px 14px}.mkgo{font-size:15px}.mklogo{font-size:28px}.mkpg{font-size:13px}.mkt{padding:10px;gap:10px}}
+.mkpage .ebcrumb{display:none}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -2147,13 +2179,13 @@ function placeBid(id, max){
 }
 
 // ───────────────────────── the page ─────────────────────────
-const EB = { page:'home', tab:'browse', q:'', typed:'', kb:false, load:0, sort:'end', bidTxt:'', f:{ type:'', tier:0, fin:'', edge:'' }, pg:0, item:null, confirm:false, msg:'' };
+const EB = { page:'results', tab:'browse', q:'', typed:'', kb:false, load:0, sort:'end', bidTxt:'', dd:'', f:{ type:'', stage:'', tier:0, fin:'', edge:'' }, pg:0, item:null, confirm:false, msg:'' };
 const ebTitle = c => { const d = DEFS[c.d]; return d.name + ' #' + c.n + '/' + d.run; };
 const ebDetail = c => { const d = DEFS[c.d]; return [cap(d.type), d.stage === 'evolved' ? 'Evolved' : 'Basic', TIER_LABEL[d.tier].toLowerCase().replace(/^./, m => m.toUpperCase()), FIN_LABEL[d.fin] ? cap(d.fin) + ' finish' : 'No finish', cap(d.edge) + ' edge'].join(' · '); };
 const ebHay = c => { const d = DEFS[c.d]; return [d.name, d.type, d.stage === 'evolved' ? 'evolved stage' : 'basic', 'tier ' + d.tier, 'tier' + d.tier, d.fin, d.fin !== 'none' ? 'foil' : '', d.edge, d.edge + ' edge', c.n].join(' ').toLowerCase(); };
 function ebResults(){
   const toks = EB.q.toLowerCase().split(/\s+/).filter(Boolean), f = EB.f;
-  let r = G.mkt.list.filter(L => { const d = DEFS[L.c.d], h = ebHay(L.c); return toks.every(t => h.includes(t)) && (!f.type || d.type === f.type) && (!f.tier || d.tier === f.tier) && (!f.fin || d.fin === f.fin) && (!f.edge || d.edge === f.edge); });
+  let r = G.mkt.list.filter(L => { const d = DEFS[L.c.d], h = ebHay(L.c); return toks.every(t => h.includes(t)) && (!f.type || d.type === f.type) && (!f.stage || (d.stage === 'evolved') === (f.stage === 'evolved')) && (!f.tier || d.tier === f.tier) && (!f.fin || d.fin === f.fin) && (!f.edge || d.edge === f.edge); });
   const price = L => L.bids ? L.bid : L.start;
   if (EB.sort === 'low') r.sort((a, b) => price(a) - price(b)); else if (EB.sort === 'high') r.sort((a, b) => price(b) - price(a)); else if (EB.sort === 'long') r.sort((a, b) => b.ends - a.ends || a.id - b.id); else r.sort((a, b) => a.ends - b.ends || a.id - b.id);
   return r;
@@ -2210,32 +2242,62 @@ function ebMine(){
   const bids = G.mkt.list.filter(L => L.mine);
   return `<div class="ebpad">${bids.length ? `<h3>Your bids (${bids.length})</h3>${bids.map(ebRow).join('')}` : ''}${mail.length ? `<h3>On the way (${mail.length})</h3>${mail.map(m => `<div class="ebrow"><div class="ebimg">${cardHTML(DEFS[m.c.d], { sm:true, c:m.c, price:false })}</div><div class="ebtx"><div class="ebt">${ebTitle(m.c)}</div><div class="ebs">Paid ${money(m.paid)} · arrives in <b data-ready="${(G.last || Date.now()) + (m.arrive - (G.beat || 0)) * BEAT_MS}">${fmtDur((G.last || Date.now()) + (m.arrive - (G.beat || 0)) * BEAT_MS - Date.now())}</b></div></div></div>`).join('')}` : ''}${scrEbaySelling()}</div>`;
 }
+// ---- the auction screen: search up top, a dropdown for each property, six auctions at a time ----
+const DD_DEFS = [
+  ['type', 'Type', () => [['', 'Any']].concat(TYPES.map(t => [t, cap(t)]))],
+  ['stage', 'Stage', () => [['', 'Any'], ['basic', 'Basic'], ['evolved', 'Stage 1']]],
+  ['tier', 'Tier', () => [[0, 'Any'], [1, '1'], [2, '2'], [3, '3']]],
+  ['fin', 'Finish', () => [['', 'Any']].concat(FIN_KEYS.map(f => [f, f === 'none' ? 'No finish' : cap(f)]))],
+  ['edge', 'Edge', () => [['', 'Any']].concat(EDGE_KEYS.map(e => [e, cap(e)]))],
+];
+const SORT_OPTS = [['end', 'Ending soonest'], ['long', 'Most time'], ['low', 'Price: low'], ['high', 'Price: high']];
+function ebDropdown(key, label, opts, cur){
+  const sel = opts.find(o => String(o[0]) === String(cur)) || opts[0];
+  return `<div class="mkdd${EB.dd === key ? ' open' : ''}" data-a="eb" data-c="dd" data-v="${key}"><small>${label}</small><b>${sel[1]}</b><i>&#9662;</i>${EB.dd === key ? `<div class="mkmenu">${opts.map(o => `<span class="${String(o[0]) === String(cur) ? 'sel' : ''}" data-a="eb" data-c="ddset" data-k="${key}" data-v="${o[0]}">${o[1]}</span>`).join('')}</div>` : ''}</div>`;
+}
+function ebTile(L){
+  const c = L.c, d = DEFS[c.d], spec = ['Tier ' + d.tier, d.edge !== 'grey' ? cap(d.edge) + ' edge' : '', d.fin !== 'none' ? cap(d.fin) : '', d.stage === 'evolved' ? 'Stage 1' : 'Basic'].filter(Boolean).join(' · ');
+  const btn = L.mine ? `<span class="mkb ${L.lead === 'you' ? 'win' : 'lose'}">${L.lead === 'you' ? 'Winning' : 'Outbid'}</span>` : '<span class="mkb">Bid</span>';
+  return `<div class="mkt" data-a="eb" data-c="item" data-v="${L.id}"><div class="mkc">${cardHTML(d, { sm:true, c, price:false })}</div><div class="mkx"><b class="mkn">${d.name} #${c.n}${d.run > 99 ? '' : '/' + d.run}</b><span class="mks">${spec}</span><div class="mkp"><span><small>${L.bids ? 'Current bid' : 'Starting bid'}</small><b>${money(ebPrice(L))}</b></span><span class="mkr"><small>${ebBidTxt(L)} &middot; ${ebLeft(L)} left</small>${btn}</span></div></div></div>`;
+}
+function ebHeader(extra){
+  const mail = G.mkt.mail.length;
+  return `<div class="mkh"><span class="mklogo" data-a="eb" data-c="home">eBay</span>${extra || `<div class="mksrch" data-a="eb" data-c="open"><span id="ebq">${EB.typed.replace(/</g, '&lt;')}</span><i class="caret"></i>${EB.typed ? '' : '<span class="ph">Search for anything (try "water shiny")</span>'}</div><button class="mkgo" data-a="eb" data-c="go">Go</button>`}<button class="mkmine" data-a="eb" data-c="tab" data-v="${EB.tab === 'mine' ? 'browse' : 'mine'}">${EB.tab === 'mine' ? '&#9664; Auctions' : 'My eBay' + (mail ? ' (' + mail + ')' : '')}</button></div>`;
+}
+function ebMain(){
+  if (EB.tab === 'mine') return `<div class="mk2">${ebHeader('<span class="grow"></span>')}<div class="mkpage">${ebMine()}</div></div>`;
+  if (EB.load > 0 || EB.page === 'item') return `<div class="mk2">${ebHeader(EB.page === 'item' ? '<button class="mkmine" data-a="eb" data-c="back2">&#9664; Back to results</button><span class="grow"></span>' : null)}<div class="mkpage">${ebPage()}</div></div>`;
+  const all = ebResults(), per = 6, pages = Math.max(1, Math.ceil(all.length / per)); EB.pg = Math.max(0, Math.min(EB.pg, pages - 1));
+  const rows = all.slice(EB.pg * per, EB.pg * per + per);
+  return `<div class="mk2">${ebHeader()}<div class="mkfl">${DD_DEFS.map(x => ebDropdown(x[0], x[1], x[2](), EB.f[x[0]])).join('')}${ebDropdown('sort', 'Sort', SORT_OPTS, EB.sort).replace('class="mkdd', 'class="mkdd mksort')}</div>${EB.dd ? '<div class="mkscrim" data-a="eb" data-c="ddx"></div>' : ''}
+    <div class="mkgrid">${rows.map(ebTile).join('') || '<div class="mkempty">No auctions match. Try fewer words or set a dropdown back to Any.</div>'}</div>
+    <div class="mkpg"><button data-a="eb" data-c="pg" data-v="-1" ${EB.pg === 0 ? 'disabled' : ''}>&#9664; Prev</button><span>page ${EB.pg + 1} of ${pages}</span><button data-a="eb" data-c="pg" data-v="1" ${EB.pg >= pages - 1 ? 'disabled' : ''}>Next &#9654;</button><span class="cnt">${all.length} auction${all.length === 1 ? '' : 's'}</span></div></div>`;
+}
 function scrEbay(){
-  const url = EB.tab === 'mine' ? 'ebay.com/my' : EB.page === 'results' ? 'ebay.com/sch?q=' + encodeURIComponent(EB.q).replace(/%20/g, '+') : EB.page === 'item' ? 'ebay.com/itm/' + EB.item : 'ebay.com';
-  const tabs = `<button class="${EB.tab === 'browse' ? 'on' : ''}" data-a="eb" data-c="tab" data-v="browse">Shop</button><button class="${EB.tab === 'mine' ? 'on' : ''}" data-a="eb" data-c="tab" data-v="mine">My eBay${G.mkt.mail.length ? ' (' + G.mkt.mail.length + ')' : ''}</button>`;
-  return `<div class="pc${EB.kb ? ' kbopen' : ''}"><div class="pcscreen"><div class="pctitle"><span class="dots"><i></i><i></i><i></i></span><span class="pcname">eBay - Browser</span></div>
-    <div class="pctool"><button class="nb" data-a="eb" data-c="back">◀</button><button class="nb" data-a="eb" data-c="home">⌂</button><div class="url">${url}</div><div class="pctabs">${tabs}</div></div>
-    <div class="pcpage">${EB.tab === 'mine' ? ebMine() : ebSearchBar() + ebPage()}</div>${EB.kb ? ebKeyboard() : ''}
-    <div class="pctask"><span class="start">▣ Start</span><span class="task on">eBay - Browser</span><span style="margin-left:auto">${dayLabel()} · ${money(G.cash)}</span></div></div></div>`;
+  return `<div class="pc${EB.kb ? ' kbopen' : ''}"><div class="pcscreen"><div class="pcpage">${ebMain()}</div>${EB.kb ? ebKeyboard() : ''}</div></div>`;
 }
 function ebGo(){
-  EB.q = EB.typed.trim(); EB.page = 'results'; EB.pg = 0; EB.kb = false; EB.confirm = false; EB.msg = ''; EB.f = { type:'', tier:0, fin:'', edge:'' };
+  EB.q = EB.typed.trim(); EB.page = 'results'; EB.pg = 0; EB.kb = false; EB.confirm = false; EB.msg = ''; EB.f = { type:'', stage:'', tier:0, fin:'', edge:'' };
   ebLoad(650);
 }
 function ebLoad(ms){ EB.load = ms; render(); setTimeout(() => { EB.load = 0; if (SCREEN === 'ebay') render(); }, ms); }
 const EBACT = {
   eb(d){
     const c = d.c;
-    if (c === 'open'){ EB.kb = true; render(); }
+    if (c !== 'dd' && c !== 'ddset' && c !== 'key' && c !== 'bksp') EB.dd = '';
+    if (c === 'dd'){ EB.dd = EB.dd === d.v ? '' : d.v; sfx.click(); render(); }
+    else if (c === 'ddx'){ render(); }
+    else if (c === 'ddset'){ if (d.k === 'sort') EB.sort = d.v; else EB.f[d.k] = d.k === 'tier' ? +d.v : d.v; EB.pg = 0; EB.dd = ''; sfx.click(); render(); }
+    else if (c === 'open'){ EB.kb = true; render(); }
     else if (c === 'key'){ if (EB.typed.length < 40){ EB.typed += d.v; const e = document.getElementById('ebq'); if (e) e.textContent = EB.typed; document.querySelectorAll('.ebsearch .ph').forEach(x => x.remove()); } sfx.click(); }
     else if (c === 'bksp'){ if (EB.typed){ EB.typed = EB.typed.slice(0, -1); const e = document.getElementById('ebq'); if (e) e.textContent = EB.typed; } sfx.click(); }
     else if (c === 'hide'){ EB.kb = false; render(); }
     else if (c === 'go'){ sfx.click(); ebGo(); }
-    else if (c === 'home'){ EB.tab = 'browse'; EB.page = 'home'; EB.kb = false; EB.confirm = false; ebLoad(350); }
+    else if (c === 'home'){ EB.tab = 'browse'; EB.page = 'results'; EB.kb = false; EB.confirm = false; ebLoad(350); }
     else if (c === 'cat'){ EB.typed = d.v; ebGo(); }
     else if (c === 'item'){ EB.page = 'item'; EB.item = +d.v; EB.confirm = false; EB.msg = ''; EB.bidTxt = ''; ebLoad(300); }
-    else if (c === 'back2'){ EB.page = EB.q || EB.f.type ? 'results' : 'home'; EB.confirm = false; ebLoad(250); }
-    else if (c === 'back'){ EB.page = EB.page === 'item' ? 'results' : 'home'; ebLoad(250); }
+    else if (c === 'back2'){ EB.page = 'results'; EB.confirm = false; ebLoad(250); }
+    else if (c === 'back'){ EB.page = 'results'; ebLoad(250); }
     else if (c === 'f'){ EB.f[d.k] = d.k === 'tier' ? +d.v : d.v; EB.pg = 0; render(); }
     else if (c === 'sort'){ EB.sort = d.v; EB.pg = 0; render(); }
     else if (c === 'pg'){ EB.pg += +d.v; render(); }
