@@ -1083,8 +1083,7 @@ function ebayHour(){
   const keep = [], beat = G.beat || 0;
   for (const c of G.ebay){
     const a = c.auc; if (!a){ delete c.ask; G.inv.cards.push(c); continue; }
-    const t = a.ends > beat ? auctionStep(a) : null; if (t != null){ a.bids++; a.bid = t; a.lead = 'bot'; }
-    if (a.ends > beat){ keep.push(c); continue; }
+    if (!auctionTick(a, beat)){ keep.push(c); continue; }
     if (a.bids){
       const net = a.bid; noteDeal('sale', c, a.bid, 'eBay'); G.cash += net; G.stats.revenue += net; G.stats.bigSale = Math.max(G.stats.bigSale, a.bid); if (!c.bs) recordSale(c.d, a.bid, 'eBay'); releaseCard(c);
       ledger('eBay: sold ' + cname(c) + ' for ' + money(a.bid) + '', net); G.rep = Math.min(100, G.rep + .1); note('eBay: sold ' + cname(c) + ' for ' + money(a.bid));
@@ -2107,12 +2106,20 @@ function auctionNew(v, beats){
   return { cap, start:r2(Math.max(.01, cap * (.02 + rnd() * .23))), bid:0, bids:0, pop:popOf(v), ends:(G.beat || 0) + beats, lead:'' };
 }
 // one beat of bidding on an auction: maybe a bidder raises it toward the hidden stopping point
-function auctionStep(L){
-  if (rnd() > BID_RATE * L.pop) return null;
+function auctionStep(L, mult){
+  const heat = Math.min(2, (L.bids || 0) / 8);            // lots of bids means lots of people watching: they jump in more
+  if (rnd() > BID_RATE * L.pop * (1 + heat) * (mult || 1)) return null;
   let target;
   if (!L.bids){ if (L.start > L.cap) return null; target = L.start; }
   else { if (L.bid + bidInc(L.bid) > L.cap) return null; target = r2(Math.min(L.cap, L.bid + Math.max(bidInc(L.bid), (L.cap - L.bid) * (.1 + rnd() * .35)))); }
   return target;
+}
+// One beat of an auction. Time running out is not the end: bidders get one last, keener look, and a bid in that last moment
+// buys another 15 seconds, so a bidding war keeps an auction open. Returns true once it is really over.
+function auctionTick(L, beat, onBid){
+  const live = L.ends > beat, t = auctionStep(L, live ? 1 : 3);
+  if (t != null){ const beaten = auctionBid(L, t); if (onBid) onBid(beaten); if (!live || L.ends - beat <= 1) L.ends = Math.max(L.ends, beat + 1); return false; }
+  return !live;
 }
 // returns true if the player's high bid was just beaten
 function auctionBid(L, target){
@@ -2153,9 +2160,8 @@ const mktDay = () => {};
 function mktHour(){
   const keep = [], beat = G.beat || 0;
   for (const L of G.mkt.list){
-    const t = L.ends > beat ? auctionStep(L) : null;
-    if (t != null && auctionBid(L, t) && L.esc){ G.cash += L.esc; L.esc = 0; L.mine = 0; note('You were outbid on ' + ebTitle(L.c) + '.'); }
-    if (L.ends > beat){ keep.push(L); continue; }
+    const over = auctionTick(L, beat, beaten => { if (beaten && L.esc){ G.cash += L.esc; L.esc = 0; L.mine = 0; note('You were outbid on ' + ebTitle(L.c) + '.'); } });
+    if (!over){ keep.push(L); continue; }
     if (L.lead === 'you' && L.mine){
       const tot = r2(L.bid + L.ship); noteDeal('buy', L.c, L.bid, 'eBay'); L.c.paid = tot; G.cash += r2(L.esc - tot); G.stats.spent += tot; recordSale(L.c.d, L.bid, 'eBay');
       G.mkt.mail.push({ c:L.c, arrive:beat + ri(8, 16), paid:tot }); ledger('eBay: won ' + cname(L.c) + ' for ' + money(L.bid), -tot); note('You won ' + ebTitle(L.c) + ' for ' + money(L.bid) + '.');
@@ -2175,7 +2181,9 @@ function placeBid(id, max){
   const need = r2(max + L.ship - (L.esc || 0)); if (G.cash < need) return { ok:false, msg:'Not enough cash (a bid holds ' + money(max + L.ship) + ').' };
   G.cash = r2(G.cash - need); L.esc = r2((L.esc || 0) + need); L.mine = max;
   if (L.lead !== 'you'){ L.bid = min; L.lead = 'you'; L.bids++; }
-  return { ok:true, L };
+  let ext = false;           // a bid with under 10 seconds left puts the clock back to 10 seconds
+  if (ebEndTs(L) - Date.now() <= 10000){ L.ends = (G.beat || 0) + Math.max(0, Date.now() + 10000 - (G.last || Date.now())) / BEAT_MS; ext = true; }
+  return { ok:true, L, ext };
 }
 
 // ───────────────────────── the page ─────────────────────────
@@ -2303,10 +2311,10 @@ const EBACT = {
     else if (c === 'pg'){ EB.pg += +d.v; render(); }
     else if (c === 'tab'){ EB.tab = d.v; EB.kb = false; render(); }
     else if (c === 'bk'){ if (EB.bidTxt.length < 9 && !(d.v === '.' && EB.bidTxt.includes('.'))) EB.bidTxt += d.v; sfx.click(); render(); }
-    else if (c === 'bq'){ const L = G.mkt.list.find(l => l.id === EB.item); if (L){ const amt = L.bids ? bidUp(L, +d.v) : r2(Math.max(L.start * (1 + d.v / 100), L.start + .01)), r = placeBid(L.id, amt); if (r.ok){ sfx.buy(); EB.msg = 'Bid placed. ' + money(r.L.mine + r.L.ship) + ' is held until it ends.'; } else EB.msg = r.msg; } render(); }
+    else if (c === 'bq'){ const L = G.mkt.list.find(l => l.id === EB.item); if (L){ const amt = L.bids ? bidUp(L, +d.v) : r2(Math.max(L.start * (1 + d.v / 100), L.start + .01)), r = placeBid(L.id, amt); if (r.ok){ sfx.buy(); EB.msg = 'Bid placed. ' + money(r.L.mine + r.L.ship) + ' is held until it ends.' + (r.ext ? ' Clock reset to 10 seconds!' : ''); } else EB.msg = r.msg; } render(); }
     else if (c === 'bkb'){ EB.bidTxt = EB.bidTxt.slice(0, -1); sfx.click(); render(); }
     else if (c === 'bmin'){ const L = G.mkt.list.find(l => l.id === EB.item); if (L) EB.bidTxt = String(L.bids ? r2(L.bid + bidInc(L.bid)) : L.start); render(); }
-    else if (c === 'bid'){ const r = placeBid(EB.item, parseFloat(EB.bidTxt)); if (r.ok){ sfx.buy(); EB.msg = 'Bid placed. ' + money(r.L.mine + r.L.ship) + ' is held until it ends.'; EB.bidTxt = ''; } else EB.msg = r.msg; render(); }
+    else if (c === 'bid'){ const r = placeBid(EB.item, parseFloat(EB.bidTxt)); if (r.ok){ sfx.buy(); EB.msg = 'Bid placed. ' + money(r.L.mine + r.L.ship) + ' is held until it ends.' + (r.ext ? ' Clock reset to 10 seconds!' : ''); EB.bidTxt = ''; } else EB.msg = r.msg; render(); }
   },
 };
 Object.assign(ACT, EBACT);
@@ -2368,17 +2376,21 @@ function shelfChance(it, i){ return 0; }
 // shoppers walk in during open hours (9 to 9). The per-day chance is spread over the 12 open hours.
 function shopHour(){
   ensureShop(); if (!shopOpen(G.hour)) return;
-  G.shop.slots.forEach((it, i) => {
-    if (!it || !it.price) return;
-    if (it.due === undefined) setShopPrice(it, it.price);              // an old price from before the timers
-    if (it.due == null || (G.beat || 0) < it.due) return;
-    G.cash += it.price; G.stats.revenue += it.price; G.stats.bigSale = Math.max(G.stats.bigSale, it.price);
-    G.shop.sold++; G.shop.earned += it.price; G.rep = Math.min(100, G.rep + .1);
-    (G.shop.log = G.shop.log || []).push(it.k === 's' ? { key:it.key, price:it.price } : { c:it.c, price:it.price }); if (G.shop.log.length > 60) G.shop.log.shift();
-    if (it.k === 's'){ ledger('Shop: sold ' + prodName(...it.key.split(':')) + ' for ' + money(it.price), it.price); note('Shop sold ' + prodName(...it.key.split(':')) + ' for ' + money(it.price)); }
-    else { if (!it.c.bs){ recordSale(it.c.d, it.price, 'Your Shop'); noteDeal('sale', it.c, it.price, 'your shop'); } ledger('Shop: sold ' + cname(it.c) + ' for ' + money(it.price), it.price); note('Shop sold ' + cname(it.c) + ' for ' + money(it.price)); releaseCard(it.c); }
-    G.shop.slots[i] = null;
-  });
+  // shoppers come through one at a time (every 2 to 6 minutes, a bit faster with reputation), so more cards on display does not mean more sales.
+  // A shopper buys an item whose price they are happy with (its sell-time from the price bands has passed).
+  const beat = G.beat || 0;
+  if (G.shop.next == null) G.shop.next = beat + ri(8, 24);
+  if (beat < G.shop.next) return;
+  G.shop.next = beat + Math.max(4, Math.round(ri(8, 24) * (1 - Math.min(.4, G.rep / 250))));
+  const ready = []; G.shop.slots.forEach((it, i) => { if (!it || !it.price) return; if (it.due === undefined) setShopPrice(it, it.price); if (it.due != null && beat >= it.due) ready.push(i); });
+  if (!ready.length) return;
+  const i = pick(ready), it = G.shop.slots[i];
+  G.cash += it.price; G.stats.revenue += it.price; G.stats.bigSale = Math.max(G.stats.bigSale, it.price);
+  G.shop.sold++; G.shop.earned += it.price; G.rep = Math.min(100, G.rep + .1);
+  (G.shop.log = G.shop.log || []).push(it.k === 's' ? { key:it.key, price:it.price } : { c:it.c, price:it.price }); if (G.shop.log.length > 60) G.shop.log.shift();
+  if (it.k === 's'){ ledger('Shop: sold ' + prodName(...it.key.split(':')) + ' for ' + money(it.price), it.price); note('Shop sold ' + prodName(...it.key.split(':')) + ' for ' + money(it.price)); }
+  else { if (!it.c.bs){ recordSale(it.c.d, it.price, 'Your Shop'); noteDeal('sale', it.c, it.price, 'your shop'); } ledger('Shop: sold ' + cname(it.c) + ' for ' + money(it.price), it.price); note('Shop sold ' + cname(it.c) + ' for ' + money(it.price)); releaseCard(it.c); }
+  G.shop.slots[i] = null;
 }
 
 // everything that sold since you last looked is shown once, a picture each, until you press OK
@@ -2403,7 +2415,7 @@ function scrMyShop(){
   ensureShop();
   const items = shopItems(), val = items.reduce((a, it) => a + itemVal(it), 0), priced = items.filter(it => it.price).length;
   let h = `<div class="shophead"><b>MY SHOP</b><span>${items.length}/${SHOP_SLOTS} on display · worth ${money(val)} · ${priced} priced · sold ${G.shop.sold} for ${money(G.shop.earned)}</span></div>
-    <div class="dim shophelp" style="margin:4px 0 8px">Click an empty spot to put something there, click it to set a price or take it down, or drag things between spots. The cubbies take any card, the feature wall (the big frame and the glass counter) is for cards worth ${money(VAULT_MIN)} or more (or graded 9+), and the shelf on the right is for packs and boxes. Price things at 120% to 200% of market: the lower you go, the faster it sells. No price means it is for show only.</div>
+    <div class="dim shophelp" style="margin:4px 0 8px">Click an empty spot to put something there, click it to set a price or take it down, or drag things between spots. The cubbies take any card, the feature wall (the big frame and the glass counter) is for cards worth ${money(VAULT_MIN)} or more (or graded 9+), and the shelf on the right is for packs and boxes. Price things at 120% to 200% of market: the lower you go, the sooner a shopper will take it. Shoppers come through one at a time, so a full shop does not sell all at once. No price means it is for show only.</div>
     <div class="showroom" style="background-image:url(${SHOWROOM_BG})">`;
   h += `<div class="signtxt"><b>MY SHOP</b><small>${items.length}/${SHOP_SLOTS} · ${money(val)}</small></div>`;
   for (let i = 0; i < SHOP_SLOTS; i++) h += slotHTML(i);
