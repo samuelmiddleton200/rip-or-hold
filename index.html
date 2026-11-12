@@ -1914,7 +1914,7 @@ function startOver(){
 const ACT = {
   next(){ advance(); },
   restart(){ resetGame(); SCREEN = 'shop'; closeOv(); render(); intro(); },
-  tab(d){ SCREEN = d.v; CONFIRM = ''; sfx.click(); render(); if (SCREEN === 'jobs' && JOB) jobLoop(); },
+  tab(d){ SCREEN = d.v; CONFIRM = ''; sfx.click(); render(); if (SCREEN === 'myshop') showShopSales(); if (SCREEN === 'jobs' && JOB) jobLoop(); },
   cat(d){ CAT = d.v; render(); },
   buy(d){ const r = buyProduct(d.s, d.p, +d.n); if (!r.ok) toast(r.msg); else sfx.buy(); render(); },
   coll(d){ const cards = buyCollection(+d.id); if (!cards) return; sfx.buy(); const got = stock(cards), v = got.reduce((a, c) => a + cv(c), 0); G.stats.cards += got.length;
@@ -2299,12 +2299,21 @@ function shopHour(){
     if (it.due == null || (G.beat || 0) < it.due) return;
     G.cash += it.price; G.stats.revenue += it.price; G.stats.bigSale = Math.max(G.stats.bigSale, it.price);
     G.shop.sold++; G.shop.earned += it.price; G.rep = Math.min(100, G.rep + .1);
+    (G.shop.log = G.shop.log || []).push(it.k === 's' ? { key:it.key, price:it.price } : { c:it.c, price:it.price }); if (G.shop.log.length > 60) G.shop.log.shift();
     if (it.k === 's'){ ledger('Shop: sold ' + prodName(...it.key.split(':')) + ' for ' + money(it.price), it.price); note('Shop sold ' + prodName(...it.key.split(':')) + ' for ' + money(it.price)); }
     else { if (!it.c.bs){ recordSale(it.c.d, it.price, 'Your Shop'); noteDeal('sale', it.c, it.price, 'your shop'); } ledger('Shop: sold ' + cname(it.c) + ' for ' + money(it.price), it.price); note('Shop sold ' + cname(it.c) + ' for ' + money(it.price)); releaseCard(it.c); }
     G.shop.slots[i] = null;
   });
 }
 
+// everything that sold since you last looked is shown once, a picture each, until you press OK
+function showShopSales(){
+  const log = (G.shop && G.shop.log) || []; if (!log.length) return;
+  const tot = log.reduce((a, x) => a + x.price, 0);
+  overlay(`<div class="modal" style="width:min(900px,96vw);text-align:center"><h2>Sold!</h2><div class="dim" style="font-size:18px;margin-bottom:6px">${log.length} thing${log.length === 1 ? '' : 's'} sold from your shop for <b class="gold">${money(tot)}</b></div>
+    <div class="grid" style="justify-content:center;max-height:52vh;overflow:auto;padding-bottom:16px">${log.map(x => `<div style="margin-bottom:${x.c && x.c.g ? 6 : 16}px">${x.key ? `<div class="box" style="text-align:center">${prodImg(...x.key.split(':'), 54)}<br><b class="gold">${money(x.price)}</b></div>` : cardHTML(DEFS[x.c.d], { sm:true, c:x.c, tagText:money(x.price) })}</div>`).join('')}</div>
+    <button class="gold" style="font-size:20px;padding:6px 40px" data-a="shopok">OK</button></div>`);
+}
 let SHP = { pf:'all' };
 function slotHTML(i){
   const s = SR[i], it = G.shop.slots[i], pos = `left:${(s.x / SR_W * 100).toFixed(3)}%;top:${(s.y / SR_H * 100).toFixed(3)}%;width:${(s.w / SR_W * 100).toFixed(3)}%;height:${(s.h / SR_H * 100).toFixed(3)}%;--sw:${(s.w / SR_W * 100).toFixed(3)}cqw;--sh:${(s.h / SR_H * 100).toFixed(3)}cqh`;
@@ -2349,6 +2358,7 @@ function showShelfItem(i){
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="gold" data-a="shp" data-c="psave" data-i="${i}">Save price</button><button class="red" data-a="shp" data-c="down" data-i="${i}">Take it down</button><button data-a="close">Close</button></div></div></div></div>`);
 }
 const SHPACT = {
+  shopok(){ G.shop.log = []; closeOv(); render(); },
   shp(d){
     const c = d.c, i = +d.i;
     if (c === 'slot'){ if (G.shop.slots[i]) showShelfItem(i); else showPicker(i); }
