@@ -740,7 +740,7 @@ const defId = (setId, cid, tier, fin, edge) => setId + '|' + cid + '|' + tier + 
 
 function newGameState(){
   const seed = Math.floor(Math.random() * 1e9);
-  G = { v:4, taken:{}, orders:[], visitors:[], trades:[], mtk:0, mlast:Date.now(), beat:0, last:Date.now(), showN:0, showAt:8, hour:9, seed, day:0, cash:150, rep:0, uid:0, sets:[], inv:{ cards:[], sealed:{} }, basis:{}, ent:{}, lp:{}, hist:{}, lps:{}, shist:{}, news:[], bought:{}, ledger:[], ebay:[], grading:[], coll:[], hof:[], ach:{}, trophies:[], done:{},
+  G = { v:4, taken:{}, orders:[], visitors:[], trades:[], mtk:0, mlast:Date.now(), beat:0, last:Date.now(), showN:0, showAt:8, hour:9, seed, day:0, cash:500, rep:0, uid:0, sets:[], inv:{ cards:[], sealed:{} }, basis:{}, ent:{}, lp:{}, hist:{}, lps:{}, shist:{}, news:[], bought:{}, ledger:[], ebay:[], grading:[], coll:[], hof:[], ach:{}, trophies:[], done:{},
         nw:[], stats:{ packs:0, cards:0, spent:0, revenue:0, shows:0, best:null, hits:0, ripIn:0, ripOut:0, bigSale:0 }, snd:true, tutorial:true, broke:false, wasBroke:false, chores:0 };
   BIAS = {}; initSets(); buildWorld();
   for (let d = -60; d <= 0; d++){ ensureSets(d); tick(d); }
@@ -748,7 +748,7 @@ function newGameState(){
   const t = G.sets.find(s => !s.vintage && s.rel <= 0);
   addSealed(t.id, 'etb', 1, prodOfSet(t, 'etb').price);
   HARD = 0; ensureMkt(); ensureShop(); recordNW();
-  postNews('Welcome. You have $150 and one ETB. Rip it or hold it?', 'up');
+  postNews('Welcome. You have $500 and one ETB. Rip it or hold it?', 'up');
   return G;
 }
 function initSets(){
@@ -2044,7 +2044,7 @@ function afterSkip(){ CONFIRM = ''; if (SH && SH.stage !== 'run') SH = null; flu
 function advance(){ skipHours(24); afterSkip(); }      // not on any button: only for tests
 // out of money and nothing left to sell: start over
 function startOver(){
-  overlay(`<div class="modal" style="width:min(560px,96vw);text-align:center"><h2>Out of money</h2><div style="font-size:19px;line-height:1.3;margin:6px 0 12px">You have no cash and nothing left to sell. Time for a fresh start with $150 and a box of cards to rip.</div><button class="gold" style="font-size:20px" data-a="restart">START OVER</button></div>`);
+  overlay(`<div class="modal" style="width:min(560px,96vw);text-align:center"><h2>Out of money</h2><div style="font-size:19px;line-height:1.3;margin:6px 0 12px">You have no cash and nothing left to sell. Time for a fresh start with $500 and an ETB to rip.</div><button class="gold" style="font-size:20px" data-a="restart">START OVER</button></div>`);
 }
 const ACT = {
   next(){ advance(); },
@@ -2159,7 +2159,7 @@ document.addEventListener('change', e => { const t = e.target.closest && e.targe
 document.addEventListener('click', e => { const t = e.target.closest('[data-a]'); if (!t || !ACT[t.dataset.a] || !G) return; ACT[t.dataset.a](t.dataset, t); });
 
 function intro(){
-  overlay(`<div class="modal" style="width:min(640px,96vw);text-align:center"><h2 style="font-size:40px">RIP OR HOLD</h2><div style="font-size:24px;line-height:1.1">You are a card shop owner with <b class="gold">$150</b> and one ETB.<br>Every card has one fixed value. Open packs of monster cards, stock your shelves, fill customer orders, buy bargains from people who guess at prices, chase the shiny and rich-scene ones, grade the good ones, sell at weekend card shows, and watch the market.<br><br>Most product loses money on average. The skill is knowing <b>when to rip and when to hold</b>.</div><br><button class="gold" style="font-size:28px" data-a="go">LET'S GO</button></div>`);
+  overlay(`<div class="modal" style="width:min(640px,96vw);text-align:center"><h2 style="font-size:40px">RIP OR HOLD</h2><div style="font-size:24px;line-height:1.1">You are a card shop owner with <b class="gold">$500</b> and one ETB.<br>Every card has one fixed value. Open packs of monster cards, stock your shelves, fill customer orders, chase the shiny and rich-scene ones, grade the good ones, sell at weekend card shows, and watch the market.<br><br>Most product loses money on average. The skill is knowing <b>when to rip and when to hold</b>.</div><br><button class="gold" style="font-size:28px" data-a="go">LET'S GO</button></div>`);
 }
 async function boot(){
   await CardRenderer.init(CARD_ASSETS, CARD_DATA); CardRenderer.ready = true;
