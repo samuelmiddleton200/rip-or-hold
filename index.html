@@ -397,6 +397,47 @@ canvas.ch{background:rgba(0,0,0,.4);border:2px solid var(--p3);border-radius:10p
 .showhead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}.sh1{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap}.sh1 b:first-child{font-family:var(--pix);color:var(--gold);letter-spacing:1px}
 .settable{background:rgba(0,0,0,.25);border-radius:12px;padding:8px 10px;min-height:64px}.sg{gap:8px}.sg .card{--w:64px}
 @media (min-height:521px){.sg .card{--w:84px}}
+
+/* ---- eBay auction screen ---- */
+.pcpage:has(.mk2){display:flex;flex-direction:column;overflow:hidden;background:#f4f5f9}
+.pcscreen{font-family:Fredoka,sans-serif}
+.mk2{flex:1;min-height:0;display:flex;flex-direction:column;background:#f4f5f9;color:#1b2437;gap:6px;padding-bottom:6px;position:relative}
+.mkh{background:#fff;display:flex;align-items:center;gap:8px;padding:6px 10px;flex:none;box-shadow:0 1px 0 #dfe3ec}
+.mklogo{font-weight:700;font-size:22px;font-style:italic;color:#e53238;cursor:pointer;letter-spacing:-1px}
+.mksrch{flex:1;display:flex;align-items:center;background:#fff;color:#8a93a6;border-radius:16px;padding:5px 12px;font-size:13px;border:1px solid #cfd6e4;cursor:text;min-width:0}.mksrch .ph{color:#9aa3b5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mksrch #ebq{color:#1b2437;white-space:nowrap}
+.mkgo{background:#e53238;color:#fff;border:0;border-radius:14px;padding:5px 14px;font-weight:600;font-size:13px;cursor:pointer}
+.mkmine{background:#fff;color:#1b2437;border:1.5px solid #cfd6e4;border-radius:14px;padding:4px 10px;font-weight:600;font-size:12px;cursor:pointer;white-space:nowrap}
+.mkh .grow{flex:1}
+.mkfl{display:flex;gap:6px;padding:0 8px;flex:none;position:relative;z-index:6}
+.mkdd{position:relative;display:flex;align-items:center;gap:4px;background:#fff;border:1.5px solid #c4cbda;border-radius:7px;padding:4px 9px;font-size:12px;white-space:nowrap;cursor:pointer;min-width:0}
+.mkdd small{color:#6b7690;font-size:11px}.mkdd b{font-weight:600;color:#1b2437}.mkdd i{font-style:normal;color:#6b7690;font-size:10px;margin-left:2px}.mkdd.open{border-color:#e53238}.mkdd.mksort{margin-left:auto}
+.mkmenu{position:absolute;top:100%;left:0;margin-top:2px;background:#fff;color:#1b2437;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.35);z-index:30;min-width:116px;padding:3px;display:flex;flex-direction:column;max-height:70vh;overflow:auto}
+.mkdd.mksort .mkmenu{left:auto;right:0}.mkmenu span{padding:4px 9px;font-size:13px;border-radius:5px}.mkmenu span:hover{background:#eef1f7}.mkmenu .sel{background:#e53238;color:#fff;font-weight:600}
+.mkscrim{position:absolute;inset:0;z-index:5}
+.mkgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:6px;padding:0 8px;flex:1;min-height:0}
+.kbopen .mkgrid{grid-template-rows:none;grid-auto-rows:minmax(104px,1fr);overflow:auto}
+.mkt{background:#fff;border-radius:10px;padding:6px;display:flex;gap:7px;min-height:0;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.12);cursor:pointer}
+.mkt .card{--w:62px;flex:none;margin:0}
+.mkx{display:flex;flex-direction:column;min-width:0;flex:1;gap:1px}
+.mkn{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#2447c4}
+.mks{font-size:10px;color:#6b7690;line-height:1.15}
+.mkp{display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;gap:4px}.mkp b{font-size:16px;color:#1b2437}.mkp small{display:block;font-size:9.5px;color:#6b7690}.mkp small b{font-size:inherit;color:inherit}
+.mkr{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.mkb{background:#e53238;color:#fff;border-radius:12px;padding:2px 14px;font-weight:600;font-size:12px}.mkb.win{background:#1fa37a}.mkb.lose{background:#6b7690}
+.mkempty{grid-column:1/-1;display:flex;align-items:center;justify-content:center;color:#6b7690;font-size:14px}
+.mkpg{display:flex;gap:14px;justify-content:center;align-items:center;font-size:11px;color:#6b7690;flex:none}.mkpg button{background:none;border:0;color:#1b2437;font:inherit;font-size:12px;cursor:pointer}.mkpg button:disabled{opacity:.35}.mkpg .cnt{margin-left:auto;margin-right:10px}
+.mkpage{flex:1;min-height:0;overflow:auto;background:#fff}
+@media (min-height:521px){.mkh{padding:10px 16px}.mkfl{padding:0 14px}.mkgrid{padding:0 14px;gap:10px}.mkt .card{--w:84px}.mkn{font-size:15px}.mks{font-size:12px}.mkp b{font-size:20px}.mkp small{font-size:12px}.mkb{font-size:14px;padding:3px 18px}.mkdd{font-size:14px;padding:6px 12px}.mkdd small{font-size:13px}.mksrch{font-size:15px;padding:7px 14px}.mkgo{font-size:15px}.mklogo{font-size:28px}.mkpg{font-size:13px}.mkt{padding:10px;gap:10px}}
+.mkpage .ebcrumb{display:none}
+
+/* ---- the bell in the shop, and trade offers ---- */
+.shopbell{position:absolute;cursor:pointer;z-index:6}
+.shopbell .bang{position:absolute;left:50%;top:-52%;transform:translateX(-50%);width:max(18px,2.4cqw);height:max(18px,2.4cqw);border-radius:50%;background:#ffd23f;color:#14141f;border:2px solid #14141f;font-style:normal;font-weight:700;font-size:max(12px,1.8cqw);display:flex;align-items:center;justify-content:center;animation:bangbob 1s ease-in-out infinite}
+@keyframes bangbob{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-18%)}}
+.tradebox{margin-bottom:10px}.tradecols{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.tarrow{font-size:28px;color:var(--gold)}
+.tg{gap:6px}.tg .card{--w:56px}
+@media (min-height:521px){.tg .card{--w:74px}}
+.mkpage .ebcrumb{display:none}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
