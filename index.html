@@ -739,7 +739,7 @@ function newGameState(){
   return G;
 }
 function initSets(){
-  G.sets.push({ id:SET_ID, cat:'tcg', name:'Ember Isles', rel:-20, color:'#ff7a2f', k:1, srate:.2, vg:.05 });
+  G.sets.push({ id:SET_ID, cat:'tcg', name:'Rip or Hold', rel:-20, color:'#ff7a2f', k:1, srate:.2, vg:.05 });
   G.nSet = 1;
 }
 
@@ -944,7 +944,7 @@ function buyProduct(setId, pid, qty){
   if (qty > left) return { ok:false, msg:'Only ' + left + ' left today.' };
   if (G.cash < unit * qty) return { ok:false, msg:'Not enough cash.' };
   G.cash -= unit * qty; G.stats.spent += unit * qty; G.bought[key] = (G.bought[key] || 0) + qty;
-  addSealed(setId, pid, qty, unit); ledger('Bought ' + qty + ' ' + prod.name + ' (' + set.name + ')', -unit * qty);
+  addSealed(setId, pid, qty, unit); ledger('Bought ' + qty + ' ' + prod.name + '', -unit * qty);
   return { ok:true };
 }
 
@@ -1138,7 +1138,7 @@ function claimSet(setId){
 // ───────────────────────── save / load ─────────────────────────
 function save(){ try { localStorage.setItem(SAVEKEY, JSON.stringify(G)); } catch (e){} }
 function load(){
-  try { const s = localStorage.getItem(SAVEKEY); if (!s) return false; G = JSON.parse(s); if (!G || G.v !== 4) return false; G.visitors = G.visitors || []; G.orders = G.orders || []; ensureMkt(); ensureShop(); BIAS = {}; G.sets.forEach(x => { x.ready = false; }); buildWorld(); ensureSets(G.day); return true; } catch (e){ return false; }
+  try { const s = localStorage.getItem(SAVEKEY); if (!s) return false; G = JSON.parse(s); if (!G || G.v !== 4) return false; G.visitors = G.visitors || []; G.orders = G.orders || []; G.sets.forEach(x => { if (x.name === 'Ember Isles') x.name = 'Rip or Hold'; }); ensureMkt(); ensureShop(); BIAS = {}; G.sets.forEach(x => { x.ready = false; }); buildWorld(); ensureSets(G.day); return true; } catch (e){ return false; }
 }
 function resetGame(){ try { localStorage.removeItem(SAVEKEY); } catch (e){} newGameState(); save(); }
 
@@ -1537,7 +1537,7 @@ function collSets(){
 }
 function collHof(){
   if (!G.hof.length) return '<div class="box">Your best pulls will be remembered here.</div>';
-  return '<div class="dim" style="margin-bottom:6px">Your top 10 pulls ever.</div>' + G.hof.map((e, i) => `<div class="row"><b style="font-size:26px;width:34px">#${i + 1}</b>${cardHTML(DEFS[e.d], { sm:true, c:{ d:e.d }, price:false })}<div class="nm"><b>${DEFS[e.d].name}</b><small>${e.prod || 'a pack'} · ${e.set}</small></div><b class="gold" style="font-size:26px">${money(e.v)}</b></div>`).join('');
+  return '<div class="dim" style="margin-bottom:6px">Your top 10 pulls ever.</div>' + G.hof.map((e, i) => `<div class="row"><b style="font-size:26px;width:34px">#${i + 1}</b>${cardHTML(DEFS[e.d], { sm:true, c:{ d:e.d }, price:false })}<div class="nm"><b>${DEFS[e.d].name}</b><small>${e.prod || 'a pack'}</small></div><b class="gold" style="font-size:26px">${money(e.v)}</b></div>`).join('');
 }
 function collAch(){
   const n = ACH.filter(a => G.ach[a[0]]).length;
@@ -1560,7 +1560,7 @@ function showInst(u){
   if (c.bs) return showBound(c);
   const d = DEFS[c.d], v = cv(c), same = G.inv.cards.filter(x => x.d === c.d && !x.g && !x.bs && x.u !== c.u);
   overlay(`<div class="modal" style="width:min(1000px,96vw)"><div style="display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start"><div class="bigcard">${cardHTML(d, { c, price:false, live:true })}</div><div style="flex:1;min-width:250px"><h2>${d.name}</h2>
-    <div class="dim">${setName(d.set)} · ${cardLabel(c)} · ${cap(d.type)} · ${d.stage === 'evolved' ? 'stage 2' : 'basic'} · HP ${d.cr.hp}</div>
+    <div class="dim">${cardLabel(c)} · ${cap(d.type)} · ${d.stage === 'evolved' ? 'stage 2' : 'basic'} · HP ${d.cr.hp}</div>
     <div style="font-size:30px;margin:4px 0">${money(v)}</div>
     ${lastSoldHTML(c)}
     <div class="dim" style="margin-top:4px;font-size:17px">${c.g ? 'Graded ' + c.g + ' (' + (c.sub ? c.sub.join(' / ') : '') + '). ' : 'Condition is a mystery until it is graded. '}Dealer pays ${money(dealerOffer(c))} (80%).</div>
@@ -1571,7 +1571,7 @@ function showInst(u){
 // a market listing = one creature at one background tier in one set; the modal shows every finish
 function showSeries(setId, cid, tier){
   const none = defId(setId, cid, tier, 'none'), d = DEFS[none], ch = chg7(none);
-  overlay(`<div class="modal" style="width:min(820px,96vw)"><div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">${cardHTML(d, { price:false })}<div style="flex:1;min-width:260px"><h2>${d.name}</h2><div class="dim">${setName(setId)} · ${TIER_LABEL[tier]} · ${cap(d.type)} · ${d.stage === 'evolved' ? 'stage 2' : 'basic'}</div>
+  overlay(`<div class="modal" style="width:min(820px,96vw)"><div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">${cardHTML(d, { price:false })}<div style="flex:1;min-width:260px"><h2>${d.name}</h2><div class="dim">${TIER_LABEL[tier]} · ${cap(d.type)} · ${d.stage === 'evolved' ? 'stage 2' : 'basic'}</div>
     <div style="font-size:26px;margin:4px 0">${money(px(none))} <span class="${col(ch)}" style="font-size:20px">${pct(ch)} this week</span> <span class="dim" style="font-size:16px">(no finish)</span></div><canvas class="ch" id="dc" width="520" height="140"></canvas>
     <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${FIN_KEYS.slice(1).map(f => `<span class="pill">${FIN_LABEL[f]} ${money(px(defId(setId, cid, tier, f)))}</span>`).join('')}${EDGE_KEYS.slice(1).map(e => `<span class="pill">${EDGE_LABEL[e]} ${money(px(defId(setId, cid, tier, 'none', e)))}</span>`).join('')}</div>
     <div style="margin-top:8px"><button data-a="close">Close</button></div></div></div></div>`);
@@ -1579,7 +1579,7 @@ function showSeries(setId, cid, tier){
 }
 function showSealedChart(k){
   const [s, p] = k.split(':'), prod = prodOfSet(setOf(s), p);
-  overlay(`<div class="modal" style="width:min(620px,96vw)"><h2>${prod.name} · ${setName(s)}</h2><div>${setOf(s).vintage ? '' : 'MSRP ' + money(prod.price) + ' · '}market <b>${money(sealedPx(s, p))}</b></div><canvas class="ch" id="dc" width="520" height="150"></canvas><div style="margin-top:8px"><button data-a="close">Close</button></div></div>`);
+  overlay(`<div class="modal" style="width:min(620px,96vw)"><h2>${prod.name}</h2><div>${setOf(s).vintage ? '' : 'MSRP ' + money(prod.price) + ' · '}market <b>${money(sealedPx(s, p))}</b></div><canvas class="ch" id="dc" width="520" height="150"></canvas><div style="margin-top:8px"><button data-a="close">Close</button></div></div>`);
   drawChart($('#dc'), G.shist[k]);
 }
 
@@ -1878,7 +1878,7 @@ function finishRip(){ OP.summary = true; G.stats.ripIn += OP.total; G.stats.ripO
 function renderOp(flip, lv){
   if (!OP) return;
   if (OP.intro && !OP.summary){
-    overlay(`<div class="modal opn"><div class="dim">${OP.set} · ${OP.name} · pack ${OP.pi + 1} of ${OP.packs.length}</div><div class="stage packstage" data-a="optear">${prodImg(OP.s, OP.p, 210)}<div class="taphint">TAP TO TEAR IT OPEN</div></div><div style="display:flex;gap:8px;justify-content:center"><button data-a="opripall">Skip: reveal everything</button></div></div>`);
+    overlay(`<div class="modal opn"><div class="dim">${OP.name} · pack ${OP.pi + 1} of ${OP.packs.length}</div><div class="stage packstage" data-a="optear">${prodImg(OP.s, OP.p, 210)}<div class="taphint">TAP TO TEAR IT OPEN</div></div><div style="display:flex;gap:8px;justify-content:center"><button data-a="opripall">Skip: reveal everything</button></div></div>`);
     return;
   }
   const last = OP.pi >= OP.packs.length - 1, doneCards = OP.ci >= OP.order.length, big = OP.big;
@@ -1892,7 +1892,7 @@ function renderOp(flip, lv){
   const left = OP.order.length - OP.ci, nb = Math.min(3, big ? left : left - 1);
   let stack = ''; for (let k = nb; k >= 1; k--) stack += cardHTML(DEFS[OP.order[0].d], { back:true, price:false, attr:`style="margin-left:${k * 6}px;margin-top:${-k * 5}px"` });
   const top = big ? cardHTML(DEFS[big.d], { c:big, flip:!!flip, live:true, attr:flip ? `style="--fd:${(.35 + (lv || 0) * .22).toFixed(2)}s"` : '' }) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, price:false });
-  overlay(`<div class="modal opn"><div class="dim">${prodImg(OP.s, OP.p, 34)}<br>${OP.set} · ${OP.name} · pack ${OP.pi + 1} of ${OP.packs.length}</div>
+  overlay(`<div class="modal opn"><div class="dim">${prodImg(OP.s, OP.p, 34)}<br>${OP.name} · pack ${OP.pi + 1} of ${OP.packs.length}</div>
     <div class="stage" data-a="opnext">${stack + top}</div>
     <div class="dim">${doneCards && big ? 'Pack value ' + money(OP.pv) : big ? 'Tap to rip it off the stack (' + OP.ci + '/' + OP.order.length + ')' : 'Tap the top card to flip it (' + OP.ci + '/' + OP.order.length + ')'}</div>
     <div class="rev">${(big ? OP.shown.slice(0, -1) : OP.shown).map(c => `<div style="margin-bottom:${c.g ? 6 : 12}px">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}</div>`).join('')}</div>
@@ -2367,46 +2367,41 @@ document.addEventListener('dragend', () => { SHDRAG = -1; });
 const ORDER_PEOPLE = [['Ava', 'kid'], ['Mr. Park', 'collector'], ['Big Tony', 'hagg'], ['Dee', 'dealer'], ['Lady Rich', 'whale'], ['Dusty Dan', 'v0'], ['Rita', 'v1'], ['Binder Bob', 'v2'], ['Carl', 'v3'], ['Mia', 'v4'], ['Sam', 'v5'], ['Steve', 'v6'], ['Fran', 'v7']];
 const orderNow = () => G.beat || 0;
 function orderMatch(w, c){
-  if (c.bs) return false; const d = DEFS[c.d];
+  if (c.bs) return false; const d = DEFS[c.d], v = cv(c);
   if (w.type && d.type !== w.type) return false;
   if (w.stage != null && (d.stage === 'evolved') !== (w.stage === 1)) return false;
-  if (w.tier && d.tier < w.tier) return false;
-  if (w.fin && d.fin === 'none') return false;
-  if (w.edge && d.edge === 'grey') return false;
-  if (w.min && cv(c) < w.min) return false;
-  return true;
+  if (w.tier && d.tier !== w.tier) return false;
+  if (w.fin && d.fin !== w.fin) return false;
+  if (w.edge && d.edge !== w.edge) return false;
+  return v >= w.min && v <= w.max;
 }
 function orderLabel(w){
-  const bits = [];
-  bits.push('a ' + (w.type ? w.type + ' ' : '') + (w.stage != null ? (w.stage ? 'evolved ' : 'basic ') : '') + 'card');
-  if (w.tier) bits.push(w.tier === 3 ? 'tier 3' : 'tier 2 or better');
-  if (w.fin) bits.push('with a shiny-or-better finish');
-  if (w.edge) bits.push('with a bronze-or-better edge');
-  if (w.min) bits.push('worth ' + money(w.min) + ' or more');
-  return bits.join(', ');
+  const adj = [w.tier ? 'tier ' + w.tier : '', w.stage != null ? (w.stage ? 'evolved' : 'basic') : '', w.type || ''].filter(Boolean).join(' ');
+  let t = 'a ' + (adj ? adj + ' ' : '') + 'card';
+  if (w.fin) t += ' with a ' + w.fin + ' finish';
+  if (w.edge) t += (w.fin ? ' and a ' : ' with a ') + w.edge + ' edge';
+  return t + ' worth ' + money(w.min) + ' to ' + money(w.max);
 }
+// customers are specific: at least two properties of a card and a value range, and they pay 1.3x to 1.7x the card's value
+const niceNum = (x, up) => { const m = Math.pow(10, Math.floor(Math.log10(Math.max(x, .01))) - 1), n = (up ? Math.ceil : Math.floor)(x / m) * m; return n >= 100 ? Math.round(n) : r2(n); };
 function newOrderSpec(){
-  const inv = G.inv.cards.filter(c => !c.bs && !c.g), base = inv.length && rnd() < .6 ? DEFS[pick(inv).d] : null, baseV = base ? cv(inv.find(c => c.d === base.id)) : 0;
-  const props = ['type', 'stage', 'tier', 'fin', 'edge', 'min'].sort(() => rnd() - .5), w = {}; let n = 1 + (rnd() < .45 ? 1 : 0), got = 0;
-  for (const p of props){
-    if (got >= n) break;
-    if (p === 'type'){ w.type = base ? base.type : pick(TYPES); got++; }
-    else if (p === 'stage'){ w.stage = base ? (base.stage === 'evolved' ? 1 : 0) : (rnd() < .5 ? 1 : 0); got++; }
-    else if (p === 'tier'){ if (base && base.tier < 2) continue; w.tier = base ? base.tier : (rnd() < .7 ? 2 : 3); got++; }
-    else if (p === 'fin'){ if (base && base.fin === 'none') continue; w.fin = true; got++; }
-    else if (p === 'edge'){ if (base && base.edge === 'grey') continue; w.edge = true; got++; }
-    else if (p === 'min'){ const ladder = [2, 5, 12, 30, 80, 200, 600], ok = base ? ladder.filter(x => x <= baseV) : ladder.slice(0, 5); if (!ok.length) continue; w.min = pick(ok); got++; }
-  }
-  if (!got) w.min = 3;
+  const inv = G.inv.cards.filter(c => !c.bs);
+  let d, v;
+  if (inv.length && rnd() < .6){ const c = pick(inv); d = DEFS[c.d]; v = cv(c); }
+  else { let tot = 0; for (const l of LOOKS) tot += l.copies; let r = rnd() * tot, l = LOOKS[0]; for (const x of LOOKS){ r -= x.copies; if (r < 0){ l = x; break; } } d = DEFS[l.id]; v = l.v0; }
+  const have = ['type', 'stage', 'tier']; if (d.fin !== 'none') have.push('fin'); if (d.edge !== 'grey') have.push('edge');
+  have.sort(() => rnd() - .5); const n = Math.min(have.length, 2 + (rnd() < .3 ? 1 : 0)), w = {};
+  for (const k of have.slice(0, n)){ if (k === 'type') w.type = d.type; else if (k === 'stage') w.stage = d.stage === 'evolved' ? 1 : 0; else if (k === 'tier') w.tier = d.tier; else if (k === 'fin') w.fin = d.fin; else w.edge = d.edge; }
+  w.min = Math.max(.25, niceNum(v * (.3 + rnd() * .4), false)); w.max = niceNum(Math.max(v * (1.5 + rnd() * 2.5), w.min * 2), true);
   return w;
 }
 function addOrder(){
-  const [name, face] = pick(ORDER_PEOPLE), w = newOrderSpec(), props = Object.keys(w).length, mult = 1.15 + rnd() * .25 + (props - 1) * .07;
+  const [name, face] = pick(ORDER_PEOPLE), w = newOrderSpec(), mult = 1.3 + rnd() * .4;
   G.orders.push({ id:++G.uid, name, face, w, mult:r2(mult), exp:1e12 });          // orders wait for you as long as it takes
   note('New order: ' + name + ' wants ' + orderLabel(w));
 }
 function ordersHour(){
-  G.orders = (G.orders || []).filter(o => o.exp > orderNow());
+  G.orders = (G.orders || []).filter(o => o.exp > orderNow() && o.w.max != null);        // orders from before the value ranges are dropped
   if (!shopOpen(G.hour)) return;
   if (G.orders.length < 4 && rnd() < .08) addOrder();
 }
@@ -2447,7 +2442,7 @@ function scrOrders(){
   if (!G.orders.length) h += `<div class="box" style="display:flex;gap:12px;align-items:center">${ico('note', 36)}<div class="dim">No orders right now. Customers ask for cards as you play.</div></div>`;
   for (const o of G.orders){
     const ms = orderMatches(o), best = ms.length ? orderPay(o, ms[ms.length - 1]) : 0;
-    h += `<div class="row">${av(o.face, 52)}<div class="nm"><b>${o.name}</b> wants ${orderLabel(o.w)}<small>${ms.length ? ms.length + ' of your cards match' : 'you have no match yet'}</small></div>
+    h += `<div class="row">${av(o.face, 52)}<div class="nm"><b>${o.name}</b> wants ${orderLabel(o.w)}<small>pays ${(o.mult).toFixed(2)}x value · ${ms.length ? ms.length + ' of your cards match' : 'you have no match yet'}</small></div>
       <div class="pr">${ms.length ? '<small class="dim">up to</small><br><b class="gold">' + money(best) + '</b>' : ''}</div><button class="grn" data-a="oopen" data-o="${o.id}" ${ms.length ? '' : 'disabled'}>Fill order</button></div>`;
   }
   return h + collectionsHTML();
