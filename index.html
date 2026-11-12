@@ -565,7 +565,7 @@ function shade(d, finish, rarity, m, t, GMASK) {
       screen(i, 255, 230, 120, gl * .5);
     } else if (finish === 'galaxy') {         // watercolour night sky behind the creature: indigo, purple, pink clouds, white speckle stars; the creature itself stays clear
       const k = (y + GOY) * GFW + (x + GOX), v = GNEB.a[k], w = GNEB.b[k], mk = GMASK ? GMASK[y * CW + x] / 255 : 0, bar = y < 21 || y >= 145;
-      const st = face ? (1 - mk * .9) * (bar ? .38 : .9) : 0;
+      const st = face ? (1 - mk * .9) * (bar ? .25 : .52) : 0;
       const sm = (e0, e1, q) => { q = Math.max(0, Math.min(1, (q - e0) / (e1 - e0))); return q * q * (3 - 2 * q); };
       let cr = 10 + 30 * sm(.2, .5, v), cg = 8 + 18 * sm(.2, .5, v), cb = 40 + 90 * sm(.2, .5, v);         // dark indigo up to blue
       const pu = sm(.42, .64, v); cr += (112 - cr) * pu; cg += (58 - cg) * pu; cb += (196 - cb) * pu;       // purple clouds
