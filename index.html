@@ -1053,7 +1053,9 @@ function processGrading(){
 
 // ───────────────────────── eBay ─────────────────────────
 // the player's own auctions: pick a starting price and a length, bidders do the rest (same engine as the market, see ebay.js)
-const AUC = { start:.5, mins:30 };
+// starting prices for your own auctions: a cheap card offers 25 / 50 / 75 / 100% of its value, and the pricier the card the higher the lowest start and the closer together they sit (30 / 55 / 80 / 100, then 35 / 57 / 78 / 100 ...)
+const AUC = { si:1, mins:30 };
+const startFracs = v => { const lo = clamp(Math.round((25 + 5 * Math.log10(Math.max(1, v / 5))) / 5) * 5, 25, 60), r5 = x => Math.ceil(x / 5) * 5; return [lo, r5(lo + (100 - lo) / 3), r5(lo + 2 * (100 - lo) / 3), 100].map(x => x / 100); };
 function listEbay(uid, startFrac, mins){
   if (G.ebay.length >= 20) return false;
   const i = G.inv.cards.findIndex(c => c.u === uid); if (i < 0) return false;
@@ -1779,7 +1781,7 @@ function scrEbaySelling(){
 function aucControls(c){
   const v = cv(c), chip = (k, val, label) => `<button class="${AUC[k] === val ? 'gold' : ''}" data-a="aset" data-k="${k}" data-v="${val}" data-u="${c.u}">${label}</button>`;
   return `<div class="dim" style="margin-top:8px;font-size:17px">Or auction it on eBay. Start at:</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${[[.02, '2%'], [.25, '25%'], [.5, '50%'], [.75, '75%'], [1, '100%']].map(x => chip('start', x[0], x[1] + ' ' + money(Math.max(.01, v * x[0])))).join('')}</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${startFracs(v).map((f, i) => chip('si', i, Math.round(f * 100) + '% ' + money(Math.max(.01, v * f)))).join('')}</div>
     <div class="dim" style="margin-top:4px;font-size:17px">Runs for:</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${[[5, '5 min'], [10, '10 min'], [15, '15 min'], [20, '20 min'], [30, '30 min'], [60, '1 hour']].map(x => chip('mins', x[0], x[1])).join('')}<button class="grn" data-a="ebay" data-u="${c.u}">Start auction</button></div>`;
 }
@@ -2068,7 +2070,7 @@ const ACT = {
   dsellcard(d){ const c = instOf(+d.v); if (!c) return; const v = dealerOffer(c); noteDeal('sale', c, v, 'the dealer'); G.inv.cards.splice(G.inv.cards.indexOf(c), 1); releaseCard(c); G.cash += v; G.stats.revenue += v; G.stats.bigSale = Math.max(G.stats.bigSale, v); ledger('Sold ' + cname(c) + ' to dealer', v); sfx.sell(); closeOv(); render(); },
   dsellsame(d){ const c = instOf(+d.v); if (!c) return; let tot = 0; G.inv.cards = G.inv.cards.filter(x => { if (x.d === c.d && !x.g && !x.bs && x.u !== c.u){ tot += dealerOffer(x); releaseCard(x); return false; } return true; }); G.cash += tot; G.stats.revenue += tot; ledger('Sold dupes of ' + DEFS[c.d].name, tot); sfx.sell(); closeOv(); render(); },
   bulk(){ const bulk = G.inv.cards.filter(isBulk), tot = bulk.length * BULK_EACH; const set = new Set(bulk); bulk.forEach(releaseCard); G.inv.cards = G.inv.cards.filter(c => !set.has(c)); G.cash += tot; G.stats.revenue += tot; ledger('Sold ' + bulk.length + ' bulk cards', tot); toast('Sold ' + bulk.length + ' bulk cards for ' + money(tot)); sfx.sell(); render(); },
-  ebay(d){ if (listEbay(+d.u, AUC.start, AUC.mins)){ sfx.buy(); toast('Auction started'); } else toast('Listing limit reached (20)'); closeOv(); render(); },
+  ebay(d){ const cc = instOf(+d.u); if (cc && listEbay(+d.u, startFracs(cv(cc))[AUC.si], AUC.mins)){ sfx.buy(); toast('Auction started'); } else toast('Listing limit reached (20)'); closeOv(); render(); },
   aset(d){ AUC[d.k] = +d.v; const c = instOf(+d.u); if (c) showInst(c.u); sfx.click(); },
   ecancel(d){ cancelEbay(+d.v); render(); },
   gradeone(d){ GSEL = new Set([+d.v]); SCREEN = 'grade'; closeOv(); render(); },
@@ -2178,7 +2180,7 @@ const SELLER_NAMES = ['cardbarn22', 'slab_shack', 'flip4cash', 'pixelpulls', 'bi
 // Each auction has a hidden stopping point (30%-120% of the card's value, tighter for pricier cards): bidders push the price toward it and then stop.
 // A beat is 15 seconds, so 20 beats = 5 minutes and 240 beats = 1 hour.
 // The market runs on its own fast clock: one tick every 3 seconds (G.mtk). 100 ticks = 5 minutes, 1200 ticks = 1 hour. A few auctions end and a few new ones open on every tick.
-const MKT_TICK_MS = 3000, MIN_T = 100, MAX_T = 1200, MKT_EXT = 10000 / 3000, MKT_RATE_DIV = 3.2;
+const MKT_TICK_MS = 3000, MIN_T = 100, MAX_T = 1200, MKT_EXT = 10000 / 3000, MKT_Q = .3;
 // listing counts by card value: each tier down has about 1.45x as many cards. [low, high, average count]
 const MKT_TIERS = [[0, 5, 300], [5, 10, 205], [10, 20, 140], [20, 40, 100], [40, 80, 70], [80, 160, 48], [160, 320, 33], [320, 640, 22], [640, 1250, 15], [1250, 2500, 10], [2500, 5000, 7], [5000, Infinity, 5]];
 const sellerOf = name => { const h = hash(name); return { name, fb:(95 + (h % 50) / 10).toFixed(1), sales:50 + (h >>> 3) % 6000 }; };
@@ -2191,28 +2193,30 @@ const bidUp = (L, pct) => r2(Math.max(ebPrice(L) * (1 + pct / 100), ebPrice(L) +
 const stopFrac = v => { const lo = Math.min(.95, (v < 25 ? .3 : v < 50 ? .4 : v < 100 ? .45 : v < 1000 ? .55 : v < 10000 ? .65 : .75) + .25 * HARD); return lo + rnd() * (1.2 - lo); };
 // how likely bidders are to look at a card: full between $5 and $250, fading below and above
 const popOf = v => v < 5 ? Math.max(.2, v / 5) : v > 250 ? Math.max(.15, Math.sqrt(250 / v)) : 1;
-const BID_RATE = .07;
+const BID_RATE = .8;           // chance per beat that a bidder acts when the price is behind where it should be (own auctions)
 function auctionNew(v, units, base){
   const cap = r2(v * stopFrac(v));
-  return { cap, start:r2(Math.max(.01, cap * (.02 + rnd() * .23))), bid:0, bids:0, pop:popOf(v), ends:(base == null ? (G.beat || 0) : base) + units, lead:'' };
+  return { cap, start:r2(Math.max(.01, cap * (.02 + rnd() * .23))), bid:0, bids:0, pop:popOf(v), t0:(base == null ? (G.beat || 0) : base), dur:units, ends:(base == null ? (G.beat || 0) : base) + units, lead:'' };
 }
 // one beat of bidding on an auction: maybe a bidder raises it toward the hidden stopping point
 // eBay is the market. Set values are only a starting point: when lots of the same card are listed at once bidders spread out and prices sag, a card with no competition goes for a little more.
 const compKey = d => { const x = DEFS[d]; return x.cid + '|' + x.tier; };          // all the tier 3 Hypnosloths compete with each other, whatever their finish or edge
 // "popular" means more listed than usual: compared with how many of that creature and tier are normally for sale (a running average), a crowded group sags and a thin one goes for a bit more
-const compOf = (key, n) => { const avg = (G.mkt && G.mkt.avgc && G.mkt.avgc[key]) != null ? G.mkt.avgc[key] : n; return clamp(1 - .3 * ((n + 1) / (avg + 1) - 1), .55, 1.15); };
-function auctionStep(L, mult, rate){
+const compOf = (key, n) => { const avg = (G.mkt && G.mkt.avgc && G.mkt.avgc[key]) != null ? G.mkt.avgc[key] : n; return clamp(1 - .3 * ((n + 1) / (avg + 1) - 1), .7, 1.12); };
+function auctionStep(L, mult, rate, now){
   const heat = Math.min(2, (L.bids || 0) / 8);            // lots of bids means lots of people watching: they jump in more
-  if (rnd() > (rate || BID_RATE) * L.pop * (1 + heat) * (mult || 1)) return null;
-  let target; const cap = L.cap * (L.comp || 1);
-  if (!L.bids){ if (L.start > cap) return null; target = L.start; }
-  else { if (L.bid + bidInc(L.bid) > cap) return null; target = r2(Math.min(cap, L.bid + Math.max(bidInc(L.bid), (cap - L.bid) * (.1 + rnd() * .35)))); }
-  return target;
+  const q = clamp((rate || BID_RATE) * L.pop * (1 + heat) * (mult || 1), 0, .95); if (rnd() > q) return null;
+  const cap = L.cap * (L.comp || 1);
+  if (!L.bids) return L.start <= cap ? L.start : null;
+  // where bidders have pushed the price to by now: most of the climb happens early, and it always ends at the stopping point
+  const p = clamp(((now == null ? L.ends : now) - L.t0) / Math.max(1, L.dur), 0, 1), lvl = L.start + (cap - L.start) * (1 - Math.pow(1 - p, 2));
+  if (L.bid + bidInc(L.bid) > Math.min(cap, lvl)) return null;
+  return r2(Math.min(cap, Math.max(L.bid + bidInc(L.bid), lvl + (cap - lvl) * rnd() * .15)));
 }
 // One beat of an auction. Time running out is not the end: bidders get one last, keener look, and a bid in that last moment
 // buys another 15 seconds, so a bidding war keeps an auction open. Returns true once it is really over.
 function auctionTick(L, now, onBid, ext, rate){
-  ext = ext || 1; const live = L.ends > now, t = auctionStep(L, live ? 1 : 3, rate);
+  ext = ext || 1; const live = L.ends > now, t = auctionStep(L, live ? 1 : 3, rate, now);
   if (t != null){ const beaten = auctionBid(L, t); if (onBid) onBid(beaten); if (!live || L.ends - now <= ext) L.ends = Math.max(L.ends, now + ext); return false; }
   return !live;
 }
@@ -2230,8 +2234,8 @@ function mktAdd(tier, fresh){
   const v = px(c.d), dur = MIN_T + (MAX_T - MIN_T) * Math.pow(rnd(), 1.3), tk = G.mtk || 0;      // most auctions are short
   const L = Object.assign(auctionNew(v, dur, tk), { id:++G.mkt.n, c, tier, ship:v >= 100 ? 6.5 : v >= 20 ? 3.5 : 1.5, seller:pick(SELLER_NAMES) });
   if (!fresh){      // the market is already mid-auction when the game starts
-    const el = rnd() * dur; L.ends -= el; G.mkt.cnt = G.mkt.cnt || {}; const ck = compKey(c.d); L.comp = 1; G.mkt.cnt[ck] = (G.mkt.cnt[ck] || 0) + 1;
-    for (let i = 0, nn = Math.floor(el); i < nn; i++){ const t = auctionStep(L, 1, BID_RATE / MKT_RATE_DIV); if (t != null) auctionBid(L, t); }
+    const el = rnd() * dur; L.ends -= el; L.t0 -= el; G.mkt.cnt = G.mkt.cnt || {}; const ck = compKey(c.d); L.comp = 1; G.mkt.cnt[ck] = (G.mkt.cnt[ck] || 0) + 1;
+    for (let i = 0, nn = Math.floor(el); i < nn; i++){ const t = auctionStep(L, 1, MKT_Q, L.t0 + i); if (t != null) auctionBid(L, t); }
   }
   G.mkt.list.push(L);
 }
@@ -2261,7 +2265,7 @@ function mktTick(){
   for (const k in cnt) av[k] = av[k] == null ? cnt[k] : av[k] * .997 + cnt[k] * .003;
   for (const L of G.mkt.list){
     L.comp = compOf(compKey(L.c.d), cnt[compKey(L.c.d)]);
-    const over = auctionTick(L, tk, beaten => { if (beaten && L.esc){ G.cash += L.esc; L.esc = 0; L.mine = 0; note('You were outbid on ' + ebTitle(L.c) + '.'); } }, MKT_EXT, BID_RATE / MKT_RATE_DIV);
+    const over = auctionTick(L, tk, beaten => { if (beaten && L.esc){ G.cash += L.esc; L.esc = 0; L.mine = 0; note('You were outbid on ' + ebTitle(L.c) + '.'); } }, MKT_EXT, MKT_Q);
     if (!over){ keep.push(L); continue; }
     if (L.lead === 'you' && L.mine){
       const tot = r2(L.bid + L.ship); noteDeal('buy', L.c, L.bid, 'eBay'); L.c.paid = tot; G.cash += r2(L.esc - tot); G.stats.spent += tot; recordSale(L.c.d, L.bid, 'eBay');
@@ -2558,6 +2562,7 @@ function showShelfItem(i){
     ${sealed ? '' : lastSoldHTML(it.c.bs ? it.c.cards[0] : it.c)}
     <div class="dim" style="margin:8px 0 4px;font-size:17px">Pick a price.</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">${shopMults(mk).map((m, k) => `<button class="${it.price && it.opt === k ? 'gold' : ''}" data-a="shp" data-c="popt" data-i="${i}" data-v="${k}">${Math.round(m * 100)}% ${money(Math.max(.01, r2(mk * m)))}<small style="display:block;font-size:11px;opacity:.8">a shopper looks every ${waitTxt(k)}</small></button>`).join('')}</div>
+    <div style="margin-top:8px;font-size:18px">Or type your own price: <input id="shpPrice" type="number" min="0" step="0.01" value="${it.price || ''}" placeholder="$" style="width:130px;font-size:18px;background:#0b1226;color:#fff;border:2px solid #34437a;border-radius:6px;padding:2px 8px"> <button class="gold" data-a="shp" data-c="psave" data-i="${i}">Set price</button></div>
     <div class="dim" style="margin-top:8px;font-size:18px">${it.price ? 'A shopper looks at it every ' + waitTxt(it.opt || 0) + '.' : 'No price set: it is on show only and will not sell.'}</div>
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button data-a="shp" data-c="punset" data-i="${i}">Remove price</button><button class="red" data-a="shp" data-c="down" data-i="${i}">Take it down</button><button data-a="close">Close</button></div></div></div></div>`);
 }
@@ -2570,6 +2575,8 @@ const SHPACT = {
     else if (c === 'place'){ const k = G.inv.cards.findIndex(x => x.u === +d.u); if (k < 0 || G.shop.slots[i]) return; G.shop.slots[i] = { c:G.inv.cards.splice(k, 1)[0], price:0 }; sfx.click(); closeOv(); render(); showShelfItem(i); }
     else if (c === 'placep'){ if (!G.inv.sealed[d.k] || G.shop.slots[i]) return; const [a, b] = d.k.split(':'), cost = basisPer(d.k); addSealed(a, b, -1); G.shop.slots[i] = { k:'s', key:d.k, cost, price:0 }; sfx.click(); closeOv(); render(); showShelfItem(i); }
     else if (c === 'popt'){ const it = G.shop.slots[i]; if (!it) return; setShopOption(it, +d.v); sfx.click(); showShelfItem(i); render(); }
+    else if (c === 'psave'){ const it = G.shop.slots[i], el = document.getElementById('shpPrice'); if (!it || !el) return; const val = r2(+el.value); if (!(val > 0)){ toast('Type a price first'); return; }
+      const v = itemVal(it), m = shopMults(v), r = val / v, k = m.reduce((best, x, n) => Math.abs(x - r) < Math.abs(m[best] - r) ? n : best, 0); it.price = val; it.opt = k; it.next = (G.beat || 0) + shopWaitBeats(k); sfx.buy(); showShelfItem(i); render(); }
     else if (c === 'punset'){ const it = G.shop.slots[i]; if (!it) return; clearShopPrice(it); sfx.click(); showShelfItem(i); render(); }
     else if (c === 'down'){ const it = G.shop.slots[i]; if (!it) return; if (it.k === 's'){ const [a, b] = it.key.split(':'); addSealed(a, b, 1, it.cost); } else G.inv.cards.push(it.c); G.shop.slots[i] = null; closeOv(); render(); }
   },
