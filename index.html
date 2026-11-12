@@ -172,7 +172,7 @@ canvas.ch{background:rgba(0,0,0,.4);border:2px solid var(--p3);border-radius:10p
 }
 @media (max-width:700px) and (min-height:521px){#top h1 span{display:none}#top .st{gap:4px}#top .chip{padding:3px 8px 3px 5px}#nav button{min-width:44px;font-size:10px}#nav button .ic{font-size:20px}}
 
-.setbadge{position:absolute;left:4px;top:4px;z-index:5;background:#ffd23f;color:#14141f;font-size:14px;padding:0 5px;border-radius:3px;border:1px solid #14141f}
+.setbadge{position:absolute;left:calc(var(--w)*.04);top:calc(var(--w)*.04);z-index:5;background:#ffd23f;color:#14141f;font-size:max(7px,calc(var(--w)*.13));line-height:1.2;white-space:nowrap;padding:0 .35em;border-radius:3px;border:1px solid #14141f}
 .srow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .srow .nm{flex:1;min-width:200px}
 .srow .nm small{display:block}
@@ -388,6 +388,8 @@ canvas.ch{background:rgba(0,0,0,.4);border:2px solid var(--p3);border-radius:10p
 
 .pcpage .row .nm b{color:var(--ink)}
 .pcpage .row .ev,.pcpage .row .pr{color:var(--ink)}.pcpage .row .ev.gold{color:var(--gold)}.pcpage>.ebpad>.dim,.pcpage .ebpad>div.dim{color:#4a5568}
+/* graded slabs are taller than plain cards, so they get a smaller card width inside a shop spot */
+.sl2 .card.slabbed{--w:min(calc(var(--sw)*.98),calc((var(--sh) - var(--tagh) - 2px)*.98/1.85))}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -1344,8 +1346,19 @@ function cardHTML(def, o){
   return `<div class="${cls}" ${o.attr || ''}>${inner}${badge}${tagHtml}</div>`;
 }
 const specOf = s => { const [creature, rarity, finish, tier, edge, serial, run] = s.split('|'); return { creature, rarity, finish, tier:+tier, edge, serial:+serial || 0, run:+run || 0 }; };
+// slab labels shrink their own text until every line fits (nothing is ever cut off)
+function fitSlabs(){
+  document.querySelectorAll('.slabtop:not([data-fit])').forEach(top => {
+    top.dataset.fit = '1';
+    top.querySelectorAll('.sln, .slabtop > span').forEach(el => {
+      let fs = parseFloat(getComputedStyle(el).fontSize), guard = 0;
+      while (el.scrollWidth > el.clientWidth + .5 && fs > 2.5 && guard++ < 60){ fs -= .4; el.style.fontSize = fs + 'px'; }
+    });
+  });
+}
 function paintCards(){
   if (!window.CardRenderer || !CardRenderer.ready) return;
+  fitSlabs();
   document.querySelectorAll('canvas.cv:not([data-done])').forEach(cv => { try { CardRenderer.render(cv, specOf(cv.dataset.spec), { mx:.5, my:.4, t:0 }); } catch (e){} cv.dataset.done = '1'; });
 }
 let LIVE = null, LASTM = { mx:.5, my:.4 };
@@ -2320,7 +2333,8 @@ function slotHTML(i){
   const title = s.big ? 'The big frame: your finest card' : ZONE[s.z].name + (s.z === 'vault' ? ' (cards worth ' + money(VAULT_MIN) + '+ or graded 9+)' : '');
   if (!it) return `<div class="sl2 empty z-${s.z}${s.big ? ' big' : ''}" style="${pos}" title="${title}" data-a="shp" data-c="slot" data-i="${i}"><span>+</span></div>`;
   const mk = itemVal(it), r = it.price ? it.price / mk : 0, tol = ZONE[s.z].tol, cls = !it.price ? 'unset' : r <= 1.2 ? 'good' : r <= 1.6 ? 'ok' : 'high';
-  const body = it.k === 's' ? `<img class="sealedimg" src="${productSprite(...it.key.split(':'))}" alt="">` : cardHTML(DEFS[it.c.d], { sm:true, c:it.c, price:false });
+  const best = it.c && it.c.bs ? it.c.cards.slice().sort((a, b) => cv(b) - cv(a))[0] : null;           // a bound set shows only its best card, labelled SET n
+  const body = it.k === 's' ? `<img class="sealedimg" src="${productSprite(...it.key.split(':'))}" alt="">` : best ? cardHTML(DEFS[best.d], { sm:true, c:it.c, serialOf:best, noStack:true, price:false }) : cardHTML(DEFS[it.c.d], { sm:true, c:it.c, price:false });
   return `<div class="sl2 full z-${s.z}${s.big ? ' big' : ''}" style="${pos}" title="${title}" draggable="true" data-a="shp" data-c="slot" data-i="${i}">${body}<div class="stag ${cls}">${it.price ? money(it.price) : '$ ?'}</div></div>`;
 }
 function scrMyShop(){
