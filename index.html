@@ -366,6 +366,10 @@ canvas.ch{background:rgba(0,0,0,.4);border:2px solid var(--p3);border-radius:10p
 .bestrow{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px 8px;margin-top:6px}
 .bestc{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center}.bestc .card{--w:96px;margin-bottom:2px}.bestc b{font-size:15px}.bestc .bestn{height:134px;display:flex;align-items:center}
 .ebquick{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.ebquick .ebbuy{padding:5px 10px}
+
+/* ---- bulk sell button ---- */
+#top .bulkbtn{display:flex;align-items:center;gap:6px;padding:6px 12px;font-size:15px;white-space:nowrap;flex:none}
+@media (max-height:520px){#top .bulkbtn{padding:3px 8px;font-size:12px}}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -943,8 +947,9 @@ function buyCollection(id){
 // grading takes real time, longer for pricier cards (it keeps running while the game is closed)
 const gradeSecs = v => v < 10 ? 300 : v < 50 ? 900 : v < 100 ? 1800 : v < 250 ? 3600 : v < 500 ? 5400 : v < 1000 ? 7200 : v < 2500 ? 14400 : v < 10000 ? 21600 : v < 25000 ? 28800 : v < 100000 ? 50400 : 86400;
 const gradingFee = c => 10;
+const MAX_GRADING = 10;      // the grader only holds 10 cards at a time
 function startGrading(uids){
-  const cards = G.inv.cards.filter(c => uids.includes(c.u) && !c.g && !c.bs), fee = r2(cards.reduce((a, c) => a + gradingFee(c), 0));
+  const cards = G.inv.cards.filter(c => uids.includes(c.u) && !c.g && !c.bs).slice(0, Math.max(0, MAX_GRADING - G.grading.length)), fee = r2(cards.reduce((a, c) => a + gradingFee(c), 0));
   if (!cards.length || G.cash < fee) return false;
   G.cash -= fee; G.stats.spent += fee; ledger('Grading ' + cards.length + ' card(s)', -fee);
   G.inv.cards = G.inv.cards.filter(c => !cards.includes(c));
@@ -965,7 +970,7 @@ function processGrading(){
 
 // ───────────────────────── eBay ─────────────────────────
 // the player's own auctions: pick a starting price and a length, bidders do the rest (same engine as the market, see ebay.js)
-const AUC = { start:.5, mins:60 };
+const AUC = { start:.5, mins:30 };
 function listEbay(uid, startFrac, mins){
   if (G.ebay.length >= 20) return false;
   const i = G.inv.cards.findIndex(c => c.u === uid); if (i < 0) return false;
@@ -980,8 +985,8 @@ function ebayHour(){
     const t = a.ends > beat ? auctionStep(a) : null; if (t != null){ a.bids++; a.bid = t; a.lead = 'bot'; }
     if (a.ends > beat){ keep.push(c); continue; }
     if (a.bids){
-      const net = r2(a.bid - SHIP); noteDeal('sale', c, a.bid, 'eBay'); G.cash += net; G.stats.revenue += net; G.stats.bigSale = Math.max(G.stats.bigSale, a.bid); if (!c.bs) recordSale(c.d, a.bid, 'eBay'); releaseCard(c);
-      ledger('eBay: sold ' + cname(c) + ' for ' + money(a.bid) + ' (-' + money(SHIP) + ' shipping)', net); G.rep = Math.min(100, G.rep + .1); note('eBay: sold ' + cname(c) + ' for ' + money(a.bid));
+      const net = a.bid; noteDeal('sale', c, a.bid, 'eBay'); G.cash += net; G.stats.revenue += net; G.stats.bigSale = Math.max(G.stats.bigSale, a.bid); if (!c.bs) recordSale(c.d, a.bid, 'eBay'); releaseCard(c);
+      ledger('eBay: sold ' + cname(c) + ' for ' + money(a.bid) + '', net); G.rep = Math.min(100, G.rep + .1); note('eBay: sold ' + cname(c) + ' for ' + money(a.bid));
     } else { delete c.auc; delete c.listed; G.inv.cards.push(c); note('eBay: no bids on ' + cname(c) + '. It is back in your collection.'); }
   }
   G.ebay = keep;
@@ -1371,9 +1376,9 @@ const pageHead = (icon, title, sub) => `<div class="ph">${ico(icon, 32)}<div><h2
 function render(){
   if (!G) return;
   const nw = netWorth();
-  $('#top').innerHTML = `<h1>${ico('pack', 26)}<div><b>RIP</b> OR <b>HOLD</b><span>CARD SHOP SIM</span></div></h1><div class="st"><div class="chip">${ico('coin', 24)}<div><small>Cash</small><b class="gold">${money(G.cash)}</b></div></div><div class="chip">${ico('trend', 24)}<div><small>Collection</small><b>${money(invValue())}</b></div></div><div class="chip">${ico('star', 24)}<div><small>Rep</small><b>${Math.floor(G.rep)}</b></div></div></div>`;
+  $('#top').innerHTML = `<h1>${ico('pack', 26)}<div><b>RIP</b> OR <b>HOLD</b><span>CARD SHOP SIM</span></div></h1><div class="st"><div class="chip">${ico('coin', 24)}<div><small>Cash</small><b class="gold">${money(G.cash)}</b></div></div><div class="chip">${ico('trend', 24)}<div><small>Collection</small><b>${money(invValue())}</b></div></div><div class="chip">${ico('star', 24)}<div><small>Rep</small><b>${Math.floor(G.rep)}</b></div></div></div><button class="bulkbtn gold" data-a="bulkopen">${ico('cards', 20)}<span>Bulk sell</span></button>`;
   const tabs = [['shop', 'Store', 'pack'], ['myshop', 'My Shop', 'shop'], ['orders', 'Customers', 'note'], ['inv', 'Sealed', 'box'], ['coll', 'Collection', 'cards'], ['grade', 'Grading', 'grade'], ['show', 'Card Show', 'ticket'], ['ebay', 'eBay', 'globe'], ['guide', 'Guide', 'book'], ['stats', 'Stats', 'bars']];
-  $('#nav').innerHTML = tabs.map(t => `<button data-a="tab" data-v="${t[0]}" class="${SCREEN === t[0] ? 'on' : ''}">${ico(t[2], 26)}${t[1]}${t[0] === 'orders' && (G.orders.length + G.visitors.length) ? `<i class="bdg">${G.orders.length + G.visitors.length}</i>` : ''}</button>`).join('');
+  $('#nav').innerHTML = tabs.map(t => `<button data-a="tab" data-v="${t[0]}" class="${SCREEN === t[0] ? 'on' : ''}">${ico(t[2], 26)}${t[1]}${t[0] === 'orders' && G.orders.length ? `<i class="bdg">${G.orders.length}</i>` : ''}</button>`).join('');
   const n = G.news[0];
   if (typeof LASTNEWS !== 'undefined' && n && n !== LASTNEWS && window.matchMedia('(max-height:520px)').matches) toast(n.text.length > 72 ? n.text.slice(0, 70) + '...' : n.text);
   LASTNEWS = n;
@@ -1541,7 +1546,7 @@ function scrMarket(){
 function gradeChart(){
   const T = [[10, 'under $10'], [50, '$10 to $50'], [100, '$50 to $100'], [250, '$100 to $250'], [500, '$250 to $500'], [1000, '$500 to $1,000'], [2500, '$1,000 to $2,500'], [10000, '$2,500 to $10,000'], [25000, '$10,000 to $25,000'], [100000, '$25,000 to $100,000'], [1e12, 'over $100,000']];
   const G_ = [['10 Gem Mint', '3.5x to 5x'], ['9 Mint', '1.2x'], ['8 Near Mint', '0.75x'], ['7 or lower', '0.5x']];
-  overlay(`<div class="modal" style="width:min(760px,96vw)"><h2>Grading chart</h2><div class="dim" style="margin-bottom:6px">Grading costs ${money(10)} a card. The grade stays hidden until the card comes back. Each grade is equally likely.</div>
+  overlay(`<div class="modal" style="width:min(760px,96vw)"><h2>Grading chart</h2><div class="dim" style="margin-bottom:6px">Grading costs ${money(10)} a card. The grade stays hidden until the card comes back. Each grade is equally likely. The grader holds ${MAX_GRADING} cards at a time.</div>
     <div class="cols"><div><h3 style="margin-top:4px">Value after grading</h3>${G_.map(g => `<div class="mrow"><span>${g[0]}</span><b>${g[1]}</b></div>`).join('')}<div class="mrow"><span class="dim">Average</span><b class="gold">about 1.67x</b></div></div>
     <div><h3 style="margin-top:4px">How long it takes</h3>${T.map(t => `<div class="mrow"><span>${t[1]}</span><b>${fmtDur(gradeSecs(t[0] - .01) * 1000)}</b></div>`).join('')}</div></div>
     <div style="margin-top:10px"><button data-a="close">Close</button></div></div>`);
@@ -1551,7 +1556,7 @@ function scrGrade(){
   const raw = G.inv.cards.filter(c => !c.g && !c.bs).sort((a, b) => cv(b) - cv(a)).slice(0, 60);
   const sel = raw.filter(c => GSEL.has(c.u)), n = sel.length, fee = r2(sel.reduce((a, c) => a + gradingFee(c), 0));
   h += `<div class="tabs"><button class="gold" data-a="gsend" ${!n || G.cash < fee ? 'disabled' : ''}>Send ${n} card${n === 1 ? '' : 's'} (${money(fee)})</button><button data-a="gclear">Clear</button><button data-a="gchart">Grading chart</button></div>`;
-  if (G.grading.length) h += `<h3>At the grader</h3><div class="grid" style="padding-bottom:12px">${G.grading.map(g => `<div class="gwait" style="margin-bottom:14px">${cardHTML(DEFS[g.c.d], { c:g.c, sm:true, price:false })}<b class="gtime" data-ready="${g.ready}">${fmtDur(g.ready - Date.now())}</b></div>`).join('')}</div>`;
+  if (G.grading.length) h += `<h3>At the grader (${G.grading.length}/${MAX_GRADING})</h3><div class="grid" style="padding-bottom:12px">${G.grading.map(g => `<div class="gwait" style="margin-bottom:14px">${cardHTML(DEFS[g.c.d], { c:g.c, sm:true, price:false })}<b class="gtime" data-ready="${g.ready}">${fmtDur(g.ready - Date.now())}</b></div>`).join('')}</div>`;
   h += '<h3>Your raw cards</h3>' + (raw.length ? '<div class="grid" style="padding-bottom:16px">' + raw.map(c => `<div style="margin-bottom:14px;${GSEL.has(c.u) ? 'outline:3px solid var(--gold);outline-offset:3px;border-radius:6px' : ''}">${cardHTML(DEFS[c.d], { c, sm:true, attr:`data-a="gsel" data-v="${c.u}"` })}</div>`).join('') + '</div>' : '<div class="box">No raw cards.</div>');
   return h;
 }
@@ -1579,7 +1584,7 @@ function newRound(){ const j = JOB; j.zw = Math.max(12, 26 - j.round * 3); j.z0 
 
 // ───────────────────────── eBay ─────────────────────────
 function scrEbaySelling(){
-  let h = `<h2>Your auctions <span class="dim" style="font-size:18px">${G.ebay.length}/20 listed</span></h2><div class="dim" style="margin-bottom:6px">Auction any card from its Collection popup. Pick a starting price and a length. Bidders come by on their own and push the price up to what they think it is worth. No bids means the card comes back. You pay ${money(SHIP)} shipping per sale. You get the full price instead of the dealer's 80%.</div>`;
+  let h = `<h2>Your auctions <span class="dim" style="font-size:18px">${G.ebay.length}/20 listed</span></h2><div class="dim" style="margin-bottom:6px">Auction any card from its Collection popup. Pick a starting price and a length. Bidders come by on their own and push the price up to what they think it is worth. No bids means the card comes back. No shipping to pay.</div>`;
   if (!G.ebay.length) return h + '<div class="box">Nothing listed.</div>';
   const endTs = a => G.last + (a.ends - G.beat) * BEAT_MS;
   for (const c of G.ebay){
@@ -1591,10 +1596,10 @@ function scrEbaySelling(){
 // start price and length picker shown in the card popups
 function aucControls(c){
   const v = cv(c), chip = (k, val, label) => `<button class="${AUC[k] === val ? 'gold' : ''}" data-a="aset" data-k="${k}" data-v="${val}" data-u="${c.u}">${label}</button>`;
-  return `<div class="dim" style="margin-top:8px;font-size:17px">Or auction it on eBay (the shipping is ${money(SHIP)}). Start at:</div>
+  return `<div class="dim" style="margin-top:8px;font-size:17px">Or auction it on eBay. Start at:</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${[[.02, '2%'], [.25, '25%'], [.5, '50%'], [.75, '75%'], [1, '100%']].map(x => chip('start', x[0], x[1] + ' ' + money(Math.max(.01, v * x[0])))).join('')}</div>
     <div class="dim" style="margin-top:4px;font-size:17px">Runs for:</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${[[10, '10 min'], [30, '30 min'], [60, '1 hour'], [120, '2 hours'], [180, '3 hours']].map(x => chip('mins', x[0], x[1])).join('')}<button class="grn" data-a="ebay" data-u="${c.u}">Start auction</button></div>`;
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">${[[5, '5 min'], [10, '10 min'], [15, '15 min'], [20, '20 min'], [30, '30 min'], [60, '1 hour']].map(x => chip('mins', x[0], x[1])).join('')}<button class="grn" data-a="ebay" data-u="${c.u}">Start auction</button></div>`;
 }
 
 // ───────────────────────── card shows ─────────────────────────
@@ -1856,9 +1861,11 @@ const ACT = {
   aset(d){ AUC[d.k] = +d.v; const c = instOf(+d.u); if (c) showInst(c.u); sfx.click(); },
   ecancel(d){ cancelEbay(+d.v); render(); },
   gradeone(d){ GSEL = new Set([+d.v]); SCREEN = 'grade'; closeOv(); render(); },
-  gsel(d){ const u = +d.v; GSEL.has(u) ? GSEL.delete(u) : GSEL.add(u); sfx.click(); render(); },
+  gsel(d){ const u = +d.v; if (GSEL.has(u)) GSEL.delete(u); else if (GSEL.size >= MAX_GRADING - G.grading.length) toast('The grader holds ' + MAX_GRADING + ' cards at a time.'); else GSEL.add(u); sfx.click(); render(); },
   gclear(){ GSEL = new Set(); render(); },
   gchart(){ gradeChart(); },
+  bulkopen(){ overlay(`<div class="modal" style="width:min(430px,92vw);text-align:center"><h2>Bulk sell</h2><div style="font-size:19px">Sell all cards under $ <input id="bulkx" inputmode="decimal" autocomplete="off" placeholder="___" style="width:110px;font:inherit;font-size:22px;text-align:center;background:var(--surf2);color:var(--ink);border:2px solid var(--line);border-radius:8px;padding:3px 6px"></div><div id="bulksum" class="dim" style="margin:12px 0;font-size:20px;min-height:28px">Type an amount</div><div style="display:flex;gap:10px;justify-content:center"><button data-a="close">Cancel</button><button class="gold" id="bulkgo" data-a="bulkgo" disabled>Sell</button></div></div>`); setTimeout(() => { const e = $('#bulkx'); if (e) e.focus(); }, 50); },
+  bulkgo(){ const x = parseFloat(($('#bulkx') || {}).value), list = x > 0 ? bulkList(x) : []; if (!list.length) return; let tot = 0; for (const c of list){ const v = dealerOffer(c); tot += v; noteDeal('sale', c, v, 'the dealer'); releaseCard(c); } const set = new Set(list); G.inv.cards = G.inv.cards.filter(c => !set.has(c)); G.cash += tot; G.stats.revenue += tot; ledger('Bulk sold ' + list.length + ' cards', tot); sfx.sell(); toast('Sold ' + list.length + ' cards for ' + money(tot)); closeOv(); checkAch(); render(); },
   gsend(){ if (startGrading([...GSEL])){ toast('Sent ' + GSEL.size + ' to the grader'); sfx.buy(); GSEL = new Set(); } render(); },
   opnext(){ opNext(); }, opall(){ opAll(); }, oppack(){ opNextPack(); }, opripall(){ opRipAll(); }, opfinish(){ opFinish(); }, opdone(){ closeOv(); recordNW(); render(); }, optear(){ opTear(); },
   shhide(){ SH.hide = !SH.hide; render(); },
@@ -1924,6 +1931,13 @@ const ACT = {
   newgame(){ if (CONFIRM === 'ng'){ CONFIRM = ''; resetGame(); SCREEN = 'shop'; render(); intro(); } else { CONFIRM = 'ng'; render(); } },
   go(){ closeOv(); render(); },
 };
+const bulkList = x => G.inv.cards.filter(c => !c.bs && cv(c) < x);
+document.addEventListener('input', e => {
+  if (!e.target || e.target.id !== 'bulkx') return;
+  const x = parseFloat(e.target.value), list = x > 0 ? bulkList(x) : [], tot = list.reduce((a, c) => a + dealerOffer(c), 0), s = $('#bulksum'), b = $('#bulkgo');
+  if (s) s.innerHTML = x > 0 ? (list.length ? `<b>${list.length}</b> card${list.length === 1 ? '' : 's'} for <b class="gold">${money(tot)}</b>` : 'No cards under that') : 'Type an amount';
+  if (b) b.disabled = !list.length;
+});
 document.addEventListener('change', e => { const t = e.target.closest && e.target.closest('[data-chg]'); if (t && ACT[t.dataset.chg]) ACT[t.dataset.chg]({ v:t.value, k:t.dataset.k }); });
 document.addEventListener('click', e => { const t = e.target.closest('[data-a]'); if (!t || !ACT[t.dataset.a] || !G) return; ACT[t.dataset.a](t.dataset, t); });
 
@@ -1945,10 +1959,10 @@ window.RH = { get G(){ return G; }, ACT, startRip, opNext, opAll, opRipAll, opNe
 // Listings are real cards taken out of the world pool. Sellers list them for about what they are worth, a few cheap, a few greedy. You pay, the card ships in a couple of days.
 const SELLER_NAMES = ['cardbarn22', 'slab_shack', 'flip4cash', 'pixelpulls', 'binderbob', 'mintcondition_mia', 'rip_n_ship', 'holo_hank', 'tinyvault', 'pack_attack', 'dusty_longbox', 'foilfiend', 'the_card_cellar', 'gradeA_greg', 'monsterhoard', 'cozycards', 'nightowl_tcg', 'sparkshop', 'garage_gems', 'bulkbin_bill', 'cardcornerco', 'shinyseeker', 'rare_ronnie', 'vaultvic', 'lootlady'];
 // ───────────────────────── the auction engine ─────────────────────────
-// Every listing is an auction (10 minutes to 3 hours). Bidders show up at random; cheap cards and very expensive cards draw fewer of them.
+// Every listing is an auction (5 minutes to 1 hour). Bidders show up at random; cheap cards and very expensive cards draw fewer of them.
 // Each auction has a hidden stopping point (30%-120% of the card's value, tighter for pricier cards): bidders push the price toward it and then stop.
-// A beat is 15 seconds, so 40 beats = 10 minutes and 720 beats = 3 hours.
-const MIN_BEATS = 40, MAX_BEATS = 720;
+// A beat is 15 seconds, so 20 beats = 5 minutes and 240 beats = 1 hour.
+const MIN_BEATS = 20, MAX_BEATS = 240;
 // listing counts by card value: each tier down has about 1.45x as many cards. [low, high, average count]
 const MKT_TIERS = [[0, 5, 300], [5, 10, 205], [10, 20, 140], [20, 40, 100], [40, 80, 70], [80, 160, 48], [160, 320, 33], [320, 640, 22], [640, 1250, 15], [1250, 2500, 10], [2500, 5000, 7], [5000, Infinity, 5]];
 const sellerOf = name => { const h = hash(name); return { name, fb:(95 + (h % 50) / 10).toFixed(1), sales:50 + (h >>> 3) % 6000 }; };
@@ -2338,9 +2352,8 @@ function addVisitor(){
   note(name + ' came in with a card to sell');
 }
 function visitorsHour(){
-  G.visitors = G.visitors || [];
-  if (G.visitors.length && rnd() < .012){ const v = G.visitors.splice(Math.floor(rnd() * G.visitors.length), 1)[0]; releaseCard(v.c); }
-  if (G.visitors.length < 3 && rnd() < .07) addVisitor();
+  // walk-in sellers are gone: send any left in an old save home
+  if (G.visitors && G.visitors.length){ G.visitors.forEach(v => releaseCard(v.c)); G.visitors = []; }
 }
 function buyVisitor(id, mult){
   const i = G.visitors.findIndex(v => v.id === id); if (i < 0) return { ok:false, msg:'They left.' };
@@ -2354,12 +2367,8 @@ function showPreview(v){
   overlay(`<div class="modal" style="width:min(900px,96vw)"><div style="display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start"><div class="bigcard">${cardHTML(DEFS[v.c.d], { c:v.c, price:false, live:true })}</div><div style="flex:1;min-width:240px"><h2>${cname(v.c)}</h2><div class="dim">${cardLabel(v.c)}</div><div style="font-size:24px;margin:8px 0">${v.name} asks <b class="gold">${money(v.ask)}</b></div><div class="dim">What it is worth is up to you. Check the Guide.</div><div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="grn" data-a="vbuy" data-v="${v.id}" data-m="1" ${G.cash < v.ask ? 'disabled' : ''}>Buy ${money(v.ask)}</button><button data-a="vbuy" data-v="${v.id}" data-m=".85">Offer ${money(r2(v.ask * .85))}</button><button data-a="close">Close</button></div></div></div></div>`);
 }
 function scrOrders(){
-  let h = pageHead('note', 'Customers', 'People come in to buy and to sell. Orders pay a premium. Sellers guess at prices, so a bargain is yours if you know what a card is worth (see the Guide).');
-  h += '<h3 style="margin-top:0">Selling to you</h3>';
-  if (!G.visitors.length) h += `<div class="box" style="display:flex;gap:12px;align-items:center">${ico('shop', 36)}<div class="dim">Nobody has anything to sell right now. They come by as you play.</div></div>`;
-  for (const v of G.visitors) h += `<div class="row">${av(v.face, 52)}<div style="flex:none">${cardHTML(DEFS[v.c.d], { sm:true, c:v.c, price:false, attr:`data-a="vlook" data-v="${v.id}"` })}</div><div class="nm"><b>${v.name}</b> wants <b class="gold">${money(v.ask)}</b><small>${cardLabel(v.c)}</small></div>
-    <button class="grn" data-a="vbuy" data-v="${v.id}" data-m="1" ${G.cash < v.ask ? 'disabled' : ''}>Buy ${money(v.ask)}</button><button data-a="vbuy" data-v="${v.id}" data-m=".85">Offer ${money(r2(v.ask * .85))}</button><button data-a="vpass" data-v="${v.id}">Pass</button></div>`;
-  h += '<h3>Orders: people who want to buy</h3>';
+  let h = pageHead('note', 'Customers', 'Customers ask for cards and pay a premium. Collections for sale hide their values, so check the Guide.');
+  h += '<h3 style="margin-top:0">Orders: people who want to buy</h3>';
   if (!G.orders.length) h += `<div class="box" style="display:flex;gap:12px;align-items:center">${ico('note', 36)}<div class="dim">No orders right now. Customers ask for cards as you play.</div></div>`;
   for (const o of G.orders){
     const ms = orderMatches(o), best = ms.length ? orderPay(o, ms[ms.length - 1]) : 0;
