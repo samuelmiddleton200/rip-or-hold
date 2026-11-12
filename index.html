@@ -914,7 +914,7 @@ const defId = (setId, cid, tier, fin, edge) => setId + '|' + cid + '|' + tier + 
 
 function newGameState(){
   const seed = Math.floor(Math.random() * 1e9);
-  G = { v:4, taken:{}, orders:[], visitors:[], trades:[], mtk:0, mlast:Date.now(), beat:0, last:Date.now(), showN:0, showAt:8, hour:9, seed, day:0, cash:500, rep:0, uid:0, sets:[], inv:{ cards:[], sealed:{} }, basis:{}, ent:{}, lp:{}, hist:{}, lps:{}, shist:{}, news:[], bought:{}, ledger:[], ebay:[], grading:[], coll:[], hof:[], ach:{}, trophies:[], done:{},
+  G = { v:5, taken:{}, orders:[], visitors:[], trades:[], mtk:0, mlast:Date.now(), beat:0, last:Date.now(), showN:0, showAt:8, hour:9, seed, day:0, cash:500, rep:0, uid:0, sets:[], inv:{ cards:[], sealed:{} }, basis:{}, ent:{}, lp:{}, hist:{}, lps:{}, shist:{}, news:[], bought:{}, ledger:[], ebay:[], grading:[], coll:[], hof:[], ach:{}, trophies:[], done:{},
         nw:[], stats:{ packs:0, cards:0, spent:0, revenue:0, shows:0, best:null, hits:0, ripIn:0, ripOut:0, bigSale:0 }, snd:true, tutorial:true, broke:false, wasBroke:false, chores:0 };
   BIAS = {}; initSets(); buildWorld();
   for (let d = -60; d <= 0; d++){ ensureSets(d); tick(d); }
@@ -1339,7 +1339,7 @@ function claimSet(setId){
 // ───────────────────────── save / load ─────────────────────────
 function save(){ try { localStorage.setItem(SAVEKEY, JSON.stringify(G)); } catch (e){} }
 function load(){
-  try { const s = localStorage.getItem(SAVEKEY); if (!s) return false; G = JSON.parse(s); if (!G || G.v !== 4) return false; G.visitors = G.visitors || []; G.orders = G.orders || []; G.trades = G.trades || []; G.sets.forEach(x => { if (x.name === 'Ember Isles') x.name = 'Rip or Hold'; }); ensureMkt(); ensureShop(); BIAS = {}; G.sets.forEach(x => { x.ready = false; }); buildWorld(); ensureSets(G.day); HARD = hardOf(); return true; } catch (e){ return false; }
+  try { const s = localStorage.getItem(SAVEKEY); if (!s) return false; G = JSON.parse(s); if (!G || G.v !== 5) return false; G.visitors = G.visitors || []; G.orders = G.orders || []; G.trades = G.trades || []; G.sets.forEach(x => { if (x.name === 'Ember Isles') x.name = 'Rip or Hold'; }); ensureMkt(); ensureShop(); BIAS = {}; G.sets.forEach(x => { x.ready = false; }); buildWorld(); ensureSets(G.day); HARD = hardOf(); return true; } catch (e){ return false; }
 }
 function resetGame(){ try { localStorage.removeItem(SAVEKEY); } catch (e){} newGameState(); save(); }
 
