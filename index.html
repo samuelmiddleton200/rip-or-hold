@@ -2445,7 +2445,7 @@ function scrOrders(){
   if (!G.orders.length) h += `<div class="box" style="display:flex;gap:12px;align-items:center">${ico('note', 36)}<div class="dim">No orders right now. Customers ask for cards as you play.</div></div>`;
   for (const o of G.orders){
     const ms = orderMatches(o), best = ms.length ? orderPay(o, ms[ms.length - 1]) : 0;
-    h += `<div class="row">${av(o.face, 52)}<div class="nm"><b>${o.name}</b> wants ${orderLabel(o.w)}<small>pays ${(o.mult).toFixed(2)}x value · ${ms.length ? ms.length + ' of your cards match' : 'you have no match yet'}</small></div>
+    h += `<div class="row">${av(o.face, 52)}<div class="nm"><b>${o.name}</b> wants ${orderLabel(o.w)}<small>${ms.length ? ms.length + ' of your cards match' : 'you have no match yet'}</small></div>
       <div class="pr">${ms.length ? '<small class="dim">up to</small><br><b class="gold">' + money(best) + '</b>' : ''}</div><button class="grn" data-a="oopen" data-o="${o.id}" ${ms.length ? '' : 'disabled'}>Fill order</button></div>`;
   }
   return h + collectionsHTML();
