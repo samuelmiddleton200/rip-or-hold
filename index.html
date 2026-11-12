@@ -548,7 +548,7 @@ function compose(spec) {
 }
 
 // ── shimmers (code, they follow the mouse) ──
-function shade(d, finish, rarity, m, t) {
+function shade(d, finish, rarity, m, t, GMASK) {
   const p = d.data, glx = m.mx * CW, gly = m.my * CH, t3 = t;
   let GNEB, GOX = 0, GOY = 0; if (finish === 'galaxy'){ GNEB = nebula(); GOX = Math.max(0, Math.min(GPAD, Math.round(GPAD / 2 + (m.mx - .5) * 36 + Math.sin(t * .3) * 8))); GOY = Math.max(0, Math.min(GPAD, Math.round(GPAD / 2 + (m.my - .5) * 26 + Math.cos(t * .25) * 6))); }
   const screen = (i, r, g, b, a) => { p[i] += (255 - (255 - p[i]) * (255 - r) / 255 - p[i]) * a; p[i + 1] += (255 - (255 - p[i + 1]) * (255 - g) / 255 - p[i + 1]) * a; p[i + 2] += (255 - (255 - p[i + 2]) * (255 - b) / 255 - p[i + 2]) * a; };
@@ -563,16 +563,23 @@ function shade(d, finish, rarity, m, t) {
     } else if (finish === 'gold') {
       p[i] = Math.min(255, p[i] * 1.1 + 18); p[i + 1] = Math.min(255, p[i + 1] * .96 + 10); p[i + 2] = p[i + 2] * .7;
       screen(i, 255, 230, 120, gl * .5);
-    } else if (finish === 'galaxy') {         // a living nebula: swirling magenta and cyan clouds, a dark tint, twinkling stars with flares, a shooting star
-      const k = (y + GOY) * GFW + (x + GOX), v = GNEB.a[k], w = GNEB.b[k];
-      p[i] = p[i] * .66 + 8; p[i + 1] = p[i + 1] * .6 + 4; p[i + 2] = p[i + 2] * .74 + 26;
-      screen(i, 36, 16, 104, .34);
-      const nv = Math.min(1, Math.pow(Math.max(0, (v - .3) * 2.1), 1.25));
-      screen(i, 215 - 145 * w, 55 + 150 * w, 205 + 50 * w, nv * .78);
-      if (nv > .8) screen(i, 255, 240, 255, (nv - .8) * 1.2);
-      const hs = hash2(x, y, 7); if (hs < .03) screen(i, 215, 230, 255, (.3 + .7 * (.5 + .5 * Math.sin(t * 3 + hs * 900))) * (hs < .006 ? 1 : .6));
-      screen(i, 190, 150, 255, gl * .4);
-      if (edge < 4) { const [r, g, b2] = hsl2rgb(280 + 80 * Math.sin(x * .12 + y * .09 + t * 1.5), 1, .62); screen(i, r, g, b2, .6 * (1 - edge / 4)); }
+    } else if (finish === 'galaxy') {         // watercolour night sky behind the creature: indigo, purple, pink clouds, white speckle stars; the creature itself stays clear
+      const k = (y + GOY) * GFW + (x + GOX), v = GNEB.a[k], w = GNEB.b[k], mk = GMASK ? GMASK[y * CW + x] / 255 : 0, bar = y < 21 || y >= 145;
+      const st = face ? (1 - mk * .9) * (bar ? .38 : .9) : 0;
+      const sm = (e0, e1, q) => { q = Math.max(0, Math.min(1, (q - e0) / (e1 - e0))); return q * q * (3 - 2 * q); };
+      let cr = 10 + 30 * sm(.2, .5, v), cg = 8 + 18 * sm(.2, .5, v), cb = 40 + 90 * sm(.2, .5, v);         // dark indigo up to blue
+      const pu = sm(.42, .64, v); cr += (112 - cr) * pu; cg += (58 - cg) * pu; cb += (196 - cb) * pu;       // purple clouds
+      const pk = sm(.5, .74, v) * sm(.3, .7, w); cr += (222 - cr) * pk; cg += (74 - cg) * pk; cb += (184 - cb) * pk;       // pink patches
+      const hot = sm(.68, .86, v) * sm(.5, .85, w); cr += (240 - cr) * hot * .85; cg += (86 - cg) * hot * .85; cb += (116 - cb) * hot * .85;  // red-hot core
+      p[i] += (cr - p[i]) * st; p[i + 1] += (cg - p[i + 1]) * st; p[i + 2] += (cb - p[i + 2]) * st;
+      if (face && mk > .3) screen(i, 120, 80, 220, .1 * mk);          // a faint purple rim light on the creature
+      if (face){
+        const hs = hash2(x, y, 7), big = hash2(x >> 1, y >> 1, 9), tw = .6 + .4 * Math.sin(t * 2 + hs * 900), keep = 1 - mk * .55;
+        if (hs < .045) screen(i, 235, 240, 255, (hs < .008 ? .95 : .5) * tw * keep);                    // fine white speckle
+        if (big < .0045) screen(i, 255, 255, 255, .9 * tw * keep);                                      // a few bigger drops
+      }
+      screen(i, 190, 150, 255, gl * .25);
+      if (edge < 4) { const [r, g, b2] = hsl2rgb(250 + 70 * Math.sin(x * .12 + y * .09 + t * 1.5), 1, .62); screen(i, r, g, b2, .55 * (1 - edge / 4)); }
     } else if (finish === 'etched') {
       const l = ((x * 2 + y) % 4 === 0 ? 14 : (x + y * 2) % 7 === 0 ? -12 : 0); p[i] += l; p[i + 1] += l; p[i + 2] += l; screen(i, 255, 255, 255, gl * .5 * (((x + y) % 3) ? 1 : .5));
     }
@@ -599,6 +606,15 @@ function nebula(){
   for (let y = 0; y < GFH; y++) for (let x = 0; x < GFW; x++){ const k = y * GFW + x; a[k] = .5 * vn(x, y, 30, 11) + .3 * vn(x, y, 15, 12) + .2 * vn(x, y, 7, 13); b[k] = .6 * vn(x, y, 40, 21) + .4 * vn(x, y, 18, 22); }
   return GN = { a, b };
 }
+const MASKS = {};
+function creatureMask(spec) {             // where the creature is on the card (same placement as compose), so finishes can leave it alone
+  const key = spec.creature + '|' + (spec.variant || 0); if (MASKS[key]) return MASKS[key];
+  const spr = variantSprite(spec.creature, VARIANTS[spec.variant || 0]), m = new Uint8Array(CW * CH); if (!spr) return MASKS[key] = m;
+  const c = document.createElement('canvas'); c.width = CW; c.height = CH; const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+  const sc = 1.15, w = Math.round(spr.width * sc), h = Math.round(spr.height * sc); x.drawImage(spr, Math.round(60 - w / 2), Math.round(134 - h), w, h);
+  const a = x.getImageData(0, 0, CW, CH).data; for (let i = 0; i < m.length; i++) m[i] = a[i * 4 + 3];
+  return MASKS[key] = m;
+}
 const COMPOSED = {};
 function render(canvas, spec, mouse) {
   const rar = spec.rarity, finish = spec.finish || DEFAULT_FINISH[rar] || 'none', m = Object.assign({ mx:.5, my:.4, t:0 }, mouse || {});
@@ -606,7 +622,7 @@ function render(canvas, spec, mouse) {
   const base = COMPOSED[key] || (COMPOSED[key] = compose(spec));
   canvas.width = CW; canvas.height = CH; const ctx = canvas.getContext('2d', { willReadFrequently:true }); ctx.imageSmoothingEnabled = false; ctx.drawImage(base, 0, 0);
   const rim = spec.edge === 'rainbow' ? 'secret' : spec.edge === 'gold' ? 'ultra' : spec.edge ? 'common' : rar;       // rainbow edge = secret-rare rim, gold = ultra glow
-  if (finish !== 'none' || rim === 'ultra' || rim === 'secret') { const d = ctx.getImageData(0, 0, CW, CH); shade(d, finish, rim, { mx:m.mx, my:m.my }, m.t || 0); ctx.putImageData(d, 0, 0); }
+  if (finish !== 'none' || rim === 'ultra' || rim === 'secret') { const d = ctx.getImageData(0, 0, CW, CH); shade(d, finish, rim, { mx:m.mx, my:m.my }, m.t || 0, finish === 'galaxy' ? creatureMask(spec) : null); ctx.putImageData(d, 0, 0); }
   return canvas;
 }
 function randomSpec(rng) { rng = rng || Math.random; const pick = a => a[Math.floor(rng() * a.length)]; return { creature:pick(CARDS.cards).id, rarity:pick(RARITIES), finish:pick(FINISHES), tier:pick(TIERS) }; }
