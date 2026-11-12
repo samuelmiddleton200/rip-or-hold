@@ -948,7 +948,7 @@ function buyCollection(id){
 const gradeSecs = v => v < 10 ? 300 : v < 50 ? 900 : v < 100 ? 1800 : v < 250 ? 3600 : v < 500 ? 5400 : v < 1000 ? 7200 : v < 2500 ? 14400 : v < 10000 ? 21600 : v < 25000 ? 28800 : v < 100000 ? 50400 : 86400;
 const gradingFee = c => 10;
 // the grader holds 5 cards at a time, plus 1 for every 10 rep
-const maxGrading = () => 5 + Math.floor((G.rep || 0) / 10);
+const maxGrading = () => Math.min(10, 5 + Math.floor((G.rep || 0) / 10));
 function startGrading(uids){
   const cards = G.inv.cards.filter(c => uids.includes(c.u) && !c.g && !c.bs).slice(0, Math.max(0, maxGrading() - G.grading.length)), fee = r2(cards.reduce((a, c) => a + gradingFee(c), 0));
   if (!cards.length || G.cash < fee) return false;
@@ -1547,7 +1547,7 @@ function scrMarket(){
 function gradeChart(){
   const T = [[10, 'under $10'], [50, '$10 to $50'], [100, '$50 to $100'], [250, '$100 to $250'], [500, '$250 to $500'], [1000, '$500 to $1,000'], [2500, '$1,000 to $2,500'], [10000, '$2,500 to $10,000'], [25000, '$10,000 to $25,000'], [100000, '$25,000 to $100,000'], [1e12, 'over $100,000']];
   const G_ = [['10 Gem Mint', '3.5x to 5x'], ['9 Mint', '1.2x'], ['8 Near Mint', '0.75x'], ['7 or lower', '0.5x']];
-  overlay(`<div class="modal" style="width:min(760px,96vw)"><h2>Grading chart</h2><div class="dim" style="margin-bottom:6px">Grading costs ${money(10)} a card. The grade stays hidden until the card comes back. Each grade is equally likely. The grader holds ${maxGrading()} cards at a time, plus 1 for every 10 rep.</div>
+  overlay(`<div class="modal" style="width:min(760px,96vw)"><h2>Grading chart</h2><div class="dim" style="margin-bottom:6px">Grading costs ${money(10)} a card. The grade stays hidden until the card comes back. Each grade is equally likely. The grader holds ${maxGrading()} cards at a time, plus 1 for every 10 rep, up to 10.</div>
     <div class="cols"><div><h3 style="margin-top:4px">Value after grading</h3>${G_.map(g => `<div class="mrow"><span>${g[0]}</span><b>${g[1]}</b></div>`).join('')}<div class="mrow"><span class="dim">Average</span><b class="gold">about 1.67x</b></div></div>
     <div><h3 style="margin-top:4px">How long it takes</h3>${T.map(t => `<div class="mrow"><span>${t[1]}</span><b>${fmtDur(gradeSecs(t[0] - .01) * 1000)}</b></div>`).join('')}</div></div>
     <div style="margin-top:10px"><button data-a="close">Close</button></div></div>`);
