@@ -970,6 +970,8 @@ function ledger(text, delta){ G.ledger.unshift({ day:G.day, text, delta:delta ||
 let HARD = 0;
 const hardOf = () => clamp(Math.log(Math.max(1, netWorth() / 500)) / Math.log(20000), 0, 1);
 const dealerRate = () => .8 - .2 * HARD;
+// reputation gets harder to earn the more you have: every gain is divided by (1 + rep / 8)
+const addRep = x => { G.rep = clamp((G.rep || 0) + x / (1 + (G.rep || 0) / 8), 0, 100); };
 const SHIP = 1.5, BULK_EACH = .005;
 const dealerOffer = c => r2(cv(c) * dealerRate());
 const isBulk = c => { if (c.bs) return false; const d = DEFS[c.d]; return !c.g && d.tier === 1 && d.fin === 'none' && cv(c) < .15; };
@@ -1091,7 +1093,7 @@ function ebayHour(){
     if (!auctionTick(a, beat)){ keep.push(c); continue; }
     if (a.bids){
       const net = a.bid; noteDeal('sale', c, a.bid, 'eBay'); G.cash += net; G.stats.revenue += net; G.stats.bigSale = Math.max(G.stats.bigSale, a.bid); if (!c.bs) recordSale(c.d, a.bid, 'eBay'); releaseCard(c);
-      ledger('eBay: sold ' + cname(c) + ' for ' + money(a.bid) + '', net); G.rep = Math.min(100, G.rep + .1); note('eBay: sold ' + cname(c) + ' for ' + money(a.bid));
+      ledger('eBay: sold ' + cname(c) + ' for ' + money(a.bid) + '', net); addRep(.1); note('eBay: sold ' + cname(c) + ' for ' + money(a.bid));
     } else { delete c.auc; delete c.listed; G.inv.cards.push(c); note('eBay: no bids on ' + cname(c) + '. It is back in your collection.'); }
   }
   G.ebay = keep;
@@ -1173,7 +1175,7 @@ function bindSet(key){
 }
 function claimSet(setId){
   const p = setProgress(setId); if (p.have < p.total || G.done['set:' + setId]) return false;
-  const bonus = 100; G.cash += bonus; G.rep = Math.min(100, G.rep + 5); G.done['set:' + setId] = 1; G.trophies.push({ set:setId, day:G.day });
+  const bonus = 100; G.cash += bonus; addRep(5); G.done['set:' + setId] = 1; G.trophies.push({ set:setId, day:G.day });
   ledger('Set complete: ' + setOf(setId).name, bonus); postNews('Set complete: ' + setOf(setId).name + '! Bonus ' + money(bonus) + ' and +5 reputation.', 'up'); checkAch(); return true;
 }
 
@@ -1810,7 +1812,7 @@ function sellAt(price){
   if (!it.sealed && !it.c.bs){ recordSale(it.c.d, price, SH.name); noteDeal('sale', it.c, price, 'a card show'); }
   if (it.sealed){ const [s, p] = it.key.split(':'); addSealed(s, p, -1); } else { G.inv.cards.splice(G.inv.cards.findIndex(x => x.u === it.c.u), 1); releaseCard(it.c); }
   SH.table.splice(SH.table.findIndex(t => t === it.t), 1);
-  G.rep = clamp(G.rep + (price >= it.v * .95 ? .5 : price >= it.v * .8 ? .25 : .05), 0, 100);
+  addRep(price >= it.v * .95 ? .5 : price >= it.v * .8 ? .25 : .05);
   SH.log.push((it.sealed ? prodName(...it.key.split(':')) : cname(it.c)) + ': sold for ' + money(price));
   sfx.sell();
 }
@@ -2019,7 +2021,7 @@ const ACT = {
   },
   spass(){ SH.log.push('You passed on ' + SH.cur.b[2] + '.'); nextBuyer(); render(); },
   sclose(){ SH.stage = 'done'; SH.cur = null; render(); },
-  shend(){ (SH.vendors || []).forEach(v => v.items.forEach(i => releaseCard(i.c))); G.stats.shows++; if (SH.sold >= 3) G.rep = clamp(G.rep + (SH.kind === 'national' ? 3 : SH.kind === 'regional' ? 2 : 1), 0, 100); SH = null; G.showN = (G.showN || 0) + 1; G.showAt = (G.beat || 0) + 32; toast('The show is over.'); afterSkip(); },
+  shend(){ (SH.vendors || []).forEach(v => v.items.forEach(i => releaseCard(i.c))); G.stats.shows++; if (SH.sold >= 3) addRep(SH.kind === 'national' ? 3 : SH.kind === 'regional' ? 2 : 1); SH = null; G.showN = (G.showN || 0) + 1; G.showAt = (G.beat || 0) + 32; toast('The show is over.'); afterSkip(); },
   deal(d){ SH.deal = { vi:+d.vi, ii:+d.ii, pat:3, msg:'Let\'s talk.', counter:0, dead:false, sel:new Set() }; dealModal(); },
   dof(d){
     const D = SH.deal, it = SH.vendors[D.vi].items[D.ii], f = +d.v;
@@ -2048,7 +2050,7 @@ const ACT = {
   vsell(){ sellVendorModal(); },
   vsold(d){
     const i = G.inv.cards.findIndex(c => c.u === +d.v); if (i < 0) return; const c = G.inv.cards.splice(i, 1)[0], v = r2(cv(c) * SH.buyRate); if (!c.bs){ recordSale(c.d, v, SH.name); noteDeal('sale', c, v, 'a card show vendor'); } releaseCard(c);
-    G.cash += v; G.stats.revenue += v; G.stats.bigSale = Math.max(G.stats.bigSale, v); SH.earned += v; SH.sold++; SH.log.push('Sold ' + cname(c) + ' to a vendor for ' + money(v)); G.rep = clamp(G.rep + .05, 0, 100); sfx.sell(); sellVendorModal(); render();
+    G.cash += v; G.stats.revenue += v; G.stats.bigSale = Math.max(G.stats.bigSale, v); SH.earned += v; SH.sold++; SH.log.push('Sold ' + cname(c) + ' to a vendor for ' + money(v)); addRep(.05); sfx.sell(); sellVendorModal(); render();
   },
   job(d){ JOB = { id:d.v, round:0, earn:0, msg:'' }; newRound(); render(); jobLoop(); },
   jstop(){
@@ -2368,35 +2370,38 @@ function ensureShop(){
     for (const it of old){ const i = G.shop.slots.findIndex((x, k) => !x && slotAccepts(k, it)); if (i >= 0) G.shop.slots[i] = it; else if (it.k !== 's') G.inv.cards.push(it.c); }
   }
 }
-// how long a priced item sits before someone buys it, by price as a share of market value: [from %, to %, fastest minutes, slowest minutes]
-const SHOP_BANDS = [[0, 120, .5, 1], [120, 130, 1, 5], [130, 140, 5, 10], [140, 150, 10, 20], [150, 160, 20, 45], [160, 180, 60, 180], [180, 200.01, 180, 1440]];
-const shopBand = r => SHOP_BANDS.find(b => r * 100 >= b[0] && r * 100 < b[1]) || null;           // null = priced past 200%: it never sells
-const minTxt = m => m < 1 ? 'under a minute' : m >= 60 ? (m / 60) + ' hr' : m + ' min';
-const bandTxt = b => !b ? 'it will not sell at that price' : b[0] === 0 ? 'sells within a minute' : 'sells in ' + (b[3] >= 60 && b[2] < 60 ? minTxt(b[2]) + ' to ' + minTxt(b[3]) : b[3] >= 60 ? (b[2] / 60) + ' to ' + (b[3] / 60) + ' hr' : b[2] + ' to ' + b[3] + ' min');
-function setShopPrice(it, price){          // fixes the moment it will sell, at random inside the band for that price
-  it.price = price > 0 ? price : 0; const b = it.price ? shopBand(it.price / Math.max(.01, itemVal(it))) : null;
-  it.due = b ? (G.beat || 0) + Math.max(1, Math.round((b[2] + rnd() * (b[3] - b[2])) * 4)) : null;
+// Pricing a shelf item: four choices, each a markup over market value. The pricier the card, the smaller the steps
+// (a $5 card: 100 / 120 / 140 / 160%, a $25 card: 100 / 115 / 130 / 145%, a $500 card: 100 / 110 / 120 / 130%).
+// A shopper looks at a priced item every 5 minutes (first price), 15 (second), 1 hour (third) or 4 hours (fourth). Some shoppers pass, and then the next one is a full wait away.
+// Pricier cards get passed on more often, and so does everything as the market heats up.
+const SHOP_WAIT = [5, 15, 60, 240];
+const STEP_PTS = [[5, .20], [25, .15], [500, .10], [5000, .07], [50000, .05], [500000, .03]];
+function shopStep(v){
+  if (v <= STEP_PTS[0][0]) return STEP_PTS[0][1]; if (v >= STEP_PTS[STEP_PTS.length - 1][0]) return STEP_PTS[STEP_PTS.length - 1][1];
+  for (let k = 1; k < STEP_PTS.length; k++){ const [v1, s1] = STEP_PTS[k], [v0, s0] = STEP_PTS[k - 1]; if (v <= v1) return s0 + (s1 - s0) * Math.log(v / v0) / Math.log(v1 / v0); }
 }
-function shelfChance(it, i){ return 0; }
+const shopMults = v => { const st = shopStep(v); return [0, 1, 2, 3].map(k => r2(1 + st * k)); };
+const shopPass = v => clamp(.2 + .12 * Math.log10(Math.max(1, v / 5)) + .2 * HARD, .2, .92);
+const shopWaitBeats = k => Math.max(2, Math.round(SHOP_WAIT[k] * 4 * (1 + HARD) * (.8 + rnd() * .4)));
+const waitTxt = k => { const m = Math.round(SHOP_WAIT[k] * (1 + HARD)); return m >= 60 ? (Math.round(m / 6) / 10) + ' hr' : m + ' min'; };
+function setShopOption(it, k){ const v = itemVal(it); it.opt = k; it.price = Math.max(.01, r2(v * shopMults(v)[k])); it.next = (G.beat || 0) + shopWaitBeats(k); }
+function clearShopPrice(it){ it.price = 0; it.opt = undefined; it.next = null; }
 // shoppers walk in during open hours (9 to 9). The per-day chance is spread over the 12 open hours.
 function shopHour(){
   ensureShop(); if (!shopOpen(G.hour)) return;
-  // shoppers come through one at a time (every 4 to 12 minutes at the start, slower as the game gets harder, a bit faster with reputation), so more cards on display does not mean more sales.
-  // A shopper buys an item whose price they are happy with (its sell-time from the price bands has passed).
   const beat = G.beat || 0;
-  if (G.shop.next == null) G.shop.next = beat + ri(16, 48);
-  if (beat < G.shop.next) return;
-  G.shop.next = beat + Math.max(8, Math.round(ri(16, 48) * (1 - Math.min(.4, G.rep / 250)) * (1 + 2 * HARD)));
-  if (rnd() < .3 + .35 * HARD) return;                           // some shoppers just look and pass
-  const ready = []; G.shop.slots.forEach((it, i) => { if (!it || !it.price) return; if (it.due === undefined) setShopPrice(it, it.price); if (it.due != null && beat >= it.due) ready.push(i); });
-  if (!ready.length) return;
-  const i = pick(ready), it = G.shop.slots[i];
-  G.cash += it.price; G.stats.revenue += it.price; G.stats.bigSale = Math.max(G.stats.bigSale, it.price);
-  G.shop.sold++; G.shop.earned += it.price; G.rep = Math.min(100, G.rep + .1);
-  (G.shop.log = G.shop.log || []).push(it.k === 's' ? { key:it.key, price:it.price } : { c:it.c, price:it.price }); if (G.shop.log.length > 60) G.shop.log.shift();
-  if (it.k === 's'){ ledger('Shop: sold ' + prodName(...it.key.split(':')) + ' for ' + money(it.price), it.price); note('Shop sold ' + prodName(...it.key.split(':')) + ' for ' + money(it.price)); }
-  else { if (!it.c.bs){ recordSale(it.c.d, it.price, 'Your Shop'); noteDeal('sale', it.c, it.price, 'your shop'); } ledger('Shop: sold ' + cname(it.c) + ' for ' + money(it.price), it.price); note('Shop sold ' + cname(it.c) + ' for ' + money(it.price)); releaseCard(it.c); }
-  G.shop.slots[i] = null;
+  G.shop.slots.forEach((it, i) => {
+    if (!it || !it.price) return;
+    if (it.opt === undefined){ const v = itemVal(it), r = it.price / v, m = shopMults(v); it.opt = m.reduce((best, x, k) => Math.abs(x - r) < Math.abs(m[best] - r) ? k : best, 0); it.next = beat + shopWaitBeats(it.opt); }
+    if (beat < it.next) return;
+    if (rnd() < shopPass(itemVal(it))){ it.next = beat + shopWaitBeats(it.opt); return; }          // a shopper looked and passed
+    G.cash += it.price; G.stats.revenue += it.price; G.stats.bigSale = Math.max(G.stats.bigSale, it.price);
+    G.shop.sold++; G.shop.earned += it.price; addRep(.1);
+    (G.shop.log = G.shop.log || []).push(it.k === 's' ? { key:it.key, price:it.price } : { c:it.c, price:it.price }); if (G.shop.log.length > 60) G.shop.log.shift();
+    if (it.k === 's'){ ledger('Shop: sold ' + prodName(...it.key.split(':')) + ' for ' + money(it.price), it.price); note('Shop sold ' + prodName(...it.key.split(':')) + ' for ' + money(it.price)); }
+    else { if (!it.c.bs){ recordSale(it.c.d, it.price, 'Your Shop'); noteDeal('sale', it.c, it.price, 'your shop'); } ledger('Shop: sold ' + cname(it.c) + ' for ' + money(it.price), it.price); note('Shop sold ' + cname(it.c) + ' for ' + money(it.price)); releaseCard(it.c); }
+    G.shop.slots[i] = null;
+  });
 }
 
 // everything that sold since you last looked is shown once, a picture each, until you press OK
@@ -2412,7 +2417,7 @@ function slotHTML(i){
   const s = SR[i], it = G.shop.slots[i], pos = `left:${(s.x / SR_W * 100).toFixed(3)}%;top:${(s.y / SR_H * 100).toFixed(3)}%;width:${(s.w / SR_W * 100).toFixed(3)}%;height:${(s.h / SR_H * 100).toFixed(3)}%;--sw:${(s.w / SR_W * 100).toFixed(3)}cqw;--sh:${(s.h / SR_H * 100).toFixed(3)}cqh`;
   const title = s.big ? 'The big frame: your finest card' : ZONE[s.z].name + (s.z === 'vault' ? ' (cards worth ' + money(VAULT_MIN) + '+ or graded 9+)' : '');
   if (!it) return `<div class="sl2 empty z-${s.z}${s.big ? ' big' : ''}" style="${pos}" title="${title}" data-a="shp" data-c="slot" data-i="${i}"><span>+</span></div>`;
-  const mk = itemVal(it), r = it.price ? it.price / mk : 0, tol = ZONE[s.z].tol, cls = !it.price ? 'unset' : r <= 1.2 ? 'good' : r <= 1.6 ? 'ok' : 'high';
+  const mk = itemVal(it), r = it.price ? it.price / mk : 0, tol = ZONE[s.z].tol, cls = !it.price ? 'unset' : (it.opt || 0) === 0 ? 'good' : (it.opt || 0) < 3 ? 'ok' : 'high';
   const best = it.c && it.c.bs ? it.c.cards.slice().sort((a, b) => cv(b) - cv(a))[0] : null;           // a bound set shows only its best card, labelled SET n
   const body = it.k === 's' ? `<img class="sealedimg" src="${productSprite(...it.key.split(':'))}" alt="">` : best ? cardHTML(DEFS[best.d], { sm:true, c:it.c, serialOf:best, noStack:true, price:false }) : cardHTML(DEFS[it.c.d], { sm:true, c:it.c, price:false });
   return `<div class="sl2 full z-${s.z}${s.big ? ' big' : ''}" style="${pos}" title="${title}" draggable="true" data-a="shp" data-c="slot" data-i="${i}">${body}<div class="stag ${cls}">${it.price ? money(it.price) : '$ ?'}</div></div>`;
@@ -2421,7 +2426,7 @@ function scrMyShop(){
   ensureShop();
   const items = shopItems(), val = items.reduce((a, it) => a + itemVal(it), 0), priced = items.filter(it => it.price).length;
   let h = `<div class="shophead"><b>MY SHOP</b><span>${items.length}/${SHOP_SLOTS} on display · worth ${money(val)} · ${priced} priced · sold ${G.shop.sold} for ${money(G.shop.earned)}</span></div>
-    <div class="dim shophelp" style="margin:4px 0 8px">Click an empty spot to put something there, click it to set a price or take it down, or drag things between spots. The cubbies take any card, the feature wall (the big frame and the glass counter) is for cards worth ${money(VAULT_MIN)} or more (or graded 9+), and the shelf on the right is for packs and boxes. Price things at 120% to 200% of market: the lower you go, the sooner a shopper will take it. Shoppers come through one at a time, so a full shop does not sell all at once. No price means it is for show only.</div>
+    <div class="dim shophelp" style="margin:4px 0 8px">Click an empty spot to put something there, click it to set a price or take it down, or drag things between spots. The cubbies take any card, the feature wall (the big frame and the glass counter) is for cards worth ${money(VAULT_MIN)} or more (or graded 9+), and the shelf on the right is for packs and boxes. Pick one of four prices for each thing: the higher the price, the longer you wait between shoppers, and some shoppers pass. No price means it is for show only.</div>
     <div class="showroom" style="background-image:url(${SHOWROOM_BG})">`;
   h += `<div class="signtxt"><b>MY SHOP</b><small>${items.length}/${SHOP_SLOTS} · ${money(val)}</small></div>`;
   for (let i = 0; i < SHOP_SLOTS; i++) h += slotHTML(i);
@@ -2445,11 +2450,10 @@ function showShelfItem(i){
   overlay(`<div class="modal" style="width:min(1000px,96vw)"><div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start"><div class="bigcard">${sealed ? prodImg(sa, sb, 240) : cardHTML(DEFS[it.c.d], { c:it.c, price:false, live:true })}</div><div style="flex:1;min-width:280px"><h2>${name}</h2><div class="dim">${sealed ? 'Sealed product' : it.c.bs ? 'Bound set · ' + it.c.size + ' cards' : cardLabel(it.c)} · ${ZONE[SR[i].z].name}</div>
     <div style="font-size:24px;margin-top:6px">Market value <b class="gold">${money(mk)}</b></div>
     ${sealed ? '' : lastSoldHTML(it.c.bs ? it.c.cards[0] : it.c)}
-    <div style="font-size:22px;margin:8px 0">Your price: <input id="shpPrice" data-mk="${mk}" type="number" min="0" step="0.01" value="${it.price || ''}" placeholder="set a price" style="width:150px;font-size:22px;background:#0b1226;color:#fff;border:2px solid #34437a;border-radius:4px;padding:2px 8px"></div>
-    <div class="dim" style="margin-bottom:4px">Suggested prices (share of market value):</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap">${[1.2, 1.3, 1.4, 1.5, 1.6, 1.8, 2].map(f => `<button data-a="shp" data-c="pm" data-i="${i}" data-v="${f}">${Math.round(f * 100)}% ${money(Math.max(.01, r2(mk * f)))}<small style="display:block;font-size:11px;opacity:.75">${bandTxt(shopBand(f)).replace('sells in ', '')}</small></button>`).join('')}</div>
-    <div id="shpEst" class="dim" style="margin-top:8px;font-size:18px">${it.price ? 'At ' + Math.round(it.price / mk * 100) + '% of market, ' + bandTxt(shopBand(it.price / mk)) + '.' : 'No price set: it is on show only and will not sell.'}</div>
-    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="gold" data-a="shp" data-c="psave" data-i="${i}">Save price</button><button class="red" data-a="shp" data-c="down" data-i="${i}">Take it down</button><button data-a="close">Close</button></div></div></div></div>`);
+    <div class="dim" style="margin:8px 0 4px;font-size:17px">Pick a price.</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">${shopMults(mk).map((m, k) => `<button class="${it.price && it.opt === k ? 'gold' : ''}" data-a="shp" data-c="popt" data-i="${i}" data-v="${k}">${Math.round(m * 100)}% ${money(Math.max(.01, r2(mk * m)))}<small style="display:block;font-size:11px;opacity:.8">a shopper looks every ${waitTxt(k)}</small></button>`).join('')}</div>
+    <div class="dim" style="margin-top:8px;font-size:18px">${it.price ? 'A shopper looks at it every ' + waitTxt(it.opt || 0) + '.' : 'No price set: it is on show only and will not sell.'}</div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button data-a="shp" data-c="punset" data-i="${i}">Remove price</button><button class="red" data-a="shp" data-c="down" data-i="${i}">Take it down</button><button data-a="close">Close</button></div></div></div></div>`);
 }
 const SHPACT = {
   shopok(){ G.shop.log = []; closeOv(); render(); },
@@ -2459,8 +2463,8 @@ const SHPACT = {
     else if (c === 'pf'){ SHP.pf = d.v; showPicker(i); }
     else if (c === 'place'){ const k = G.inv.cards.findIndex(x => x.u === +d.u); if (k < 0 || G.shop.slots[i]) return; G.shop.slots[i] = { c:G.inv.cards.splice(k, 1)[0], price:0 }; sfx.click(); closeOv(); render(); showShelfItem(i); }
     else if (c === 'placep'){ if (!G.inv.sealed[d.k] || G.shop.slots[i]) return; const [a, b] = d.k.split(':'), cost = basisPer(d.k); addSealed(a, b, -1); G.shop.slots[i] = { k:'s', key:d.k, cost, price:0 }; sfx.click(); closeOv(); render(); showShelfItem(i); }
-    else if (c === 'pm'){ const it = G.shop.slots[i]; if (!it) return; setShopPrice(it, Math.max(.01, r2(itemVal(it) * +d.v))); sfx.click(); showShelfItem(i); render(); }
-    else if (c === 'psave'){ const it = G.shop.slots[i], el = document.getElementById('shpPrice'); if (!it || !el) return; setShopPrice(it, r2(+el.value)); sfx.buy(); closeOv(); render(); }
+    else if (c === 'popt'){ const it = G.shop.slots[i]; if (!it) return; setShopOption(it, +d.v); sfx.click(); showShelfItem(i); render(); }
+    else if (c === 'punset'){ const it = G.shop.slots[i]; if (!it) return; clearShopPrice(it); sfx.click(); showShelfItem(i); render(); }
     else if (c === 'down'){ const it = G.shop.slots[i]; if (!it) return; if (it.k === 's'){ const [a, b] = it.key.split(':'); addSealed(a, b, 1, it.cost); } else G.inv.cards.push(it.c); G.shop.slots[i] = null; closeOv(); render(); }
   },
 };
@@ -2529,7 +2533,7 @@ function fillOrder(oid, uid){
   const oi = G.orders.findIndex(o => o.id === oid), ci = G.inv.cards.findIndex(c => c.u === uid); if (oi < 0 || ci < 0) return false;
   const o = G.orders[oi], c = G.inv.cards[ci]; if (!orderMatch(o.w, c)) return false;
   const pay = orderPay(o, c); G.inv.cards.splice(ci, 1); releaseCard(c); G.orders.splice(oi, 1);
-  G.cash += pay; G.stats.revenue += pay; G.stats.bigSale = Math.max(G.stats.bigSale, pay); G.rep = Math.min(100, G.rep + .4);
+  G.cash += pay; G.stats.revenue += pay; G.stats.bigSale = Math.max(G.stats.bigSale, pay); addRep(.4);
   recordSale(c.d, pay, 'Your Shop'); noteDeal('sale', c, pay, 'a customer order'); ledger('Order for ' + o.name + ': ' + cname(c), pay);
   return pay;
 }
