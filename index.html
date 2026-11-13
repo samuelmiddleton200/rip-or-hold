@@ -898,7 +898,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='1.1';'use strict';
+<script>const BUILD='mwfffcfs';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2568,6 +2568,8 @@ function intro(){
   overlay(`<div class="modal" style="width:min(640px,96vw);text-align:center"><h2 style="font-size:40px">RIP OR HOLD</h2><div style="font-size:24px;line-height:1.1">You are a card shop owner with <b class="gold">$500</b> and one ETB.<br>Card prices move with supply and demand, so read the market. Open packs of monster cards, stock your shelves, fill customer orders, chase the shiny and rich-scene ones, grade the good ones, sell to shoppers and on eBay, and watch the market.<br><br>Most product loses money on average. The skill is knowing <b>when to rip and when to hold</b>.</div><br><button class="gold" style="font-size:28px" data-a="go">LET'S GO</button></div>`);
 }
 async function boot(){
+  // self-update: if the server already has a newer build than this page (a stale cached copy), reload once to pick it up
+  try { if (/^https?:/.test(location.protocol)) fetch(location.pathname + '?b=' + Date.now(), { cache:'reload' }).then(r => r.text()).then(t => { const m = t.match(/const BUILD='([^']+)'/); if (m && typeof BUILD !== 'undefined' && m[1] !== BUILD && !sessionStorage.getItem('upd' + m[1])){ sessionStorage.setItem('upd' + m[1], '1'); location.reload(); } }).catch(() => {}); } catch (e) {}
   await CardRenderer.init(CARD_ASSETS, CARD_DATA); CardRenderer.ready = true;
   if (!load()){ newGameState(); G.gift1 = 1; save(); }
   // a one-time gift for everyone already playing: a free Collectors Pack in the Packs tab
