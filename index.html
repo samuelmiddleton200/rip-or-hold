@@ -3059,17 +3059,18 @@ function orderLabel(w){
   if (w.edge) t += (w.fin ? ' and a ' : ' with a ') + w.edge + ' edge';
   return t + ' worth ' + money(w.min) + ' to ' + money(w.max);
 }
-// customers are specific: at least two properties of a card and a value range, and they pay 1.3x to 1.7x the card's value
+// customers are specific: at least two properties of a card and a value range (cards worth $25 or more), and they pay 1.3x to 1.7x the card's value
 const niceNum = (x, up) => { const m = Math.pow(10, Math.floor(Math.log10(Math.max(x, .01))) - 1), n = (up ? Math.ceil : Math.floor)(x / m) * m; return n >= 100 ? Math.round(n) : r2(n); };
+const CUSTOMER_MIN = 25;            // customers only ask for cards worth at least this much
 function newOrderSpec(){
-  const inv = G.inv.cards.filter(c => !c.bs);
+  const inv = G.inv.cards.filter(c => !c.bs && cv(c) >= CUSTOMER_MIN);
   let d, v;
   if (inv.length && rnd() < .6){ const c = pick(inv); d = DEFS[c.d]; v = cv(c); }
-  else { let tot = 0; for (const l of LOOKS) tot += l.copies; let r = rnd() * tot, l = LOOKS[0]; for (const x of LOOKS){ r -= x.copies; if (r < 0){ l = x; break; } } d = DEFS[l.id]; v = l.v0; }
+  else { const pool = LOOKS.filter(l => l.v0 >= CUSTOMER_MIN * 1.1); let tot = 0; for (const l of pool) tot += l.copies; let r = rnd() * tot, l = pool[0]; for (const x of pool){ r -= x.copies; if (r < 0){ l = x; break; } } d = DEFS[l.id]; v = px(l.id); }
   const have = ['type', 'stage', 'tier']; if (d.fin !== 'none') have.push('fin'); if (d.edge !== 'grey') have.push('edge');
   have.sort(() => rnd() - .5); const n = Math.min(have.length, 2 + (rnd() < .3 ? 1 : 0)), w = {};
   for (const k of have.slice(0, n)){ if (k === 'type') w.type = d.type; else if (k === 'stage') w.stage = d.stage === 'evolved' ? 1 : 0; else if (k === 'tier') w.tier = d.tier; else if (k === 'fin') w.fin = d.fin; else w.edge = d.edge; }
-  w.min = Math.max(.25, niceNum(v * (.3 + rnd() * .4), false)); w.max = niceNum(Math.max(v * (1.5 + rnd() * 2.5), w.min * 2), true);
+  w.min = Math.max(CUSTOMER_MIN, niceNum(v * (.5 + rnd() * .4), false)); w.max = niceNum(Math.max(v * (1.5 + rnd() * 2.5), w.min * 2), true);
   return w;
 }
 function addOrder(){
@@ -3078,7 +3079,7 @@ function addOrder(){
   note('New order: ' + name + ' wants ' + orderLabel(w));
 }
 function ordersHour(){
-  G.orders = (G.orders || []).filter(o => o.exp > orderNow() && o.w.max != null);        // orders from before the value ranges are dropped
+  G.orders = (G.orders || []).filter(o => o.exp > orderNow() && o.w.max != null && o.w.min >= CUSTOMER_MIN);        // old orders for cheap cards are dropped
   if (!shopOpen(G.hour)) return;
   if (G.orders.length < 4 && rnd() < .08) addOrder();
 }
@@ -3131,7 +3132,7 @@ const displayedCards = () => shopCards().map(it => it.c).filter(c => !c.bs);
 const tradeMineOk = t => t.mine.every(u => displayedCards().some(c => c.u === u));
 function dropTrade(t){ G.trades = G.trades.filter(x => x !== t); t.theirs.forEach(releaseCard); }
 function makeTradeOffer(){
-  const mine = displayedCards().filter(c => cv(c) >= 1.5); if (!mine.length) return;
+  const mine = displayedCards().filter(c => cv(c) >= CUSTOMER_MIN); if (!mine.length) return;
   const f = (.8 + rnd() * .55) * (1 - .12 * HARD), id = ++G.uid;
   if (rnd() < .5 || mine.length < 2){            // many small cards for one of yours
     const c = pick(mine), v = cv(c), target = v * f; let theirs = [], ok = false;
@@ -3152,7 +3153,7 @@ function makeTradeOffer(){
 function tradesHour(){
   G.trades = G.trades || [];
   for (const t of G.trades.slice()) if ((G.beat || 0) > t.exp || !tradeMineOk(t)) dropTrade(t);
-  if (G.trades.length < 3 && rnd() < .015 * (1 - .5 * HARD)) makeTradeOffer();
+  if (G.trades.length < 4 && rnd() < .06 * (1 - .4 * HARD)) makeTradeOffer();          // trade offers are common now
 }
 function acceptTrade(id){
   const t = G.trades.find(x => x.id === id); if (!t) return false; if (!tradeMineOk(t)){ dropTrade(t); return false; }
