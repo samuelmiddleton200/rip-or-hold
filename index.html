@@ -2624,7 +2624,7 @@ mxDraw.cap = 0; mxDraw.w = new Float64Array(0);
 const bidInc = b => Math.max(.01, r2(b * .02));
 const bidUp = (L, pct) => r2(Math.max(ebPrice(L) * (1 + pct / 100), ebPrice(L) + .01));
 // where bidders stop: the card's market value right now (its set value x supply and demand, already in v), give or take a few percent. Low demand means they quit around 300 for a 400 card.
-const stopFrac = v => { const sp = v < 25 ? .1 : v < 100 ? .08 : v < 1000 ? .06 : .04; return 1 - sp + rnd() * 2 * sp; };
+const stopFrac = v => .95 + rnd() * .1;          // bidders stop within 5% either side of the market level (a 350 market card ends between about 332 and 367)
 // how likely bidders are to look at a card: full between $5 and $250, fading below and above
 const popOf = v => v < 5 ? Math.max(.2, v / 5) : v > 250 ? Math.max(.15, Math.sqrt(250 / v)) : 1;
 const BID_RATE = .8;           // chance per beat that a bidder acts when the price is behind where it should be (own auctions)
