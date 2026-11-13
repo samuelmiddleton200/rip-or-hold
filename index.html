@@ -1169,6 +1169,8 @@ const dealerRate = () => .8 - .2 * HARD;
 // reputation gets harder to earn the more you have: every gain is divided by (1 + rep / 8)
 const addRep = x => { G.rep = clamp((G.rep || 0) + x / (1 + (G.rep || 0) / 8), 0, 100); };
 const SHIP = 1.5, BULK_EACH = .005;
+// a card's set value: fixed, never moves with the market (grade included)
+const setValue = c => c.bs ? cv(c) : DEFS[c.d].val * gradeMult(c);
 const dealerOffer = c => r2(cv(c) * dealerRate());
 const BULK_RATE = .6, bulkOffer = c => r2(cv(c) * BULK_RATE);          // the Bulk sell button pays 60% of market value
 const isBulk = c => { if (c.bs) return false; const d = DEFS[c.d]; return !c.g && d.tier === 1 && d.fin === 'none' && cv(c) < .15; };
@@ -1387,8 +1389,8 @@ function claimSet(setId){
 // ───────────────────────── save / load ─────────────────────────
 // the market can hold 10,000 listings, so they are saved as short arrays (your own bids stay full objects)
 const rd2 = x => Math.round(x * 100) / 100;
-const packListing = L => (L.mine || L.esc) ? L : [L.id, L.c.d, L.c.n, L.c.q, L.tier, L.ship, SELLER_NAMES.indexOf(L.seller), L.cap, L.start, L.bid, L.bids, L.pop, rd2(L.t0), rd2(L.dur), rd2(L.ends), L.lead === 'bot' ? 1 : 0];
-const unpackListing = a => Array.isArray(a) ? { id:a[0], c:{ d:a[1], n:a[2], q:a[3] }, tier:a[4], ship:a[5], seller:SELLER_NAMES[a[6]] || SELLER_NAMES[0], cap:a[7], start:a[8], bid:a[9], bids:a[10], pop:a[11], t0:a[12], dur:a[13], ends:a[14], lead:a[15] ? 'bot' : '' } : a;
+const packListing = L => (L.mine || L.esc) ? L : [L.id, L.c.d, L.c.n, L.c.q, L.tier, L.ship, SELLER_NAMES.indexOf(L.seller), L.cap, L.start, L.bid, L.bids, L.pop, rd2(L.t0), rd2(L.dur), rd2(L.ends), L.lead === 'bot' ? 1 : 0, L.hot || 1];
+const unpackListing = a => Array.isArray(a) ? { id:a[0], c:{ d:a[1], n:a[2], q:a[3] }, tier:a[4], ship:a[5], seller:SELLER_NAMES[a[6]] || SELLER_NAMES[0], cap:a[7], start:a[8], bid:a[9], bids:a[10], pop:a[11], t0:a[12], dur:a[13], ends:a[14], lead:a[15] ? 'bot' : '', hot:a[16] || 1 } : a;
 function save(){
   let lst = null;
   try {
@@ -2164,14 +2166,14 @@ function showOfferModal(i){
   const o = x.t.offer, name = showName2(x);
   if (o.kind === 'trade'){
     const get = r2(o.theirs.reduce((a, c) => a + cv(c), 0) + (o.cash || 0));
-    overlay(`<div class="modal" style="width:min(940px,96vw)"><h2>Trade offer for ${name}</h2><div class="dim">${o.asked ? 'You asked what they have.' : 'A buyer has cards instead of cash.'} Your price is ${money(x.price)}; market value ${money(x.v)}.</div>
+    overlay(`<div class="modal" style="width:min(940px,96vw)"><h2>Trade offer for ${name}</h2><div class="dim">${o.asked ? 'You asked what they have.' : 'A buyer has cards instead of cash.'} Your price is ${money(x.price)}; card value ${money(x.sealed ? x.v : setValue(x.c))}.</div>
       <div class="tradecols"><div><div class="dim">You give &middot; ${money(x.price)} ask</div><div class="grid tg"><div style="margin-bottom:14px">${x.sealed ? '' : cardHTML(x.def, { sm:true, c:x.c, tagText:money(x.v) })}</div></div></div><div class="tarrow">&rarr;</div>
       <div><div class="dim">You get &middot; ${money(get)}${o.cash ? ' (cards + ' + money(o.cash) + ' cash)' : ''}</div><div class="grid tg">${o.theirs.map(c => `<div style="margin-bottom:14px">${cardHTML(DEFS[c.d], { sm:true, c, tagText:money(cv(c)) })}</div>`).join('')}${o.cash ? `<div class="box" style="align-self:center"><b class="gold" style="font-size:24px">+ ${money(o.cash)}</b><br><span class="dim">cash</span></div>` : ''}</div></div></div>
       <div style="display:flex;gap:8px;margin-top:6px"><button class="grn" data-a="sotradeyes" data-v="${i}">Accept the trade</button><button data-a="sotradeno" data-v="${i}">No thanks</button></div></div>`);
     return;
   }
   overlay(`<div class="modal" style="width:min(940px,96vw)"><div style="display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start"><div class="bigcard">${x.sealed ? prodImg(...x.key.split(':'), 160) : cardHTML(x.def, { c:x.c, price:false, live:true })}</div><div style="flex:1;min-width:260px"><h2>${name}</h2>
-    <div style="font-size:20px">Your price <b class="gold">${money(x.price)}</b> &middot; market value <b>${money(x.v)}</b></div>
+    <div style="font-size:20px">Your price <b class="gold">${money(x.price)}</b> &middot; card value <b>${money(x.sealed ? x.v : setValue(x.c))}</b></div>
     <div class="bubble" style="margin:8px 0">${o.msg}</div>
     <div style="font-size:26px;margin:2px 0 8px">They offer <b class="up">${money(o.offer)}</b></div>
     <div style="display:flex;gap:6px;flex-wrap:wrap"><button class="grn" data-a="soacc" data-v="${i}">Accept ${money(o.offer)}</button>${x.sealed ? '' : `<button data-a="socards" data-v="${i}">Ask if they have cards</button>`}
@@ -2180,7 +2182,7 @@ function showOfferModal(i){
 }
 function showPriceEdit(i){
   const x = tableItems().find(y => y.i === i); if (!x) return closeOv();
-  overlay(`<div class="modal" style="width:min(700px,96vw)"><div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start"><div class="bigcard">${x.sealed ? prodImg(...x.key.split(':'), 120) : cardHTML(x.def, { c:x.c, price:false, live:true })}</div><div style="flex:1;min-width:230px"><h2>${showName2(x)}</h2><div style="font-size:22px">Market value <b class="gold">${money(x.v)}</b></div>
+  overlay(`<div class="modal" style="width:min(700px,96vw)"><div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start"><div class="bigcard">${x.sealed ? prodImg(...x.key.split(':'), 120) : cardHTML(x.def, { c:x.c, price:false, live:true })}</div><div style="flex:1;min-width:230px"><h2>${showName2(x)}</h2><div style="font-size:22px">Card value <b class="gold">${money(x.sealed ? x.v : setValue(x.c))}</b></div>${x.sealed ? '' : lastSoldHTML(x.c)}
     <div style="margin-top:10px;font-size:18px">Table price: <input id="shwPrice" type="number" min="0" step="0.01" value="${x.price}" style="width:130px;font-size:18px;background:#0b1226;color:#fff;border:2px solid #34437a;border-radius:6px;padding:2px 8px"> <button class="gold" data-a="shpsave" data-v="${i}">Set price</button></div>
     <div class="dim" style="margin-top:6px">Priced above market, buyers will try to haggle you down.</div>
     <div style="margin-top:10px;display:flex;gap:8px"><button class="red" data-a="shoff" data-v="${i}">Take off the table</button><button data-a="close">Close</button></div></div></div></div>`);
@@ -2621,14 +2623,14 @@ mxDraw.cap = 0; mxDraw.w = new Float64Array(0);
 // every bid raises the price by at least 2%
 const bidInc = b => Math.max(.01, r2(b * .02));
 const bidUp = (L, pct) => r2(Math.max(ebPrice(L) * (1 + pct / 100), ebPrice(L) + .01));
-// where bidders stop: a fraction of value, between a floor that rises with value and a ceiling that falls toward 100% for pricey cards (a bidding war can push past it)
-const stopFrac = v => { const hi = v < 100 ? 1.2 : v < 1000 ? 1.15 : v < 10000 ? 1.1 : 1.05, lo = Math.min(hi - .05, (v < 25 ? .3 : v < 50 ? .4 : v < 100 ? .45 : v < 1000 ? .55 : v < 10000 ? .7 : .85) + .25 * HARD); return lo + rnd() * (hi - lo); };
+// where bidders stop: the card's market value right now (its set value x supply and demand, already in v), give or take a few percent. Low demand means they quit around 300 for a 400 card.
+const stopFrac = v => { const sp = v < 25 ? .1 : v < 100 ? .08 : v < 1000 ? .06 : .04; return 1 - sp + rnd() * 2 * sp; };
 // how likely bidders are to look at a card: full between $5 and $250, fading below and above
 const popOf = v => v < 5 ? Math.max(.2, v / 5) : v > 250 ? Math.max(.15, Math.sqrt(250 / v)) : 1;
 const BID_RATE = .8;           // chance per beat that a bidder acts when the price is behind where it should be (own auctions)
 function auctionNew(v, units, base){
   const cap = r2(v * stopFrac(v));
-  return { v, cap, start:r2(Math.max(.01, cap * (.02 + rnd() * .23))), bid:0, bids:0, pop:popOf(v), t0:(base == null ? (G.beat || 0) : base), dur:units, ends:(base == null ? (G.beat || 0) : base) + units, lead:'' };
+  return { v, hot:rnd() < .1 ? r2(1.1 + rnd() * .3) : 1, cap, start:r2(Math.max(.01, cap * (.02 + rnd() * .23))), bid:0, bids:0, pop:popOf(v), t0:(base == null ? (G.beat || 0) : base), dur:units, ends:(base == null ? (G.beat || 0) : base) + units, lead:'' };
 }
 // one beat of bidding on an auction: maybe a bidder raises it toward the hidden stopping point
 // eBay is the market. Set values are only a starting point: when lots of the same card are listed at once bidders spread out and prices sag, a card with no competition goes for a little more.
@@ -2639,8 +2641,8 @@ function auctionStep(L, mult, rate, now){
   const heat = Math.min(2, (L.bids || 0) / 8);            // lots of bids means lots of people watching: they jump in more
   // bargain hunters: the further the price sits below what the card is worth on the market right now, the more bidders jump in
   const price = L.bids ? L.bid : L.start, mv = L.c ? px(L.c.d) : (L.v || 0), under = mv > 0 ? clamp(1 - price / mv, 0, 1) : 0, bargain = 1 + 4 * Math.max(0, under - .15);
-  const q = clamp((rate || BID_RATE) * L.pop * (1 + heat) * (mult || 1) * bargain, 0, .95); if (rnd() > q) return null;
-  const cap = L.cap * (L.comp || 1) * (1 + Math.min(.35, Math.max(0, (L.bids || 0) - 25) * .008));       // a long bidding war pushes the stopping point up
+  const q = clamp((rate || BID_RATE) * L.pop * (1 + heat) * (mult || 1) * bargain * (L.hot ? 1.4 : 1), 0, .95); if (rnd() > q) return null;
+  const cap = L.cap * (L.comp || 1) * (L.hot || 1);       // a hot auction (a bidding war) goes past the market level
   if (!L.bids) return L.start <= cap ? L.start : null;
   // where bidders have pushed the price to by now: most of the climb happens early, and it always ends at the stopping point
   const p = clamp(((now == null ? L.ends : now) - L.t0) / Math.max(1, L.dur), 0, 1), lvl = L.start + (cap - L.start) * (1 - Math.pow(1 - p, 2));
@@ -3005,10 +3007,10 @@ function showShelfItem(i){
   const mk = itemVal(it), sealed = it.k === 's';
   const [sa, sb] = sealed ? it.key.split(':') : [], name = sealed ? prodName(sa, sb) : cname(it.c);
   overlay(`<div class="modal" style="width:min(1000px,96vw)"><div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start"><div class="bigcard">${sealed ? prodImg(sa, sb, 240) : cardHTML(DEFS[it.c.d], { c:it.c, price:false, live:true })}</div><div style="flex:1;min-width:280px"><h2>${name}</h2><div class="dim">${sealed ? 'Sealed product' : it.c.bs ? 'Bound set · ' + it.c.size + ' cards' : cardLabel(it.c)} · ${ZONE[SR[i].z].name}</div>
-    <div style="font-size:24px;margin-top:6px">Market value <b class="gold">${money(mk)}</b></div>
+    <div style="font-size:24px;margin-top:6px">Card value <b class="gold">${money(sealed ? mk : setValue(it.c))}</b> <span class="dim" style="font-size:15px">set, never changes</span></div>
     ${sealed ? '' : lastSoldHTML(it.c.bs ? it.c.cards[0] : it.c)}
     <div style="margin-top:12px;font-size:18px">Your price: <input id="shpPrice" type="number" min="0" step="0.01" value="${it.price || ''}" placeholder="$" style="width:130px;font-size:18px;background:#0b1226;color:#fff;border:2px solid #34437a;border-radius:6px;padding:2px 8px"> <button class="gold" data-a="shp" data-c="psave" data-i="${i}">Set price</button></div>
-    <div class="dim" style="margin-top:8px;font-size:18px">${it.price ? 'Right now a shopper who looks at it buys about <b>' + Math.round(shopBuyChance(it) * 100) + '%</b> of the time at this price. ' + '<span class="shelfage">' + shelfAge(it) + '</span>.' : 'No price set: it is on show only and will not sell. Type a price. Above market it may sit; around market it usually goes.'}</div>
+    <div class="dim" style="margin-top:8px;font-size:18px">${it.price ? '<span class="shelfage">' + shelfAge(it) + '</span>' : 'No price set: it is on show only and will not sell.'}</div>
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button data-a="shp" data-c="punset" data-i="${i}">Remove price</button><button class="red" data-a="shp" data-c="down" data-i="${i}">Take it down</button><button data-a="close">Close</button></div></div></div></div>`);
 }
 const SHPACT = {
