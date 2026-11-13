@@ -904,8 +904,7 @@ const CR = CARD_DATA.cards, CRI = {}; CR.forEach(c => { CRI[c.id] = c; });
 const TYPES = ['fire', 'water', 'grass', 'electric', 'psychic', 'rock', 'dark', 'sky'];
 const TYPE_COL = { fire:'#e0452a', water:'#3b8fe6', grass:'#4cc05a', electric:'#f2cf2f', psychic:'#d86ac8', rock:'#a08a6a', dark:'#6b4aa8', sky:'#7cc4ee' };
 const BASEVAL = {"fire_01": 0.82, "fire_02": 0.21, "water_01": 0.52, "water_02": 0.34, "grass_01": 0.21, "grass_02": 0.46, "electric_01": 0.38, "electric_02": 0.31, "psychic_01": 0.48, "psychic_02": 0.37, "rock_01": 0.68, "rock_02": 0.27, "dark_01": 0.29, "dark_02": 0.52, "sky_01": 0.36, "sky_02": 0.42, "fire_05": 0.43, "fire_06": 0.65, "water_05": 0.42, "water_06": 0.14, "grass_05": 0.32, "grass_06": 0.73, "electric_05": 0.42, "electric_06": 0.56, "psychic_05": 0.62, "psychic_06": 0.57, "rock_05": 0.37, "rock_06": 0.5, "dark_05": 0.54, "dark_06": 0.66, "sky_05": 0.76, "sky_06": 0.29};       // tier 1, no finish, grey edge price of each basic (an evolved creature is x13 of its basic)
-// an evolved creature is worth its basic x13; this keeps an evolution at its old price when its basic is changed on its own (Kitedrake went from 0.48 to 0.76, Cirrusdrake stays where it was)
-const EVO_BASE = { sky_05:0.48 };
+const EVO_BASE = {};          // (empty: an evolved creature is always its basic x13, so changing a basic moves its evolution too)
 const evoBase = id => EVO_BASE[id] != null ? EVO_BASE[id] : BASEVAL[id];
 const STAGE_MULT = 13, ALPHA = 1.3, SHRINK = 1, SET_ID = 'T1';
 const FIN_KEYS = ['none', 'shiny', 'gold', 'etched', 'rainbow', 'galaxy'];
