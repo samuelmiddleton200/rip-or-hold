@@ -641,6 +641,16 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 .showhall .stbl-top{position:relative;z-index:3;align-self:flex-start;background:rgba(15,10,28,.78);border:2px solid #ffd23f;border-radius:10px;padding:3px 12px;width:100%}
 .htabart2{position:absolute;left:3%;width:94%;bottom:0;height:62%;z-index:1;image-rendering:pixelated;object-fit:fill;pointer-events:none}
 .showhall .stbl-grid{position:relative;z-index:2;margin-top:auto;padding:14px 14px 4px;justify-content:center}
+/* walk the floor: other collectors showing their best cards */
+.floorhall{display:block;min-height:0}
+.floorhall .stbl-top{width:auto;display:block}
+.vbooths{position:relative;z-index:2;display:flex;flex-direction:column;gap:10px;margin-top:8px}
+.vbooth{background:rgba(20,12,36,.84);border:2px solid #c9a24a;border-radius:10px;padding:6px 10px 2px}
+.vbhead{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;color:#fff;font-size:15px}
+.vbhead>b{font-family:var(--pix);font-size:14px;color:#ffd23f}
+.vbhead .vbc{margin-left:auto;color:#cfe3ff}.vbhead .vbc b{color:#7df29a}.vbhead .vbn{color:#cbb690}
+.vbgrid{flex-wrap:nowrap;overflow-x:auto;padding:12px 8px 0;gap:10px}
+.vbgrid>div{flex:none}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -2133,17 +2143,31 @@ function showTick(){
   }
   return false;
 }
+// the other collectors at the show: think of them as other players laying out their best cards. Collections run from about $5,000 to $50,000 and up.
+const VENDOR_NAMES = ['Dusty Dan', 'Retro Rita', 'Binder Bros', 'Cardboard Carl', 'Mint Mia', 'Shoebox Sam', 'Slab Steve', 'Foil Fran', 'Vault Vince', 'Gem Gina', 'Holo Hank', 'Prism Pete'];
+// a real card whose market value is close to `target`
+function cardNear(target){
+  let i = Math.max(0, upperIdx(LASC, target)); const cands = [];
+  for (let d = 0; d < LASC.length && cands.length < 4; d++){
+    for (const j of (d ? [i - d, i + d] : [i])){ const l = LASC[j]; if (l && remaining(l) > 0 && cands.length < 4) cands.push(l); }
+  }
+  return cands.length ? takeLook(pick(cands)) : null;
+}
 function genVendors(){
-  const names = [['Dusty Dan', 'v0'], ['Retro Rita', 'v1'], ['Binder Bros', 'v2'], ['Cardboard Carl', 'v3'], ['Mint Mia', 'v4'], ['Shoebox Sam', 'v5'], ['Slab Steve', 'v6'], ['Foil Fran', 'v7']].sort(() => rnd() - .5);
-  const kinds = [['dealer', 'Dealer', 1.10, 1.20], ['collector', 'Collector', .95, 1.12], ['garage', 'Garage seller', .70, 1.05]];
+  const names = VENDOR_NAMES.slice().sort(() => rnd() - .5);
+  const kinds = [['dealer', 'Dealer', 1.10, 1.20], ['collector', 'Collector', .95, 1.12], ['garage', 'Private collector', .85, 1.05]];
+  const range = SH.kind === 'national' ? [25000, 90000] : SH.kind === 'regional' ? [10000, 40000] : [5000, 18000];
   const out = [], n = SH.kind === 'national' ? 5 : SH.kind === 'regional' ? 4 : 3;
   for (let v = 0; v < n; v++){
     const kind = kinds[v % 3 === 0 ? 0 : v % 3 === 1 ? 1 : 2], items = [];
-    for (let k = 0, cnt = ri(4, 6), guard = 0; k < cnt && guard < 120; guard++){
-      const c = sampleCard(), val = cv(c); if (val < 1 && rnd() < .85){ releaseCard(c); continue; }
-      const ask = r2(val * (kind[2] + rnd() * (kind[3] - kind[2]))); items.push({ c, ask, floor:r2(ask * (.82 + rnd() * .11)) }); k++;
+    const coll = Math.round(Math.exp(Math.log(range[0]) + rnd() * Math.log(range[1] / range[0])) / 100) * 100;          // the size of their whole collection
+    const top = coll * (.1 + rnd() * .15);                                                                               // their best card is a slice of it
+    for (let k = 0, cnt = ri(6, 8); k < cnt; k++){
+      const t = Math.max(40, top * Math.pow(.55, k) * (.8 + rnd() * .4)), c = cardNear(t); if (!c) continue;
+      const val = cv(c), ask = r2(val * (kind[2] + rnd() * (kind[3] - kind[2]))); items.push({ c, ask, floor:r2(ask * (.82 + rnd() * .11)) });
     }
-    out.push({ name:names[v][0], face:names[v][1], kind:kind[1], items });
+    items.sort((x, y) => y.ask - x.ask);
+    out.push({ name:names[v], kind:kind[1], coll, items });
   }
   return out;
 }
@@ -2154,9 +2178,10 @@ function showRun(){
 }
 // the other tables at the show: a plain list
 function floorHTML(tabs){
-  const rows = SH.vendors.map((v, i) => { const left = v.items.length;
-    return `<div class="row vrow" data-a="vendor" data-vi="${i}"><div class="nm"><b>${v.name}</b><small>${v.kind} &middot; ${left ? left + ' card' + (left > 1 ? 's' : '') + ' for sale' : 'sold out'}</small></div><div class="pr"><span class="ebbtn" style="background:var(--gold);color:#1b1230">Browse</span></div></div>`; }).join('');
-  return `${tabs}<div class="dim" style="margin:6px 0">The other tables at the show. Tap one to see what they have, buy, haggle or trade.</div>${rows}`;
+  const bg = typeof SHOWHALL_BG !== 'undefined' ? `background-image:url(${SHOWHALL_BG})` : '';
+  const rows = SH.vendors.map((v, vi) => `<div class="vbooth"><div class="vbhead"><b>${v.name}</b><span>${v.kind}</span><span class="vbc">collection about <b>${money(v.coll)}</b></span><span class="vbn">${v.items.length ? v.items.length + ' on show' : 'sold out'}</span></div>
+    <div class="grid sg vbgrid">${v.items.map((it, ii) => `<div style="margin-bottom:${it.c.g ? 6 : 16}px">${cardHTML(DEFS[it.c.d], { sm:true, c:it.c, tagText:money(it.ask), attr:`data-a="deal" data-vi="${vi}" data-ii="${ii}"` })}</div>`).join('') || '<span class="dim">Sold out.</span>'}</div></div>`).join('');
+  return `${tabs}<div class="showhall floorhall" style="${bg}"><div class="stbl-top"><span>Other collectors are showing their best cards. Tap one to buy, haggle or trade.</span></div><div class="vbooths">${rows}</div></div>`;
 }
 function showVendor(vi){
   const v = SH.vendors[vi]; if (!v) return; SH.vi = vi;
