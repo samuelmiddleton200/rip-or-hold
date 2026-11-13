@@ -1996,19 +1996,11 @@ function scrMarket(){
 }
 
 // ───────────────────────── grading ─────────────────────────
-function gradeChart(){
-  const T = [[10, 'under $10'], [50, '$10 to $50'], [100, '$50 to $100'], [250, '$100 to $250'], [500, '$250 to $500'], [1000, '$500 to $1,000'], [2500, '$1,000 to $2,500'], [10000, '$2,500 to $10,000'], [25000, '$10,000 to $25,000'], [100000, '$25,000 to $100,000'], [1e12, 'over $100,000']];
-  const G_ = [['10 Gem Mint', '1.5x to 2.25x'], ['9 Mint', '0.9x to 1.3x'], ['8 Near Mint', '0.8x to 1.0x'], ['7 or lower', '0.7x to 0.9x']];
-  overlay(`<div class="modal" style="width:min(760px,96vw)"><h2>Grading chart</h2><div class="dim" style="margin-bottom:6px">Grading costs ${money(35)} a card. The grade stays hidden until the card comes back. The odds drift a little against you as your fortune grows. The grader holds ${maxGrading()} cards at a time, plus 1 for every 10 rep, up to 10.</div>
-    <div class="cols"><div><h3 style="margin-top:4px">Value after grading</h3>${G_.map(g => `<div class="mrow"><span>${g[0]}</span><b>${g[1]}</b></div>`).join('')}<div class="mrow"><span class="dim">Average</span><b class="gold">about ${(1.17 - .065 * HARD).toFixed(2)}x now</b></div></div>
-    <div><h3 style="margin-top:4px">How long it takes</h3>${T.map(t => `<div class="mrow"><span>${t[1]}</span><b>${fmtDur(gradeSecs(t[0] - .01) * 1000)}</b></div>`).join('')}</div></div>
-    <div style="margin-top:10px"><button data-a="close">Close</button></div></div>`);
-}
 function scrGrade(){
   let h = pageHead('grade', 'Grading', 'Send cards off and they come back with a grade. It keeps going while the game is closed.');
   const raw = G.inv.cards.filter(c => !c.g && !c.bs).sort((a, b) => cv(b) - cv(a)).slice(0, 60);
   const sel = raw.filter(c => GSEL.has(c.u)), n = sel.length, fee = r2(sel.reduce((a, c) => a + gradingFee(c), 0));
-  h += `<div class="tabs"><button class="gold" data-a="gsend" ${!n || G.cash < fee ? 'disabled' : ''}>Send ${n} card${n === 1 ? '' : 's'} (${money(fee)})</button><button data-a="gclear">Clear</button><button data-a="gchart">Grading chart</button></div>`;
+  h += `<div class="tabs"><button class="gold" data-a="gsend" ${!n || G.cash < fee ? 'disabled' : ''}>Send ${n} card${n === 1 ? '' : 's'} (${money(fee)})</button><button data-a="gclear">Clear</button></div>`;
   if (G.grading.length) h += `<h3>At the grader (${G.grading.length}/${maxGrading()})</h3><div class="grid" style="padding-bottom:12px">${G.grading.map(g => `<div class="gwait" style="margin-bottom:14px">${cardHTML(DEFS[g.c.d], { c:g.c, sm:true, price:false })}<b class="gtime" data-ready="${g.ready}">${fmtDur(g.ready - Date.now())}</b></div>`).join('')}</div>`;
   h += '<h3>Your raw cards</h3>' + (raw.length ? '<div class="grid" style="padding-bottom:16px">' + raw.map(c => `<div style="margin-bottom:14px;${GSEL.has(c.u) ? 'outline:3px solid var(--gold);outline-offset:3px;border-radius:6px' : ''}">${cardHTML(DEFS[c.d], { c, sm:true, attr:`data-a="gsel" data-v="${c.u}"` })}</div>`).join('') + '</div>' : '<div class="box">No raw cards.</div>');
   return h;
@@ -2419,7 +2411,6 @@ const ACT = {
   gradeone(d){ GSEL = new Set([+d.v]); SCREEN = 'grade'; closeOv(); render(); },
   gsel(d){ const u = +d.v; if (GSEL.has(u)) GSEL.delete(u); else if (GSEL.size >= maxGrading() - G.grading.length) toast('The grader holds ' + maxGrading() + ' cards at a time (+1 for every 10 rep).'); else GSEL.add(u); sfx.click(); render(); },
   gclear(){ GSEL = new Set(); render(); },
-  gchart(){ gradeChart(); },
   bulkopen(){ overlay(`<div class="modal" style="width:min(430px,92vw);text-align:center"><h2>Bulk sell</h2><div class="dim" style="font-size:16px;margin-bottom:6px">Pays 60% of market value</div><div style="font-size:19px">Sell all cards under $ <input id="bulkx" inputmode="decimal" autocomplete="off" placeholder="___" style="width:110px;font:inherit;font-size:22px;text-align:center;background:var(--surf2);color:var(--ink);border:2px solid var(--line);border-radius:8px;padding:3px 6px"></div><div id="bulksum" class="dim" style="margin:12px 0;font-size:20px;min-height:28px">Type an amount</div><div style="display:flex;gap:10px;justify-content:center"><button data-a="close">Cancel</button><button class="gold" id="bulkgo" data-a="bulkgo" disabled>Sell</button></div></div>`); setTimeout(() => { const e = $('#bulkx'); if (e) e.focus(); }, 50); },
   bulkgo(){ const x = parseFloat(($('#bulkx') || {}).value), list = x > 0 ? bulkList(x) : []; if (!list.length) return; let tot = 0; for (const c of list){ const v = bulkOffer(c); tot += v; noteDeal('sale', c, v, 'the dealer'); releaseCard(c); } const set = new Set(list); G.inv.cards = G.inv.cards.filter(c => !set.has(c)); G.cash += tot; G.stats.revenue += tot; ledger('Bulk sold ' + list.length + ' cards', tot); sfx.sell(); toast('Sold ' + list.length + ' cards for ' + money(tot)); closeOv(); checkAch(); render(); },
   gsend(){ if (startGrading([...GSEL])){ toast('Sent ' + GSEL.size + ' to the grader'); sfx.buy(); GSEL = new Set(); } render(); },
