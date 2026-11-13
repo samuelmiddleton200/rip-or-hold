@@ -2165,10 +2165,9 @@ function showOfferModal(i){
   const x = tableItems().find(y => y.i === i); if (!x || !x.t.offer) return closeOv();
   const o = x.t.offer, name = showName2(x);
   if (o.kind === 'trade'){
-    const get = r2(o.theirs.reduce((a, c) => a + cv(c), 0) + (o.cash || 0));
-    overlay(`<div class="modal" style="width:min(940px,96vw)"><h2>Trade offer for ${name}</h2><div class="dim">${o.asked ? 'You asked what they have.' : 'A buyer has cards instead of cash.'} Your price is ${money(x.price)}; card value ${money(x.sealed ? x.v : setValue(x.c))}.</div>
-      <div class="tradecols"><div><div class="dim">You give &middot; ${money(x.price)} ask</div><div class="grid tg"><div style="margin-bottom:14px">${x.sealed ? '' : cardHTML(x.def, { sm:true, c:x.c, tagText:money(x.v) })}</div></div></div><div class="tarrow">&rarr;</div>
-      <div><div class="dim">You get &middot; ${money(get)}${o.cash ? ' (cards + ' + money(o.cash) + ' cash)' : ''}</div><div class="grid tg">${o.theirs.map(c => `<div style="margin-bottom:14px">${cardHTML(DEFS[c.d], { sm:true, c, tagText:money(cv(c)) })}</div>`).join('')}${o.cash ? `<div class="box" style="align-self:center"><b class="gold" style="font-size:24px">+ ${money(o.cash)}</b><br><span class="dim">cash</span></div>` : ''}</div></div></div>
+    overlay(`<div class="modal" style="width:min(940px,96vw)"><h2>Trade offer for ${name}</h2><div class="dim">${o.asked ? 'You asked what they have.' : 'A buyer has cards instead of cash.'}</div>
+      <div class="tradecols"><div><div class="dim">You give</div><div class="grid tg"><div style="margin-bottom:14px">${x.sealed ? '' : cardHTML(x.def, { sm:true, c:x.c, price:false })}</div></div></div><div class="tarrow">&rarr;</div>
+      <div><div class="dim">You get</div><div class="grid tg">${o.theirs.map(c => `<div style="margin-bottom:14px">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}</div>`).join('')}${o.cash ? `<div class="box" style="align-self:center"><b class="gold" style="font-size:24px">+ ${money(o.cash)}</b><br><span class="dim">cash</span></div>` : ''}</div></div></div>
       <div style="display:flex;gap:8px;margin-top:6px"><button class="grn" data-a="sotradeyes" data-v="${i}">Accept the trade</button><button data-a="sotradeno" data-v="${i}">No thanks</button></div></div>`);
     return;
   }
@@ -3166,14 +3165,14 @@ function acceptTrade(id){
   mine.forEach(releaseCard); addCards(t.theirs); G.trades = G.trades.filter(x => x !== t);
   ledger('Trade at the shop: ' + mine.length + ' for ' + t.theirs.length, 0); addRep(.3); return true;
 }
-const tradeTile = c => `<div style="margin-bottom:14px">${cardHTML(DEFS[c.d], { sm:true, c, tagText:money(cv(c)) })}</div>`;
+const tradeTile = c => `<div style="margin-bottom:14px">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}</div>`;          // no values on trade offers: you have to know what your cards are worth (the Guide has the prices)
 function tradesHTML(){
   if (!G.trades.length) return '';
   let h = '<h3 style="margin-top:0">Trade offers</h3>';
   for (const t of G.trades){
     const mine = displayedCards().filter(c => t.mine.includes(c.u)), give = mine.reduce((a, c) => a + cv(c), 0), get = t.theirs.reduce((a, c) => a + cv(c), 0);
     h += `<div class="box tradebox"><div class="dim">${t.kind === 'many' ? 'Wants your card from the shop for all of these' : 'Wants these cards from your shop for one of theirs'}</div>
-      <div class="tradecols"><div><div class="dim">You give &middot; ${money(give)}</div><div class="grid tg">${mine.map(tradeTile).join('')}</div></div><div class="tarrow">&rarr;</div><div><div class="dim">You get &middot; ${money(get)}</div><div class="grid tg">${t.theirs.map(tradeTile).join('')}</div></div></div>
+      <div class="tradecols"><div><div class="dim">You give</div><div class="grid tg">${mine.map(tradeTile).join('')}</div></div><div class="tarrow">&rarr;</div><div><div class="dim">You get</div><div class="grid tg">${t.theirs.map(tradeTile).join('')}</div></div></div>
       <div style="display:flex;gap:8px;margin-top:4px"><button class="grn" data-a="tradeyes" data-t="${t.id}">Accept</button><button data-a="tradeno" data-t="${t.id}">No thanks</button></div></div>`;
   }
   return h;
