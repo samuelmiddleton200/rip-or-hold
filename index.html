@@ -3008,7 +3008,7 @@ function showShelfItem(i){
   const mk = itemVal(it), sealed = it.k === 's';
   const [sa, sb] = sealed ? it.key.split(':') : [], name = sealed ? prodName(sa, sb) : cname(it.c);
   overlay(`<div class="modal" style="width:min(1000px,96vw)"><div style="display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start"><div class="bigcard">${sealed ? prodImg(sa, sb, 240) : cardHTML(DEFS[it.c.d], { c:it.c, price:false, live:true })}</div><div style="flex:1;min-width:280px"><h2>${name}</h2><div class="dim">${sealed ? 'Sealed product' : it.c.bs ? 'Bound set · ' + it.c.size + ' cards' : cardLabel(it.c)} · ${ZONE[SR[i].z].name}</div>
-    <div style="font-size:24px;margin-top:6px">Card value <b class="gold">${money(sealed ? mk : setValue(it.c))}</b> <span class="dim" style="font-size:15px">set, never changes</span></div>
+    <div style="font-size:24px;margin-top:6px">Card value <b class="gold">${money(sealed ? mk : setValue(it.c))}</b></div>
     ${sealed ? '' : lastSoldHTML(it.c.bs ? it.c.cards[0] : it.c)}
     <div style="margin-top:12px;font-size:18px">Your price: <input id="shpPrice" type="number" min="0" step="0.01" value="${it.price || ''}" placeholder="$" style="width:130px;font-size:18px;background:#0b1226;color:#fff;border:2px solid #34437a;border-radius:6px;padding:2px 8px"> <button class="gold" data-a="shp" data-c="psave" data-i="${i}">Set price</button></div>
     <div class="dim" style="margin-top:8px;font-size:18px">${it.price ? '<span class="shelfage">' + shelfAge(it) + '</span>' : 'No price set: it is on show only and will not sell.'}</div>
