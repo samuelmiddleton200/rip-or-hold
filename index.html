@@ -2640,7 +2640,7 @@ function auctionStep(L, mult, rate, now){
   // bargain hunters: the further the price sits below what the card is worth on the market right now, the more bidders jump in
   const price = L.bids ? L.bid : L.start, mv = L.c ? px(L.c.d) : (L.v || 0), under = mv > 0 ? clamp(1 - price / mv, 0, 1) : 0, bargain = 1 + 4 * Math.max(0, under - .15);
   const q = clamp((rate || BID_RATE) * L.pop * (1 + heat) * (mult || 1) * bargain, 0, .95); if (rnd() > q) return null;
-  const cap = L.cap * (L.comp || 1) * (1 + Math.min(.6, Math.max(0, (L.bids || 0) - 8) * .015));       // a long bidding war pushes the stopping point up
+  const cap = L.cap * (L.comp || 1) * (1 + Math.min(.35, Math.max(0, (L.bids || 0) - 25) * .008));       // a long bidding war pushes the stopping point up
   if (!L.bids) return L.start <= cap ? L.start : null;
   // where bidders have pushed the price to by now: most of the climb happens early, and it always ends at the stopping point
   const p = clamp(((now == null ? L.ends : now) - L.t0) / Math.max(1, L.dur), 0, 1), lvl = L.start + (cap - L.start) * (1 - Math.pow(1 - p, 2));
