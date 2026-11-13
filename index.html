@@ -2569,7 +2569,9 @@ function intro(){
 }
 async function boot(){
   await CardRenderer.init(CARD_ASSETS, CARD_DATA); CardRenderer.ready = true;
-  if (!load()){ newGameState(); save(); }
+  if (!load()){ newGameState(); G.gift1 = 1; save(); }
+  // a one-time gift for everyone already playing: a free Collectors Pack in the Packs tab
+  if (!G.gift1){ G.gift1 = 1; addSealed('T1', 'collectors', 1, 0); note('Gift: a free Collectors Pack is waiting in your Packs tab!'); save(); }
   checkBroke(); checkAch();
   G.visitors = G.visitors || []; G.orders = G.orders || []; worldCatchUp();
   render(); setInterval(worldLoop, 1000); document.addEventListener('visibilitychange', () => { if (!document.hidden) worldLoop(); });
