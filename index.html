@@ -2099,7 +2099,7 @@ function scrShow(){
 }
 // ───── the show table: your cards are laid out with prices. Buyers come and go on their own (nobody is drawn): a card sells, or a "!" appears over it ─────
 // A "!" means someone wants to haggle for less, or offers cards in a trade. Tap the card or the "!" to talk to them.
-function tableItems(){ return SH.table.map((t, i) => { if (t.k === 'c'){ const c = instOf(t.u); return { i, t, def:DEFS[c.d], c, v:cv(c), price:t.price || r2(cv(c)) }; } const [s, p] = t.key.split(':'), v = sealedPx(s, p); return { i, t, sealed:true, key:t.key, v, price:t.price || r2(v) }; }); }
+function tableItems(){ SH.table = SH.table.filter(t => t.k !== 'c' || instOf(t.u)); return SH.table.map((t, i) => { if (t.k === 'c'){ const c = instOf(t.u); return { i, t, def:DEFS[c.d], c, v:cv(c), price:t.price || r2(cv(c)) }; } const [s, p] = t.key.split(':'), v = sealedPx(s, p); return { i, t, sealed:true, key:t.key, v, price:t.price || r2(v) }; }); }
 const showName2 = x => x.sealed ? prodName(...x.key.split(':')) : cname(x.c);
 // a bit of jitter so counter-offers never look like perfect maths
 const jit = w => (rnd() - .5) * w;
@@ -2122,7 +2122,7 @@ function sellItem(x, price){
   if (x.sealed){ const [s, p] = x.key.split(':'); addSealed(s, p, -1); } else { G.inv.cards.splice(G.inv.cards.findIndex(c => c.u === x.c.u), 1); releaseCard(x.c); }
   dropOffer(x.t); SH.table.splice(SH.table.indexOf(x.t), 1);
   addRep(price >= x.v * .95 ? .5 : price >= x.v * .8 ? .25 : .05);
-  SH.log.push(showName2(x) + ': sold for ' + money(price)); sfx.sell();
+  SH.log.push(showName2(x) + ': sold for ' + money(price)); sfx.sell(); save();
 }
 // one visit from a buyer, every few seconds while you are at the show. Returns true if anything changed on the table.
 function showTick(){
@@ -2225,7 +2225,7 @@ function showPriceEdit(i){
 function showDone(){
   const profit = SH.earned - SH.fee - (SH.spent || 0);
   const tile = (l, v, cls) => `<div class="stat"><div><small>${l}</small><b class="${cls || ''}">${v}</b></div></div>`;
-  return `<h2 style="margin:6px 0">Show's over</h2><div class="stats">${tile('Sold', SH.sold)}${tile('Earned', money(SH.earned), 'gold')}${tile('Bought', SH.bought)}${tile('Traded', SH.traded || 0)}${tile('Table fee', money(SH.fee))}</div>
+  return `<h2 style="margin:6px 0">Show's over</h2><div class="stats">${tile('Sold', SH.sold)}${tile('Earned', money(SH.earned), 'gold')}${tile('Bought', SH.bought)}${tile('Traded', SH.traded || 0)}${tile('Table fee', money(SH.fee))}${SH.refund ? tile('Fee refunded', money(SH.refund), 'up') : ''}</div>
     <div class="dim" style="margin:8px 0">${SH.log.slice(-6).reverse().join('<br>')}</div><button class="gold" data-a="shend">Finish the day</button>`;
 }
 function dealModal(){
@@ -2239,8 +2239,15 @@ function dealModal(){
 function buyFromVendor(price){
   const D = SH.deal, v = SH.vendors[D.vi], it = v.items[D.ii];
   if (G.cash < price){ D.msg = 'You can\'t afford that.'; return dealModal(); }
+  if (!D.confirmed && price >= 50 && price >= G.cash * .25){          // a big spend: stop and make sure
+    D.pend = price;
+    overlay(`<div class="modal" style="width:min(560px,96vw);text-align:center"><h2>Spend ${money(price)}?</h2><div style="font-size:19px;line-height:1.35;margin:6px 0 12px">That is <b>${Math.round(price / G.cash * 100)}%</b> of your cash. You would have <b class="gold">${money(r2(G.cash - price))}</b> left.<br>Cards you buy here cost what the collector asks, and you can only sell them for what the market pays.</div>
+      <div style="display:flex;gap:10px;justify-content:center"><button data-a="dnoconf">Not now</button><button class="grn" data-a="dconfirm">Buy it</button></div></div>`);
+    return;
+  }
+  D.confirmed = false;
   G.cash -= price; G.stats.spent += price; SH.bought++; recordSale(it.c.d, price, SH.name); noteDeal('buy', it.c, price, 'a card show'); it.c.paid = price; addCards([it.c]); v.items.splice(D.ii, 1);
-  SH.log.push('Bought ' + DEFS[it.c.d].name + ' for ' + money(price)); ledger('Show: bought ' + DEFS[it.c.d].name, -price); sfx.buy();
+  SH.log.push('Bought ' + DEFS[it.c.d].name + ' for ' + money(price)); ledger('Show: bought ' + DEFS[it.c.d].name, -price); sfx.buy(); save();
   SH.deal = null; closeOv(); render(); if (SH.vi != null) showVendor(SH.vi);
 }
 function tradeModal(){
@@ -2490,12 +2497,18 @@ const ACT = {
     const i = +d.v, x = tableItems().find(y => y.i === i); if (!x || !x.t.offer || x.t.offer.kind !== 'trade') return; const o = x.t.offer;
     if (!x.sealed){ G.inv.cards.splice(G.inv.cards.findIndex(c => c.u === x.c.u), 1); releaseCard(x.c); }
     addCards(o.theirs); if (o.cash){ G.cash += o.cash; G.stats.revenue += o.cash; } SH.traded = (SH.traded || 0) + 1; SH.table.splice(i, 1); addRep(.3);
-    SH.log.push('Traded ' + showName2(x) + ' for ' + o.theirs.length + ' card' + (o.theirs.length > 1 ? 's' : '') + (o.cash ? ' + ' + money(o.cash) : '')); ledger('Show trade: ' + showName2(x), o.cash || 0); sfx.buy(); closeOv(); render(); toast('Trade done');
+    SH.gain = (SH.gain || 0) + o.theirs.reduce((a, c) => a + cv(c), 0) + (o.cash || 0); save(); SH.log.push('Traded ' + showName2(x) + ' for ' + o.theirs.length + ' card' + (o.theirs.length > 1 ? 's' : '') + (o.cash ? ' + ' + money(o.cash) : '')); ledger('Show trade: ' + showName2(x), o.cash || 0); sfx.buy(); closeOv(); render(); toast('Trade done');
   },
   sotradeno(d){ const x = tableItems().find(y => y.i === +d.v); if (x) dropOffer(x.t); closeOv(); render(); },
   sono(d){ const x = tableItems().find(y => y.i === +d.v); if (x){ SH.log.push('You turned down an offer for ' + showName2(x) + '.'); dropOffer(x.t); } closeOv(); render(); },
-  sclose(){ SH.stage = 'done'; SH.table.forEach(dropOffer); render(); },
-  shend(){ (SH.vendors || []).forEach(v => v.items.forEach(i => releaseCard(i.c))); G.stats.shows++; if (SH.sold >= 3) addRep(SH.kind === 'national' ? 3 : SH.kind === 'regional' ? 2 : 1); SH = null; G.showN = (G.showN || 0) + 1; G.showAt = (G.beat || 0) + 32; toast('The show is over.'); afterSkip(); },
+  sclose(){
+    if (SH.stage !== 'run') return;
+    SH.stage = 'done'; SH.table.forEach(dropOffer);
+    const gain = (SH.earned || 0) + (SH.gain || 0), refund = r2(Math.max(0, Math.min(SH.fee, SH.fee - gain)));
+    if (refund > 0){ G.cash += refund; SH.refund = refund; ledger('Table fee refunded (sales did not cover it)', refund); }
+    save(); render();
+  },
+  shend(){ (SH.vendors || []).forEach(v => v.items.forEach(i => releaseCard(i.c))); save(); G.stats.shows++; if (SH.sold >= 3) addRep(SH.kind === 'national' ? 3 : SH.kind === 'regional' ? 2 : 1); SH = null; G.showN = (G.showN || 0) + 1; G.showAt = (G.beat || 0) + 32; toast('The show is over.'); afterSkip(); },
   vendor(d){ showVendor(+d.vi); sfx.click(); },
   deal(d){ SH.deal = { vi:+d.vi, ii:+d.ii, pat:3, msg:'Let\'s talk.', counter:0, dead:false, sel:new Set() }; dealModal(); },
   dof(d){
@@ -2508,6 +2521,8 @@ const ACT = {
     dealModal();
   },
   dtake(){ buyFromVendor(SH.deal.counter); },
+  dconfirm(){ if (!SH.deal) return; SH.deal.confirmed = true; buyFromVendor(SH.deal.pend); },
+  dnoconf(){ if (SH.deal) SH.deal.pend = 0; dealModal(); },
   dclose(){ SH.deal = null; closeOv(); render(); if (SH.vi != null && SH.stage === 'run') showVendor(SH.vi); },
   dtrade(){ SH.deal.sel = new Set(); tradeModal(); },
   trsel(d){ const s = SH.deal.sel, u = +d.v; s.has(u) ? s.delete(u) : s.add(u); sfx.click(); tradeModal(); },
