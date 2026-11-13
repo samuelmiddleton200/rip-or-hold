@@ -636,7 +636,7 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 /* price tags always show the whole price (packs and boxes were cut to "$29...") */
 .sl2 .stag,.sl2.z-pack .stag,.sl2.z-box .stag,.sl2.z-wall .stag,.sl2.z-vault .stag{overflow:visible;text-overflow:clip;max-width:none;width:max-content}
 /* the show hall picture is back behind your table: hall in the back, the table in front, your cards laid out on it */
-.showhall{position:relative;margin-top:6px;border-radius:12px;overflow:hidden;background:#2b1b12 center/cover no-repeat;box-shadow:inset 0 0 0 3px #07111c;min-height:max(280px,calc(var(--app-h,100vh) - 205px));padding:8px 10px 12px;display:flex;flex-direction:column}
+.showhall{position:relative;margin-top:6px;border-radius:12px;overflow:hidden;background:#2b1b12 center/cover no-repeat;box-shadow:inset 0 0 0 3px #07111c;min-height:200px;padding:8px 10px 10px;display:flex;flex-direction:column}
 .showhall .stbl-top{position:relative;z-index:3;align-self:flex-start;background:rgba(15,10,28,.78);border:2px solid #ffd23f;border-radius:10px;padding:3px 12px;width:100%}
 .htabart2{position:absolute;left:3%;width:94%;bottom:0;height:62%;z-index:1;image-rendering:pixelated;object-fit:fill;pointer-events:none}
 .showhall .stbl-grid{position:relative;z-index:2;margin-top:auto;padding:14px 14px 4px;justify-content:center}
@@ -650,6 +650,19 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 .vbhead .vbc{margin-left:auto;color:#cfe3ff}.vbhead .vbc b{color:#7df29a}.vbhead .vbn{color:#cbb690}
 .vbgrid{flex-wrap:nowrap;overflow-x:auto;padding:12px 8px 0;gap:10px}
 .vbgrid>div{flex:none}
+
+/* card show run screen: fits the screen exactly, never scrolls. Your cards are not drawn; deals appear in the My table panel */
+#main.showrun{overflow:hidden;display:flex;flex-direction:column}
+#main.showrun .showhall{flex:1;min-height:0;margin-top:6px}
+.mytable{position:relative;z-index:3;margin-top:auto;background:rgba(15,10,28,.82);border:2px solid #ffd23f;border-radius:10px;padding:5px 10px 6px;max-height:60%;display:flex;flex-direction:column;min-height:0}
+.mthead{display:flex;justify-content:space-between;color:#fff;font-size:15px}.mthead b{font-family:var(--pix);font-size:13px;color:#ffd23f}.mthead span{color:#cbb690}
+.mtdeals{overflow:auto;min-height:34px;display:flex;flex-direction:column;gap:5px;margin-top:4px}
+.deal{display:flex;align-items:center;gap:10px;background:#2a1a46;border:2px solid #ff4a4a;border-radius:8px;padding:3px 10px;color:#fff;font-size:16px;cursor:pointer;flex:none}
+.deal .xmark{position:static;animation:none;flex:none;width:24px;height:24px;line-height:24px;font-size:15px;margin:0}
+.deal b{color:#ffd23f}.deal span:not(.xmark){flex:1;color:#e8dcff}.deal i{font-style:normal;color:#7df29a;font-size:14px}
+.mtnone{color:#cbb690;font-size:15px;padding:2px 0}
+.mtlog{color:#cbb690;font-size:13px;margin-top:3px}
+.deal .xmark{display:inline-block;border-radius:50%;background:#ff4a4a;color:#fff;font-family:var(--pix);text-align:center;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.5)}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -897,7 +910,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwffn0f5';'use strict';
+<script>const BUILD='mwfg0b3t';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -1826,7 +1839,7 @@ function worldLoop(){
     flushNotes(); if (G.hour % 3 === 0) save();
     const ov = $('#ov').classList.contains('on'), typing = SCREEN === 'ebay' && EB.kb, show = SH && SH.stage === 'run';
     if (!ov && !typing && !show) render();
-  } else if (mran && SCREEN === 'ebay' && !$('#ov').classList.contains('on')) render();        // the auction list keeps changing every few seconds
+  } else if (mran && SCREEN === 'ebay' && !$('#ov').classList.contains('on') && !(EB.page === 'item' && EB.bidTxt)) render();          // not while you are typing a bid        // the auction list keeps changing every few seconds
 }
 const SHOW_FREE = true;          // TEMPORARY: shows cost nothing while they are being tested. Set to false to bring the table fees back ($25 / $150 / $800).
 const SHOWINFO = { local:{ fee:SHOW_FREE ? 0 : 25, slots:20, buyers:8, rep:0, label:'LOCAL SHOW' }, regional:{ fee:SHOW_FREE ? 0 : 150, slots:40, buyers:14, rep:15, label:'REGIONAL SHOW' }, national:{ fee:SHOW_FREE ? 0 : 800, slots:80, buyers:24, rep:40, label:'NATIONAL SHOW' } };
@@ -1849,10 +1862,11 @@ function render(){
     LASTNEWS = n;
   $('#news').innerHTML = '';
   const m = $('#main'), sc = m.scrollTop;
+  const keepScroll = ['.mkpage', '.pcpage', '.ebpad'].map(q => { const e = m.querySelector(q); return [q, e ? e.scrollTop : 0]; });          // nested scroll spots survive a redraw (typing a bid used to jump back to the top)
   m.innerHTML = ({ shop:scrShop, myshop:scrMyShop, orders:scrOrders, inv:scrInv, coll:scrColl, market:scrMarket, grade:scrGrade, show:scrShow, ebay:scrEbay, guide:scrGuide, jobs:scrOrders, stats:scrStats })[SCREEN]();
   if (G.broke && !$('#ov').classList.contains('on')) startOver();
   document.body.classList.toggle('shopfull', SCREEN === 'myshop');          // the shop page uses the whole screen: no title or cash bar on top
-  m.classList.toggle('fit', SCREEN === 'myshop' || SCREEN === 'ebay'); m.scrollTop = sc; paintCards(); if (SCREEN === 'ebay') liveCards();
+  m.classList.toggle('fit', SCREEN === 'myshop' || SCREEN === 'ebay'); m.classList.toggle('showrun', SCREEN === 'show' && !!SH && SH.stage === 'run'); m.scrollTop = sc; keepScroll.forEach(([q, t]) => { const e = m.querySelector(q); if (e && t) e.scrollTop = t; }); paintCards(); if (SCREEN === 'ebay') liveCards();
 }
 
 // ───────────────────────── store ─────────────────────────
@@ -2190,11 +2204,12 @@ function showVendor(vi){
     <button data-a="close">Back to the floor</button></div>`);
 }
 function hallHTML(tabs){
-  const items = tableItems(), pending = items.filter(x => x.t.offer).length;
-  const grid = items.map(x => `<div class="stbl${x.t.offer ? ' hasoffer' : ''}" data-a="soffer" data-v="${x.i}">${x.t.offer ? '<span class="xmark">!</span>' : ''}${x.sealed ? `<div class="box" style="text-align:center">${prodImg(...x.key.split(':'), 54)}<br><b class="gold">${money(x.price)}</b></div>` : cardHTML(x.def, { sm:true, c:x.c, tagText:money(x.price) })}</div>`).join('');
-  const msg = !SH.table.length ? 'Your table is empty. Walk the floor to buy and trade, or end the show.' : pending ? 'Tap a card with a ! to talk to the buyer.' : SH.queue > 0 ? 'Buyers are browsing...' : 'The crowd is thinning out. End the show when you are done.';
+  const items = tableItems(), deals = items.filter(x => x.t.offer);
+  const rows = deals.map(x => { const o = x.t.offer; return `<div class="deal" data-a="soffer" data-v="${x.i}"><span class="xmark">!</span><b>${showName2(x)}</b><span>${o.kind === 'trade' ? (o.asked ? 'is showing you what they have' : 'has cards to trade for it') : 'offers ' + money(o.offer) + ' (you asked ' + money(x.price) + ')'}</span><i>Tap to answer</i></div>`; }).join('');
+  const msg = !items.length ? 'Your table is empty. Walk the floor to buy and trade, or end the show.' : deals.length ? deals.length + ' deal' + (deals.length > 1 ? 's' : '') + ' waiting' : SH.queue > 0 ? 'Buyers are browsing...' : 'The crowd is thinning out. End the show when you are done.';
   const bg = typeof SHOWHALL_BG !== 'undefined' ? `background-image:url(${SHOWHALL_BG})` : '';
-  return `${tabs}<div class="showhall" style="${bg}"><div class="stbl-top"><span>${msg}</span><span>${SH.sold} sold &middot; ${money(SH.earned)}</span></div><div class="grid sg stbl-grid">${grid || ''}</div></div><div class="dim" style="margin-top:4px">${SH.log.slice(-2).reverse().join(' &middot; ')}</div>`;
+  return `${tabs}<div class="showhall" style="${bg}"><div class="stbl-top"><span>${msg}</span><span>${SH.sold} sold &middot; ${money(SH.earned)}</span></div>
+    <div class="mytable"><div class="mthead"><b>My table</b><span>${items.length} card${items.length === 1 ? '' : 's'} out</span></div><div class="mtdeals">${rows || '<div class="mtnone">No deals right now. Offers show up here.</div>'}</div>${SH.log.length ? `<div class="mtlog">${SH.log.slice(-2).reverse().join(' &middot; ')}</div>` : ''}</div></div>`;
 }
 // the offer popup: a buyer wants it for less (haggle), or has cards to trade
 function showOfferModal(i){
@@ -2789,15 +2804,15 @@ function mailHour(){
   for (const m of G.mkt.mail){ if (m.arrive <= beat){ addCards([m.c]); note('Your eBay order arrived: ' + cname(m.c)); } else still.push(m); }
   G.mkt.mail = still;
 }
-// the player bids a maximum; the price only climbs as far as it needs to. The whole maximum (plus shipping) is held until the auction is decided.
+// the player bids exactly what they type: the price goes to that amount. The whole bid (plus shipping) is held until the auction is decided.
 function placeBid(id, max){
   const L = G.mkt.list.find(l => l.id === id); if (!L || L.ends <= (G.mtk || 0)) return { ok:false, msg:'This auction has ended.' };
   max = r2(max); const min = L.bids ? r2(L.bid + bidInc(L.bid)) : L.start;
   if (!(max >= min)) return { ok:false, msg:'Bid at least ' + money(min) + '.' };
-  if (L.mine && max <= L.mine) return { ok:false, msg:'Your maximum is already ' + money(L.mine) + '.' };
+  if (L.mine && max <= L.mine) return { ok:false, msg:'Your bid is already ' + money(L.mine) + '.' };
   const need = r2(max + L.ship - (L.esc || 0)); if (G.cash < need) return { ok:false, msg:'Not enough cash (a bid holds ' + money(max + L.ship) + ').' };
   G.cash = r2(G.cash - need); L.esc = r2((L.esc || 0) + need); L.mine = max;
-  if (L.lead !== 'you'){ L.bid = min; L.lead = 'you'; L.bids++; }
+  L.bid = max; if (L.lead !== 'you'){ L.lead = 'you'; L.bids++; }          // the price becomes exactly the bid you typed
   let ext = false;           // a bid with under 10 seconds left puts the clock back to 10 seconds
   if (ebEndTs(L) - Date.now() <= 10000){ L.ends = (G.mtk || 0) + Math.max(0, Date.now() + 10000 - (G.mlast || Date.now())) / MKT_TICK_MS; ext = true; }
   return { ok:true, L, ext };
@@ -2841,10 +2856,10 @@ function ebPage(){
     const c = L.c, d = DEFS[c.d], s = sellerOf(L.seller), min = L.bids ? r2(L.bid + bidInc(L.bid)) : L.start, keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0'];
     return `<div class="ebpad"><div class="ebcrumb" data-a="eb" data-c="back2">◀ Back to results</div><div class="ebitem"><div>${cardHTML(d, { c, price:false, live:true })}</div><div class="ebinfo"><h2>${ebTitle(c)}</h2><div class="ebd">${ebDetail(c)}</div><div class="ebs">Seller: <b>${L.seller}</b> · ${s.fb}% positive feedback · ${s.sales.toLocaleString()} items sold</div>
       <div class="ebs" style="margin-top:6px">${L.bids ? 'Current bid' : 'Starting bid'}</div><div class="ebbig">${money(ebPrice(L))}</div><div class="ebs">${ebBidTxt(L)} · ${ebLeft(L)} left · + ${money(L.ship)} shipping</div><div class="ebs">${((G.mkt.cnt || {})[compKey(c.d)] || 1) - 1 ? ((G.mkt.cnt || {})[compKey(c.d)] - 1) + ' other ' + cap(d.name) + ' tier ' + d.tier + ' auction' + (((G.mkt.cnt || {})[compKey(c.d)] - 1) > 1 ? 's' : '') + ' right now' : 'No other ' + d.name + ' tier ' + d.tier + ' auctions right now'}</div>
-      ${L.mine ? `<div class="ebs" style="margin-top:4px;color:${L.lead === 'you' ? 'var(--grn)' : 'var(--red)'}"><b>${L.lead === 'you' ? 'You are the high bidder' : 'You were outbid'}</b> · your maximum ${money(L.mine)}</div>` : ''}
+      ${L.mine ? `<div class="ebs" style="margin-top:4px;color:${L.lead === 'you' ? 'var(--grn)' : 'var(--red)'}"><b>${L.lead === 'you' ? 'You are the high bidder' : 'You were outbid'}</b> · your bid ${money(L.mine)}</div>` : ''}
       <div class="ebs" style="margin-top:6px">Condition: raw, ungraded. You will not know how clean it is until you send it to a grader.</div>
       ${EB.msg ? `<div class="ebmsg">${EB.msg}</div>` : ''}
-      <div class="ebs" style="margin-top:8px">Every bid raises the price by at least 2%. Tap a button or type a maximum (at least ${money(min)}). You only pay what it takes to win.</div>
+      <div class="ebs" style="margin-top:8px">Every bid raises the price by at least 2%. Tap a button or type your bid (at least ${money(min)}). Your bid goes in exactly as typed.</div>
       <div class="ebquick">${[2, 3, 5].map(p => `<button class="ebbuy" data-a="eb" data-c="bq" data-v="${p}">+${p}% ${money(L.bids ? bidUp(L, p) : r2(Math.max(L.start * (1 + p / 100), L.start + .01)))}</button>`).join('')}</div><div class="ebs" style="margin-top:6px">Or type your own:</div>
       <div class="ebbid"><span class="ebamt">$${EB.bidTxt || '0'}</span><div class="ebkeys">${keys.map(k => `<button class="key" data-a="eb" data-c="bk" data-v="${k}">${k}</button>`).join('')}<button class="key" data-a="eb" data-c="bkb">⌫</button><button class="key" data-a="eb" data-c="bmin">Min</button></div><button class="ebbuy" data-a="eb" data-c="bid">Place bid</button></div></div></div></div>`;
   }
