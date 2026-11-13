@@ -1033,9 +1033,11 @@ const releasedSets = () => G.sets.filter(s => s.rel <= G.day && s.ready);
 
 // ───────────────────────── cards and values ─────────────────────────
 function gradeMult(c, def){ if (!c.g) return 1; if (c.gm) return c.gm; const r = gradeRange(c.g); return (r[0] + r[1]) / 2; }
-// a bound set sells for 1.5x its cards at 4 cards, 1.7x at 5, 1.9x at 6 and so on
+// a bound set is worth 1.5x to 3x its cards added up, and every set re-rolls its own multiplier at random every 4 minutes
+const SET_BUCKET_MS = 4 * 60000;
+const setMult = c => 1.5 + 1.5 * (hash('set' + c.u + ':' + Math.floor(Date.now() / SET_BUCKET_MS)) / 4294967296);
 const setBonus = size => .5 + .2 * (size - 4);
-function cv(c){ if (c.bs) return c.cards.reduce((a, x) => a + cv(x), 0) * (1 + setBonus(c.size)); const d = DEFS[c.d]; return px(c.d) * gradeMult(c, d); }
+function cv(c){ if (c.bs) return c.cards.reduce((a, x) => a + cv(x), 0) * setMult(c); const d = DEFS[c.d]; return px(c.d) * gradeMult(c, d); }
 const cname = c => c.bs ? c.name : DEFS[c.d].name;
 // grade odds: 25% each for 10, 9, 8 and 7, so a graded card averages about 1.17x its raw value
 function rawGrade(c, def){ const q = c.q == null ? .5 : c.q, t = def.vint ? [.98, .86, .58, .25] : [.75 + .1 * HARD, .5 + .05 * HARD, .25, 0]; return q > t[0] ? 10 : q > t[1] ? 9 : q > t[2] ? 8 : q > t[3] ? 7 : 5 + Math.floor(q * 8); }
@@ -1915,7 +1917,7 @@ function scrColl(){
 let SETN = 30; const SETMIN = 3;   // only sets you hold at least 3 cards of
 function collSets(){
   const all = buildSets(), list = all.filter(s => s.have >= SETMIN || s.complete), done = list.filter(s => s.complete).length;
-  let h = `<div class="dim" style="margin-bottom:6px">A set is four or more cards that match in everything except one property, with every value of that property covered. A card counts toward every set it fits until you bind a finished set. Bound sets stay together for good and sell as one item anywhere. Finished sets first, then the ones missing the fewest cards, then by value.</div>
+  let h = `<div class="dim" style="margin-bottom:6px">A set is four or more cards that match in everything except one property, with every value of that property covered. A card counts toward every set it fits until you bind a finished set. Bound sets stay together for good and sell as one item anywhere, worth 1.5x to 3x their cards added up (each set re-rolls its multiplier every few minutes). Finished sets first, then the ones missing the fewest cards, then by value.</div>
     <div class="tabs"><span class="dim" style="margin-left:auto;align-self:center">${list.length} set${list.length === 1 ? '' : 's'} with 3+ cards · ${done} finished</span></div>`;
   if (!list.length) return h + '<div class="box">Nothing to show yet. Sets appear here once you own 3 cards that match in everything except one property.</div>';
   h += list.slice(0, SETN).map(st => {
