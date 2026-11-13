@@ -910,7 +910,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwfg0b3t';'use strict';
+<script>const BUILD='mwfg6khz';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -1045,7 +1045,10 @@ function fairOf(set, cid, tier, day){
 }
 const MILL = 1000;
 function lastOf(key){ const h = G.hist[key]; return h && h.length ? h[h.length - 1] / MILL : 0; }
-function px(defId){ return DEFS[defId].val * mxFactor(defId); }           // a card's base value (stage x tier x finish x edge) times what the market says about cards like it right now
+function px(defId){ return DEFS[defId].val; }           // a card's value is SET: stage x tier x finish x edge. It never moves, it is what the Guide shows and what a pack pull is worth.
+// what the market will pay right now: supply and demand only change how cards sell in the shop and on eBay, never the card's value
+const marketPx = defId => DEFS[defId].val * mxFactor(defId);
+const mktVal = c => c.bs ? cv(c) : marketPx(c.d) * gradeMult(c, DEFS[c.d]);
 function seriesData(defId){ const d = DEFS[defId], h = G.hist[d.skey] || [], m = FIN_MULT[d.fin] * EDGE_MULT[d.edge]; return h.map(v => v * m); }
 function tick(day){}      // card values are fixed, so the market has nothing to do
 function sealedCalc(set, p, day){
@@ -1088,7 +1091,7 @@ function lastSold(lookId){
     const d = DEFS[lookId], h = G.hist[d.skey] || [], m = FIN_MULT[d.fin] * EDGE_MULT[d.edge], out = []; let ago = 0;
     for (let k = 0; k < 3; k++){
       ago += k === 0 ? ri(1, 6) : ri(3, 14);
-      const base = h.length ? h[Math.max(0, h.length - 1 - ago)] / MILL * m : px(lookId), p = r2(Math.max(.2, base * (.9 + rnd() * .2)));
+      const base = h.length ? h[Math.max(0, h.length - 1 - ago)] / MILL * m : marketPx(lookId), p = r2(Math.max(.2, base * (.9 + rnd() * .2)));
       if (rnd() < .68) out.push({ p, w:'eBay', d:G.day - ago });
       else out.push({ p, w:showName(ri(0, 15)), d:G.day - ago });
     }
@@ -1320,8 +1323,8 @@ const startFracs = v => {
 function listEbay(uid, startFrac, mins){
   if (G.ebay.length >= 20) return false;
   const i = G.inv.cards.findIndex(c => c.u === uid); if (i < 0) return false;
-  const c = G.inv.cards.splice(i, 1)[0], v = cv(c), a = auctionNew(v, Math.round(mins * 60000 / BEAT_MS));
-  a.start = Math.max(.01, r2(v * startFrac)); c.auc = a; c.listed = G.day; G.ebay.push(c); return true;
+  const c = G.inv.cards.splice(i, 1)[0], v = mktVal(c), a = auctionNew(v, Math.round(mins * 60000 / BEAT_MS));
+  a.start = Math.max(.01, r2(cv(c) * startFrac)); c.auc = a;          // you pick the start price from the card's set value; bidders judge it against the market, so too high may get no bids c.listed = G.day; G.ebay.push(c); return true;
 }
 function cancelEbay(uid){ const i = G.ebay.findIndex(l => l.u === uid); if (i < 0 || G.ebay[i].auc.bids) return false; const c = G.ebay.splice(i, 1)[0]; delete c.auc; delete c.listed; G.inv.cards.push(c); return true; }
 function ebayHour(){
@@ -2710,7 +2713,7 @@ const compOf = (key, n) => { const avg = (G.mkt && G.mkt.avgc && G.mkt.avgc[key]
 function auctionStep(L, mult, rate, now){
   const heat = Math.min(2, (L.bids || 0) / 8);            // lots of bids means lots of people watching: they jump in more
   // bargain hunters: the further the price sits below what the card is worth on the market right now, the more bidders jump in
-  const price = L.bids ? L.bid : L.start, mv = L.c ? px(L.c.d) : (L.v || 0), under = mv > 0 ? clamp(1 - price / mv, 0, 1) : 0, bargain = 1 + 4 * Math.max(0, under - .15);
+  const price = L.bids ? L.bid : L.start, mv = L.v || 0, under = mv > 0 ? clamp(1 - price / mv, 0, 1) : 0, bargain = 1 + 4 * Math.max(0, under - .15);
   const q = clamp((rate || BID_RATE) * L.pop * (1 + heat) * (mult || 1) * bargain * (L.hot ? 1.4 : 1), 0, .95); if (rnd() > q) return null;
   const cap = L.cap * (L.comp || 1) * (L.hot || 1);       // a hot auction (a bidding war) goes past the market level
   if (!L.bids) return L.start <= cap ? L.start : null;
@@ -2737,7 +2740,7 @@ function auctionBid(L, target){
 }
 function mktAdd(tier, fresh){
   const c = mxDraw(mktPools()[tier]); if (!c) return;
-  const v = px(c.d), dur = MIN_T + (MAX_T - MIN_T) * Math.pow(rnd(), 1.3), tk = G.mtk || 0;      // most auctions are short
+  const v = marketPx(c.d), dur = MIN_T + (MAX_T - MIN_T) * Math.pow(rnd(), 1.3), tk = G.mtk || 0;      // most auctions are short
   const L = Object.assign(auctionNew(v, dur, tk), { id:++G.mkt.n, c, tier, ship:v >= 100 ? 6.5 : v >= 20 ? 3.5 : 1.5, seller:pick(SELLER_NAMES) });
   if (!fresh){      // the market is already mid-auction when the game starts
     const el = rnd() * dur; L.ends -= el; L.t0 -= el; G.mkt.cnt = G.mkt.cnt || {}; const ck = compKey(c.d); L.comp = 1; G.mkt.cnt[ck] = (G.mkt.cnt[ck] || 0) + 1;
@@ -3005,10 +3008,11 @@ function ensureShop(){
 const shopSpread = v => clamp(.5 - .12 * Math.log10(Math.max(1, v / 5)) * 1.2, .1, .5);
 const shopVisitMin = v => clamp(8 + 7 * Math.log10(Math.max(1, v / 5)), 8, 45);
 const shopVisitBeats = v => Math.max(2, Math.round(shopVisitMin(v) * 4 * (1 + HARD) * (.7 + rnd() * .6)));
-// the chance a shopper who looks at it buys, for a given price against market value (demand-shifted)
+// the chance a shopper who looks at it buys, for a given price against what the market pays right now
+const mktItemVal = it => it.k === 's' ? sealedPx(...it.key.split(':')) : mktVal(it.c);
 function shopBuyChance(it){
-  const v = itemVal(it), sp = shopSpread(v), dem = it.k === 's' ? 1 : clamp(1 + (demandOf(it.c.bs ? it.c.cards[0].d : it.c.d) - 1) * .35, .8, 1.25);       // market value already includes demand; shoppers lean a little more on top of it
-  const lo = (1 - sp * .3) * dem * (1 - .12 * HARD), hi = (1 + sp * .7) * dem * (1 - .12 * HARD), r = it.price / v;
+  const v = mktItemVal(it), sp = shopSpread(v);          // shoppers judge the price against what the market says the card is worth right now (supply and demand included)
+  const lo = (1 - sp * .3) * (1 - .12 * HARD), hi = (1 + sp * .7) * (1 - .12 * HARD), r = it.price / v;
   return clamp((hi - r) / (hi - lo), 0, 1);
 }
 const shelfShort = it => { const min = Math.floor(Math.max(0, (G.beat || 0) - (it.since == null ? (G.beat || 0) : it.since)) / 4); return min < 1 ? 'new' : min < 60 ? min + 'm' : min < 1440 ? Math.floor(min / 60) + 'h' : Math.floor(min / 1440) + 'd ' + Math.floor(min % 1440 / 60) + 'h'; };
