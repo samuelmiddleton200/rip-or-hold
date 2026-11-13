@@ -910,7 +910,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwfg6khz';'use strict';
+<script>const BUILD='mwfg82n5';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2244,7 +2244,7 @@ function showDone(){
   const profit = SH.earned - SH.fee - (SH.spent || 0);
   const tile = (l, v, cls) => `<div class="stat"><div><small>${l}</small><b class="${cls || ''}">${v}</b></div></div>`;
   return `<h2 style="margin:6px 0">Show's over</h2><div class="stats">${tile('Sold', SH.sold)}${tile('Earned', money(SH.earned), 'gold')}${tile('Bought', SH.bought)}${tile('Traded', SH.traded || 0)}${tile('Table fee', money(SH.fee))}${SH.refund ? tile('Fee refunded', money(SH.refund), 'up') : ''}${tile('Spent on cards', money(SH.paid || 0))}</div>
-    ${SH.cash0 != null ? `<div style="font-size:20px;margin:8px 0">Cash when you arrived <b>${money(SH.cash0)}</b> &rarr; now <b class="${G.cash >= SH.cash0 ? 'up' : 'down'}">${money(G.cash)}</b> <span class="dim">(${G.cash >= SH.cash0 ? '+' : '-'}${money(Math.abs(G.cash - SH.cash0))}${(SH.paid || 0) > 0 ? '; the cards you bought are in your collection' : ''})</span></div>` : ''}
+    <div style="font-size:20px;margin:8px 0">Cash spent at the card show: <b class="${((SH.fee - (SH.refund || 0)) + (SH.paid || 0)) > 0 ? 'down' : ''}">${money(r2((SH.fee - (SH.refund || 0)) + (SH.paid || 0)))}</b> <span class="dim">(table fee ${money(r2(SH.fee - (SH.refund || 0)))} + cards bought ${money(SH.paid || 0)}${(SH.paid || 0) > 0 ? '; those cards are in your collection' : ''})</span></div>
     <div class="dim" style="margin:8px 0">${SH.log.slice(-6).reverse().join('<br>')}</div><button class="gold" data-a="shend">Finish the day</button>`;
 }
 function dealModal(){
