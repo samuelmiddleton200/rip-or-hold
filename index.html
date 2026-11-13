@@ -633,6 +633,8 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 @keyframes xbob{from{transform:translateY(0) scale(1)}to{transform:translateY(-6px) scale(1.12)}}
 .stbl.hasoffer .card{box-shadow:0 0 0 3px #ff4a4a,0 0 16px #ff4a4a}
 .vrow{cursor:pointer}
+/* price tags always show the whole price (packs and boxes were cut to "$29...") */
+.sl2 .stag,.sl2.z-pack .stag,.sl2.z-box .stag,.sl2.z-wall .stag,.sl2.z-vault .stag{overflow:visible;text-overflow:clip;max-width:none;width:max-content}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
