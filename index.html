@@ -1168,6 +1168,7 @@ const dealerRate = () => .8 - .2 * HARD;
 const addRep = x => { G.rep = clamp((G.rep || 0) + x / (1 + (G.rep || 0) / 8), 0, 100); };
 const SHIP = 1.5, BULK_EACH = .005;
 const dealerOffer = c => r2(cv(c) * dealerRate());
+const BULK_RATE = .6, bulkOffer = c => r2(cv(c) * BULK_RATE);          // the Bulk sell button pays 60% of market value
 const isBulk = c => { if (c.bs) return false; const d = DEFS[c.d]; return !c.g && d.tier === 1 && d.fin === 'none' && cv(c) < .15; };
 
 function dealerLeft(setId, pid){
@@ -2418,8 +2419,8 @@ const ACT = {
   gsel(d){ const u = +d.v; if (GSEL.has(u)) GSEL.delete(u); else if (GSEL.size >= maxGrading() - G.grading.length) toast('The grader holds ' + maxGrading() + ' cards at a time (+1 for every 10 rep).'); else GSEL.add(u); sfx.click(); render(); },
   gclear(){ GSEL = new Set(); render(); },
   gchart(){ gradeChart(); },
-  bulkopen(){ overlay(`<div class="modal" style="width:min(430px,92vw);text-align:center"><h2>Bulk sell</h2><div style="font-size:19px">Sell all cards under $ <input id="bulkx" inputmode="decimal" autocomplete="off" placeholder="___" style="width:110px;font:inherit;font-size:22px;text-align:center;background:var(--surf2);color:var(--ink);border:2px solid var(--line);border-radius:8px;padding:3px 6px"></div><div id="bulksum" class="dim" style="margin:12px 0;font-size:20px;min-height:28px">Type an amount</div><div style="display:flex;gap:10px;justify-content:center"><button data-a="close">Cancel</button><button class="gold" id="bulkgo" data-a="bulkgo" disabled>Sell</button></div></div>`); setTimeout(() => { const e = $('#bulkx'); if (e) e.focus(); }, 50); },
-  bulkgo(){ const x = parseFloat(($('#bulkx') || {}).value), list = x > 0 ? bulkList(x) : []; if (!list.length) return; let tot = 0; for (const c of list){ const v = dealerOffer(c); tot += v; noteDeal('sale', c, v, 'the dealer'); releaseCard(c); } const set = new Set(list); G.inv.cards = G.inv.cards.filter(c => !set.has(c)); G.cash += tot; G.stats.revenue += tot; ledger('Bulk sold ' + list.length + ' cards', tot); sfx.sell(); toast('Sold ' + list.length + ' cards for ' + money(tot)); closeOv(); checkAch(); render(); },
+  bulkopen(){ overlay(`<div class="modal" style="width:min(430px,92vw);text-align:center"><h2>Bulk sell</h2><div class="dim" style="font-size:16px;margin-bottom:6px">Pays 60% of market value</div><div style="font-size:19px">Sell all cards under $ <input id="bulkx" inputmode="decimal" autocomplete="off" placeholder="___" style="width:110px;font:inherit;font-size:22px;text-align:center;background:var(--surf2);color:var(--ink);border:2px solid var(--line);border-radius:8px;padding:3px 6px"></div><div id="bulksum" class="dim" style="margin:12px 0;font-size:20px;min-height:28px">Type an amount</div><div style="display:flex;gap:10px;justify-content:center"><button data-a="close">Cancel</button><button class="gold" id="bulkgo" data-a="bulkgo" disabled>Sell</button></div></div>`); setTimeout(() => { const e = $('#bulkx'); if (e) e.focus(); }, 50); },
+  bulkgo(){ const x = parseFloat(($('#bulkx') || {}).value), list = x > 0 ? bulkList(x) : []; if (!list.length) return; let tot = 0; for (const c of list){ const v = bulkOffer(c); tot += v; noteDeal('sale', c, v, 'the dealer'); releaseCard(c); } const set = new Set(list); G.inv.cards = G.inv.cards.filter(c => !set.has(c)); G.cash += tot; G.stats.revenue += tot; ledger('Bulk sold ' + list.length + ' cards', tot); sfx.sell(); toast('Sold ' + list.length + ' cards for ' + money(tot)); closeOv(); checkAch(); render(); },
   gsend(){ if (startGrading([...GSEL])){ toast('Sent ' + GSEL.size + ' to the grader'); sfx.buy(); GSEL = new Set(); } render(); },
   opnext(){ opNext(); }, opall(){ opAll(); }, oppack(){ opNextPack(); }, opripall(){ opRipAll(); }, opfinish(){ opFinish(); }, opdone(){ closeOv(); recordNW(); render(); }, optear(){ opTear(); },
   shhide(){ SH.hide = !SH.hide; render(); },
@@ -2509,7 +2510,7 @@ const bulkList = x => G.inv.cards.filter(c => !c.bs && cv(c) < x);
 document.addEventListener('input', e => {
   if (e.target && e.target.id === 'shpPrice'){ const el = $('#shpEst'), v = +e.target.value; const mk = +(e.target.dataset.mk || 0); if (el && mk > 0) el.textContent = v > 0 ? 'At ' + Math.round(v / mk * 100) + '% of market, ' + bandTxt(shopBand(v / mk)) + '.' : 'No price set: it is on show only and will not sell.'; return; }
   if (!e.target || e.target.id !== 'bulkx') return;
-  const x = parseFloat(e.target.value), list = x > 0 ? bulkList(x) : [], tot = list.reduce((a, c) => a + dealerOffer(c), 0), s = $('#bulksum'), b = $('#bulkgo');
+  const x = parseFloat(e.target.value), list = x > 0 ? bulkList(x) : [], tot = list.reduce((a, c) => a + bulkOffer(c), 0), s = $('#bulksum'), b = $('#bulkgo');
   if (s) s.innerHTML = x > 0 ? (list.length ? `<b>${list.length}</b> card${list.length === 1 ? '' : 's'} for <b class="gold">${money(tot)}</b>` : 'No cards under that') : 'Type an amount';
   if (b) b.disabled = !list.length;
 });
