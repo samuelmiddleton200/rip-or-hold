@@ -2225,7 +2225,8 @@ function showPriceEdit(i){
 function showDone(){
   const profit = SH.earned - SH.fee - (SH.spent || 0);
   const tile = (l, v, cls) => `<div class="stat"><div><small>${l}</small><b class="${cls || ''}">${v}</b></div></div>`;
-  return `<h2 style="margin:6px 0">Show's over</h2><div class="stats">${tile('Sold', SH.sold)}${tile('Earned', money(SH.earned), 'gold')}${tile('Bought', SH.bought)}${tile('Traded', SH.traded || 0)}${tile('Table fee', money(SH.fee))}${SH.refund ? tile('Fee refunded', money(SH.refund), 'up') : ''}</div>
+  return `<h2 style="margin:6px 0">Show's over</h2><div class="stats">${tile('Sold', SH.sold)}${tile('Earned', money(SH.earned), 'gold')}${tile('Bought', SH.bought)}${tile('Traded', SH.traded || 0)}${tile('Table fee', money(SH.fee))}${SH.refund ? tile('Fee refunded', money(SH.refund), 'up') : ''}${tile('Spent on cards', money(SH.paid || 0))}</div>
+    ${SH.cash0 != null ? `<div style="font-size:20px;margin:8px 0">Cash when you arrived <b>${money(SH.cash0)}</b> &rarr; now <b class="${G.cash >= SH.cash0 ? 'up' : 'down'}">${money(G.cash)}</b> <span class="dim">(${G.cash >= SH.cash0 ? '+' : '-'}${money(Math.abs(G.cash - SH.cash0))}${(SH.paid || 0) > 0 ? '; the cards you bought are in your collection' : ''})</span></div>` : ''}
     <div class="dim" style="margin:8px 0">${SH.log.slice(-6).reverse().join('<br>')}</div><button class="gold" data-a="shend">Finish the day</button>`;
 }
 function dealModal(){
@@ -2246,7 +2247,7 @@ function buyFromVendor(price){
     return;
   }
   D.confirmed = false;
-  G.cash -= price; G.stats.spent += price; SH.bought++; recordSale(it.c.d, price, SH.name); noteDeal('buy', it.c, price, 'a card show'); it.c.paid = price; addCards([it.c]); v.items.splice(D.ii, 1);
+  G.cash -= price; G.stats.spent += price; SH.bought++; SH.paid = (SH.paid || 0) + price; recordSale(it.c.d, price, SH.name); noteDeal('buy', it.c, price, 'a card show'); it.c.paid = price; addCards([it.c]); v.items.splice(D.ii, 1);
   SH.log.push('Bought ' + DEFS[it.c.d].name + ' for ' + money(price)); ledger('Show: bought ' + DEFS[it.c.d].name, -price); sfx.buy(); save();
   SH.deal = null; closeOv(); render(); if (SH.vi != null) showVendor(SH.vi);
 }
@@ -2468,7 +2469,7 @@ const ACT = {
   shoff(d){ SH.table.splice(+d.v, 1); render(); },
   shopen(){
     const kind = curShowKind(), inf = SHOWINFO[kind]; if (G.cash < inf.fee) return;
-    G.cash -= inf.fee; G.stats.spent += inf.fee; ledger('Table fee (' + kind + ' show)', -inf.fee);
+    SH.cash0 = G.cash; G.cash -= inf.fee; G.stats.spent += inf.fee; ledger('Table fee (' + kind + ' show)', -inf.fee);
     for (const t of SH.table) if (!t.price){ if (t.k === 'c'){ const c = instOf(t.u); t.price = r2(cv(c)); } else { const [a, b] = t.key.split(':'); t.price = r2(sealedPx(a, b)); } }
     Object.assign(SH, { stage:'run', tab:'cust', kind, name:showName(G.showN || 0), fee:inf.fee, sold:0, earned:0, bought:0, traded:0, log:[], queue:inf.buyers * 2 + Math.floor(G.rep / 4), clock:0, next:2 });
     SH.vendors = genVendors(); render();
@@ -2532,7 +2533,7 @@ const ACT = {
     const credit = r2([...D.sel].reduce((a, u) => { const c = instOf(u); return a + (c ? cv(c) * .9 : 0); }, 0)), need = r2(it.ask - credit);
     if (need > 0 && G.cash < need) return;
     G.inv.cards.filter(c => D.sel.has(c.u)).forEach(releaseCard); G.inv.cards = G.inv.cards.filter(c => !D.sel.has(c.u));
-    if (need > 0) G.cash -= need; else G.cash += r2(-need * .6);
+    if (need > 0){ G.cash -= need; SH.paid = (SH.paid || 0) + need; } else G.cash += r2(-need * .6);
     addCards([it.c]); v.items.splice(D.ii, 1); SH.traded++;
     SH.log.push('Traded ' + D.sel.size + ' card' + (D.sel.size > 1 ? 's' : '') + ' for ' + DEFS[it.c.d].name); ledger('Show trade: got ' + DEFS[it.c.d].name, need > 0 ? -need : -need * .6); sfx.sell();
     SH.deal = null; closeOv(); render();
