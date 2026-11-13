@@ -1316,6 +1316,7 @@ const ACH = [
   ['chase', 'Chase Card', 'Pull a tier 3 galaxy or rainbow-edge card', () => G.done.chase],
   ['ten', 'Gem Mint', 'Get a grade 10 back', () => G.done.ten],
   ['big', 'Big Sale', 'Sell something for $250 or more', () => G.stats.bigSale >= 250],
+  ['show', 'Table Time', 'Work a card show', () => G.stats.shows >= 1],
   ['hundred', 'Hundred Dollar Pull', 'Pull a card worth $100+', () => G.done.hundred],
   ['broke', 'Back From Broke', 'Go bankrupt and rebuild to $100 cash', () => G.wasBroke && G.cash >= 100],
   ['set', 'Set Bound', 'Bind your first set', () => (G.stats.bound || 0) >= 1],
@@ -1818,7 +1819,7 @@ function render(){
   if (!G) return;
   const nw = netWorth();
   $('#top').innerHTML = `<h1>${ico('pack', 26)}<div><b>RIP</b> OR <b>HOLD</b><span>CARD SHOP SIM</span></div></h1><div class="st"><div class="chip">${ico('coin', 24)}<div><small>Cash</small><b class="gold">${money(G.cash)}</b></div></div><div class="chip">${ico('trend', 24)}<div><small>Collection</small><b>${money(invValue())}</b></div></div><div class="chip">${ico('star', 24)}<div><small>Rep</small><b>${Math.floor(G.rep)}</b></div></div></div><button class="bulkbtn gold" data-a="bulkopen">${ico('cards', 20)}<span>Bulk sell</span></button>`;
-  const tabs = [['shop', 'Store', 'pack'], ['myshop', 'My Shop', 'shop'], ['inv', 'Packs', 'box'], ['coll', 'Collection', 'cards'], ['grade', 'Grading', 'grade'], ['ebay', 'eBay', 'globe'], ['guide', 'Guide', 'book'], ['stats', 'Stats', 'bars']];
+  const tabs = [['shop', 'Store', 'pack'], ['myshop', 'My Shop', 'shop'], ['inv', 'Packs', 'box'], ['coll', 'Collection', 'cards'], ['grade', 'Grading', 'grade'], ['show', 'Card Show', 'ticket'], ['ebay', 'eBay', 'globe'], ['guide', 'Guide', 'book'], ['stats', 'Stats', 'bars']];
   $('#nav').innerHTML = tabs.map(t => `<button data-a="tab" data-v="${t[0]}" class="${SCREEN === t[0] ? 'on' : ''}">${ico(t[2], 26)}${t[1]}${t[0] === 'myshop' && bellCount() ? `<i class="bdg">${bellCount()}</i>` : ''}</button>`).join('');
   const n = G.news[0];
     LASTNEWS = n;
