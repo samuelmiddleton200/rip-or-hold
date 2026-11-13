@@ -898,7 +898,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwfffcfs';'use strict';
+<script>const BUILD='mwffm8ri';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -1829,7 +1829,8 @@ function worldLoop(){
     if (!ov && !typing && !show) render();
   } else if (mran && SCREEN === 'ebay' && !$('#ov').classList.contains('on')) render();        // the auction list keeps changing every few seconds
 }
-const SHOWINFO = { local:{ fee:25, slots:20, buyers:8, rep:0, label:'LOCAL SHOW' }, regional:{ fee:150, slots:40, buyers:14, rep:15, label:'REGIONAL SHOW' }, national:{ fee:800, slots:80, buyers:24, rep:40, label:'NATIONAL SHOW' } };
+const SHOW_FREE = true;          // TEMPORARY: shows cost nothing while they are being tested. Set to false to bring the table fees back ($25 / $150 / $800).
+const SHOWINFO = { local:{ fee:SHOW_FREE ? 0 : 25, slots:20, buyers:8, rep:0, label:'LOCAL SHOW' }, regional:{ fee:SHOW_FREE ? 0 : 150, slots:40, buyers:14, rep:15, label:'REGIONAL SHOW' }, national:{ fee:SHOW_FREE ? 0 : 800, slots:80, buyers:24, rep:40, label:'NATIONAL SHOW' } };
 function toast(t){ const e = document.createElement('div'); e.className = 'toast'; e.textContent = t; e.style.top = (70 + document.querySelectorAll('.toast').length * 40) + 'px'; document.body.appendChild(e); setTimeout(() => e.remove(), 2200); }
 function overlay(html){ const o = $('#ov'); o.innerHTML = html; o.classList.add('on'); paintCards(); liveCards(); }
 function closeOv(){ const o = $('#ov'); o.classList.remove('on'); o.innerHTML = ''; delete o.dataset.lv; delete o.dataset.tense; if (OP && OP.rv) OP.rv = null; OP = null; }
