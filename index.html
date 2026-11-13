@@ -635,6 +635,12 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 .vrow{cursor:pointer}
 /* price tags always show the whole price (packs and boxes were cut to "$29...") */
 .sl2 .stag,.sl2.z-pack .stag,.sl2.z-box .stag,.sl2.z-wall .stag,.sl2.z-vault .stag{overflow:visible;text-overflow:clip;max-width:none;width:max-content}
+/* the show hall picture is back behind your table: hall in the back, the table in front, your cards laid out on it */
+.showhall{position:relative;margin-top:6px;border-radius:12px;overflow:hidden;background:#2b1b12 center/cover no-repeat;box-shadow:inset 0 0 0 3px #07111c;min-height:min(300px,56vh);padding:8px 10px 12px;display:flex;flex-direction:column}
+.showhall::before{content:'';position:absolute;inset:0;background:linear-gradient(rgba(10,6,20,.35),rgba(10,6,20,.15));pointer-events:none}
+.showhall .stbl-top{position:relative;z-index:3;align-self:flex-start;background:rgba(15,10,28,.78);border:2px solid #ffd23f;border-radius:10px;padding:3px 12px;width:100%}
+.htabart2{position:absolute;left:3%;width:94%;bottom:0;height:62%;z-index:1;image-rendering:pixelated;object-fit:fill;pointer-events:none}
+.showhall .stbl-grid{position:relative;z-index:2;margin-top:auto;padding:14px 14px 4px;justify-content:center}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -2162,7 +2168,8 @@ function hallHTML(tabs){
   const items = tableItems(), pending = items.filter(x => x.t.offer).length;
   const grid = items.map(x => `<div class="stbl${x.t.offer ? ' hasoffer' : ''}" data-a="soffer" data-v="${x.i}">${x.t.offer ? '<span class="xmark">!</span>' : ''}${x.sealed ? `<div class="box" style="text-align:center">${prodImg(...x.key.split(':'), 54)}<br><b class="gold">${money(x.price)}</b></div>` : cardHTML(x.def, { sm:true, c:x.c, tagText:money(x.price) })}</div>`).join('');
   const msg = !SH.table.length ? 'Your table is empty. Walk the floor to buy and trade, or end the show.' : pending ? 'Tap a card with a ! to talk to the buyer.' : SH.queue > 0 ? 'Buyers are browsing...' : 'The crowd is thinning out. End the show when you are done.';
-  return `${tabs}<div class="showtbl"><div class="stbl-top"><span>${msg}</span><span class="dim">${SH.sold} sold &middot; ${money(SH.earned)}</span></div><div class="grid sg stbl-grid">${grid || ''}</div></div><div class="dim" style="margin-top:4px">${SH.log.slice(-2).reverse().join(' &middot; ')}</div>`;
+  const bg = typeof SHOWHALL_BG !== 'undefined' ? `background-image:url(${SHOWHALL_BG})` : '';
+  return `${tabs}<div class="showhall" style="${bg}"><div class="stbl-top"><span>${msg}</span><span>${SH.sold} sold &middot; ${money(SH.earned)}</span></div><img class="htabart2" src="${tableArt()}" alt=""><div class="grid sg stbl-grid">${grid || ''}</div></div><div class="dim" style="margin-top:4px">${SH.log.slice(-2).reverse().join(' &middot; ')}</div>`;
 }
 // the offer popup: a buyer wants it for less (haggle), or has cards to trade
 function showOfferModal(i){
