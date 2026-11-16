@@ -604,17 +604,18 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 #ov::after{background:radial-gradient(circle at 50% 45%,transparent 30%,rgba(0,0,0,.82))}
 #ov[data-lv="1"]::before{opacity:.14}#ov[data-lv="2"]::before{opacity:.3}#ov[data-lv="3"]::before{opacity:.5}#ov[data-lv="4"]::before{opacity:.65}#ov[data-lv="5"]::before{opacity:.8;animation:bgpulse 1.1s ease-in-out infinite alternate}
 #ov[data-lv="4"]::after{opacity:.5}#ov[data-lv="5"]::after{opacity:.9}
+#ov[data-lv="6"]::before,#ov[data-lv="7"]::before{opacity:.85;animation:bgpulse .9s ease-in-out infinite alternate}#ov[data-lv="6"]::after,#ov[data-lv="7"]::after{opacity:.95}
 #ov[data-tense]::after{opacity:.75}#ov[data-tense]::before{opacity:.35;animation:bgpulse .42s ease-in-out infinite alternate}
 @keyframes bgpulse{from{filter:brightness(.8)}to{filter:brightness(1.7)}}
 .modal.opn{position:relative;z-index:1}
 .modal.opn.rv{background:linear-gradient(#1c3a58cc,#112638cc)}
-.modal.opn.rv3,.modal.opn.rv4,.modal.opn.rv5{box-shadow:0 0 0 5px rgba(0,0,0,.45),0 0 50px var(--rc),0 0 110px var(--rc)}
+.modal.opn.rv3,.modal.opn.rv4,.modal.opn.rv5,.modal.opn.rv6,.modal.opn.rv7{box-shadow:0 0 0 5px rgba(0,0,0,.45),0 0 50px var(--rc),0 0 110px var(--rc)}
 .modal.opn.rv2{box-shadow:0 0 0 5px rgba(0,0,0,.45),0 0 34px var(--rc)}
 .opn.rv .stage::before{background:repeating-conic-gradient(var(--rc) 0 9deg,transparent 9deg 18deg);opacity:.32;animation-duration:12s}
-.opn.rv4 .stage::before,.opn.rv5 .stage::before{opacity:.5;animation-duration:6s}
-.opn.rv5 .stage::before{background:repeating-conic-gradient(#ff5f5f 0 6deg,#ffd23f 6deg 12deg,#5be37d 12deg 18deg,#5dd6ff 18deg 24deg,#b56cff 24deg 30deg,transparent 30deg 36deg)}
+.opn.rv4 .stage::before,.opn.rv5 .stage::before,.opn.rv6 .stage::before,.opn.rv7 .stage::before{opacity:.5;animation-duration:6s}.opn.rv6 .stage::before,.opn.rv7 .stage::before{animation-duration:3s}
+.opn.rv5 .stage::before,.opn.rv6 .stage::before,.opn.rv7 .stage::before{background:repeating-conic-gradient(#ff5f5f 0 6deg,#ffd23f 6deg 12deg,#5be37d 12deg 18deg,#5dd6ff 18deg 24deg,#b56cff 24deg 30deg,transparent 30deg 36deg)}
 .opn .stage::after{content:'';position:absolute;left:50%;top:50%;width:420px;height:420px;margin:-210px 0 0 -210px;background:radial-gradient(circle,var(--rc,#fff) 0,transparent 62%);opacity:0;pointer-events:none;transition:opacity .4s}
-.opn.rv2 .stage::after{opacity:.25}.opn.rv3 .stage::after{opacity:.42}.opn.rv4 .stage::after{opacity:.6}.opn.rv5 .stage::after{opacity:.8}
+.opn.rv2 .stage::after{opacity:.25}.opn.rv3 .stage::after{opacity:.42}.opn.rv4 .stage::after{opacity:.6}.opn.rv5 .stage::after,.opn.rv6 .stage::after,.opn.rv7 .stage::after{opacity:.8}
 .modal.rumble{animation:rumble .06s linear infinite}
 @keyframes rumble{0%{transform:translate(calc(var(--amp,1px)*-1),calc(var(--amp,1px)*.5))}25%{transform:translate(calc(var(--amp,1px)*.8),calc(var(--amp,1px)*-.7))}50%{transform:translate(calc(var(--amp,1px)*-.6),calc(var(--amp,1px)*-.8))}75%{transform:translate(calc(var(--amp,1px)*.9),calc(var(--amp,1px)*.6))}100%{transform:translate(calc(var(--amp,1px)*-1),calc(var(--amp,1px)*.5))}}
 .modal.quake{animation:quake .6s ease-out}.modal.quake2{animation:quake .6s ease-out 2}
@@ -624,7 +625,7 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 @keyframes hotglow{from{box-shadow:0 0 18px var(--rc),0 0 40px var(--rc)}to{box-shadow:0 0 34px var(--rc),0 0 90px var(--rc),0 0 130px var(--rc)}}
 .banner{font-size:38px;color:#fff;text-shadow:3px 3px 0 #000,0 0 26px var(--rc,#ffb52e),0 0 50px var(--rc,#ffb52e);animation:ban 2s ease-out forwards}
 .banner .bl{display:block}
-.banner.b3{font-size:44px}.banner.b4{font-size:52px}.banner.b5{font-size:60px;animation:ban5 2.1s ease-out forwards}
+.banner.b3{font-size:44px}.banner.b4{font-size:52px}.banner.b5,.banner.b6,.banner.b7{font-size:60px;animation:ban5 2.1s ease-out forwards}.banner.b6{font-size:72px}.banner.b7{font-size:86px}
 .banner em{display:block;font-style:normal;font-size:20px;color:var(--rc);text-shadow:2px 2px 0 #000;margin-top:2px}
 @keyframes ban5{0%{transform:scale(.2) rotate(-6deg);opacity:0}12%{transform:scale(1.35) rotate(2deg);opacity:1}22%{transform:scale(1) rotate(0)}85%{opacity:1}100%{opacity:0}}
 .flash.col{animation:flo .9s ease-out forwards;background:var(--fc)}
@@ -739,6 +740,14 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 /* the card's value sits under it once it has landed */
 .spc .sptag{position:absolute;left:50%;bottom:calc(var(--w)*-.13);transform:translateX(-50%);background:#08121d;border:2px solid #2d5075;border-radius:6px;padding:0 8px;font-size:calc(var(--w)*.15);font-weight:600;white-space:nowrap;color:var(--grn);z-index:6;opacity:0;transition:opacity .25s}
 .spc.landed .sptag{opacity:1}
+
+/* the better the card, the more it glows while it waits and while it spins */
+.card.back[data-aura]{animation:auraP calc(1.5s - var(--lvn)*.12s) ease-in-out infinite alternate}
+@keyframes auraP{from{filter:drop-shadow(0 0 calc(var(--lvn)*2px) var(--rc))}to{filter:drop-shadow(0 0 calc(var(--lvn)*7px) var(--rc)) drop-shadow(0 0 calc(var(--lvn)*3px) var(--rc)) brightness(1.15)}}
+.spc.aura:not(.landed) .card{filter:drop-shadow(0 0 calc(var(--lvn)*4px) var(--rc)) drop-shadow(0 0 calc(var(--lvn)*8px) var(--rc))}
+.spc .swirl{width:calc(var(--w)*(1.5 + var(--lvn,0)*.08));height:calc(var(--w)*(1.5 + var(--lvn,0)*.08));margin:calc(var(--w)*(1.5 + var(--lvn,0)*.08)*-.5) 0 0 calc(var(--w)*(1.5 + var(--lvn,0)*.08)*-.5)}
+.stage .spc.zoomw:not(.landed){animation:zoomin var(--dur) ease-in both}
+@keyframes zoomin{to{transform:scale(1.22)}}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -990,7 +999,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwixdp7j';'use strict';
+<script>const BUILD='mwixhs6o';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -1024,7 +1033,7 @@ const EDGE_LABEL = { grey:'', bronze:'BRONZE EDGE', gold:'GOLD EDGE', rainbow:'R
 const EDGE_RAR = { grey:'common', bronze:'uncommon', gold:'ultra', rainbow:'secret' };
 const TIER_RUN = [0, 1000, 100, 25];
 const TIER_MULT = [0, 1, Math.pow(TIER_RUN[1] / TIER_RUN[2], ALPHA), Math.pow(TIER_RUN[1] / TIER_RUN[3], ALPHA)], TIER_LABEL = ['', 'TIER 1', 'TIER 2', 'TIER 3'];
-const levelOfValue = v => v < 5 ? 0 : v < 20 ? 1 : v < 100 ? 2 : v < 500 ? 3 : v < 5000 ? 4 : 5;
+const levelOfValue = v => v < 5 ? 0 : v < 15 ? 1 : v < 40 ? 2 : v < 100 ? 3 : v < 200 ? 4 : v < 500 ? 5 : v < 2000 ? 6 : 7;          // hype level of a pull: under $5, 5-15, 15-40, 40-100, 100-200, 200-500, 500-2,000, 2,000 and up
 const GRADER = { 10:[1.5, 2.25], 9:[.9, 1.3], 8:[.8, 1], 7:[.7, .9] };      // value multiplier range per grade, rolled per card when it comes back (grades under 7 count as 7)
 const gradeRange = g => GRADER[Math.max(7, g)];
 const SET_COLORS = ['#ff7a2f', '#3fa3ff', '#8a5cd6', '#ffd23f', '#54d67a', '#ff7ac0', '#8fe3ff', '#ffa23f'];
@@ -1910,12 +1919,15 @@ const sfx = {
   flip(){ beep(300, .05, 'triangle', .05, 1.6); },
   bad(){ beep(200, .15, 'sawtooth', .05, .6); },
   day(){ beep(330, .1, 'triangle'); beep(440, .12, 'triangle', .05, 0, .09); },
+  thump(l){ beep(58, .16, 'sine', .08 + l * .012, .5); beep(46, .14, 'sine', .06 + l * .008, .5, .17); },
   tense(l){ beep(110 + l * 30, .5 + l * .2, 'sawtooth', .02 + l * .006, 1.8 + l * .2); },
   hit(l){
-    const base = [300, 392, 494, 587, 698, 880][l] || 300;
+    const base = [300, 392, 494, 587, 698, 880, 1047, 1319][l] || 300;
     for (let i = 0; i < Math.min(8, l + 2); i++) beep(base * Math.pow(1.26, i), .14 + l * .02, 'square', .05, 0, i * .08);
     if (l >= 3){ beep(1760, .5, 'sine', .06, 0, .1); beep(70, .6, 'sine', .12, .4); }
     if (l >= 5) for (let i = 0; i < 6; i++) beep(1046 * Math.pow(1.19, i), .3, 'triangle', .05, 0, .4 + i * .07);
+    if (l >= 6){ beep(55, .9, 'sine', .16, .3); for (let i = 0; i < 8; i++) beep(1319 * Math.pow(1.12, i), .35, 'triangle', .05, 0, .9 + i * .06); }
+    if (l >= 7) for (let i = 0; i < 10; i++) beep(1568 * Math.pow(1.1, i), .4, 'square', .035, 0, 1.4 + i * .05);
   },
 };
 
@@ -2445,7 +2457,7 @@ function scrStats(){
 
 // ───────────────────────── pack opening ─────────────────────────
 const BACKFOR = [0, 0, 0, 0, 0, 0];          // card back by how good the card is: purple, ice, teal, orange, pink, black-gold
-const LVCOL = ['#888', '#4a9bff', '#b56cff', '#ff9a2e', '#ff5fb7', '#ffd23f'];
+const LVCOL = ['#888', '#4a9bff', '#b56cff', '#ff9a2e', '#ff5fb7', '#ffd23f', '#ff4d4d', '#ffffff'];
 function startRip(key, n){
   const [s, p] = key.split(':'); n = Math.min(n, G.inv.sealed[key] || 0); if (n < 1) return;
   const set = setOf(s), prod = prodOfSet(set, p), cost = basisPer(key) * n;
@@ -2468,8 +2480,8 @@ function noteCard(c){
 }
 // ───── pull effects: the better the card, the bigger the show ─────
 const LVNAME = ['', 'PULL', 'NICE HIT!', 'GREAT PULL!', 'BIG HIT!', 'CHASE PULL!'];
-const QAMP = [0, 0, 3, 7, 12, 18];                       // screen shake size (px) when a card lands
-const TENSE_MS = [0, 520, 950, 1400, 1900, 2500];        // how long the buildup lasts before the flip (tap to skip it)
+const QAMP = [0, 0, 3, 7, 12, 18, 24, 30];                       // screen shake size (px) when a card lands
+const TENSE_MS = [0, 520, 950, 1400, 1900, 2500, 3000, 3500];        // how long the buildup lasts before the flip (tap to skip it)
 const fxEl = (cls, css, ms, parent) => { const e = document.createElement('div'); e.className = cls; e.style.cssText = css; (parent || document.body).appendChild(e); setTimeout(() => e.remove(), ms); return e; };
 function stageCenter(){ const st = $('.stage'); if (!st) return { x:innerWidth / 2, y:innerHeight * .4 }; const r = st.getBoundingClientRect(); return { x:r.left + r.width / 2, y:r.top + r.height / 2 }; }
 function flash(rb, col){ const f = document.createElement('div'); f.className = 'flash' + (rb ? ' rb' : '') + (col ? ' col' : ''); if (col) f.style.setProperty('--fc', col); document.body.appendChild(f); setTimeout(() => f.remove(), 1500); }
@@ -2519,7 +2531,9 @@ function effects(c, lv){
   if (lv >= 2){ banner(v, lv, c); quake(lv); flash(false, col); burst(lv * 9, lv, 110 + lv * 60); }
   if (lv >= 3) burst(lv * 10, lv, 250);
   if (lv >= 4) rain(lv * 12);
-  if (lv >= 5){ flash(true); rain(50);  }
+  if (lv >= 5){ flash(true); rain(50); }
+  if (lv >= 6){ rain(70); burst(90, lv, 360); setTimeout(() => flash(true), 350); }
+  if (lv >= 7) [500, 1000, 1500].forEach(t => setTimeout(() => { if (OP){ burst(60, 5, 320); rain(40); } }, t));
   if (lv >= 3 && top) setTimeout(() => { if (top.isConnected) top.classList.add('hot'); }, (.55 + lv * .28) * 1000 + 120);
   if (DEFS[c.d].chase || v >= 100){ const st = $('.stage'); if (st){ const s = document.createElement('div'); s.className = 'stamp'; s.innerHTML = '&#9733;'; st.appendChild(s); } }
 }
@@ -2539,8 +2553,11 @@ function opNext(){
   OP.ci++; OP.shown.push(c); OP.big = c; noteCard(c);
   const turns = ONE_TURNS[lv], dur = Math.round(turns * ONE_T0);
   renderOp(true, lv, dur, turns);
-  const tm = [];
-  const land = () => { if (!OP || OP.rv !== land) return; OP.rv = null; tm.forEach(clearTimeout); const w = $('.stage .spc'), cd = w && w.querySelector('.card'); if (w){ w.classList.add('face', 'landed'); if (cd) cd.style.animation = 'none'; } OP.busy = false; effects(c, lv); };
+  const tm = [], stops = [];
+  if (lv >= 1) sfx.tense(lv);
+  if (lv >= 2) stops.push(tenseFx(lv, dur));
+  if (lv >= 4){ const hb = setInterval(() => sfx.thump(lv), Math.max(300, 720 - lv * 55)); stops.push(() => clearInterval(hb)); }
+  const land = () => { if (!OP || OP.rv !== land) return; OP.rv = null; tm.forEach(clearTimeout); stops.forEach(f => f()); const w = $('.stage .spc'), cd = w && w.querySelector('.card'); if (w){ w.classList.add('face', 'landed'); if (cd) cd.style.animation = 'none'; } OP.busy = false; effects(c, lv); };
   OP.rv = land;
   tm.push(setTimeout(() => { const w = $('.stage .spc'); if (w) w.classList.add('face'); }, easeT(1 - .5 / turns) * dur));
   if (lv >= 2) tm.push(setTimeout(() => { const w = $('.stage .spc'); if (w && !w.classList.contains('landed')) w.classList.add('tenseW'); }, Math.max(0, dur - 900)));
@@ -2548,8 +2565,8 @@ function opNext(){
 }
 
 // ───── the pack opens: every card spins face down together, the better the card the more turns it takes, and each lands face up on its last turn ─────
-const ONE_TURNS = [1, 2, 3, 5, 7, 9], ONE_T0 = 430;          // turns before a single card lands, by how good it is
-const SPIN_TURNS = [2, 3, 4, 6, 8, 10], SPIN_T0 = 520, SPIN_HUE = [0, 0, 200, 150, 90, 0];
+const ONE_TURNS = [1, 2, 3, 5, 7, 9, 11, 14], ONE_T0 = 430;          // turns before a single card lands, by how good it is
+const SPIN_TURNS = [2, 3, 4, 6, 8, 10], SPIN_T0 = 520, SPIN_HUE = [0, 0, 200, 150, 90, 40, 330, 0];
 function easeT(p){ const f = (a, b, t) => 3 * (1 - t) * (1 - t) * t * a + 3 * (1 - t) * t * t * b + t * t * t; let lo = 0, hi = 1; for (let k = 0; k < 24; k++){ const m = (lo + hi) / 2; if (f(.15, 1, m) < p) lo = m; else hi = m; } return f(.3, .2, (lo + hi) / 2); }          // the card's easing curve: when (0-1 of its time) has it turned p of its way?
 function startSpin(){
   OP.spinning = true; OP.spinDone = false; OP.shown = []; OP.big = null;
@@ -2627,7 +2644,7 @@ function renderOp(flip, lv, dur, turns){
   }
   const left = OP.order.length - OP.ci, nb = Math.min(3, big ? left : left - 1);
   let stack = ''; for (let k = nb; k >= 1; k--) stack += cardHTML(DEFS[OP.order[0].d], { back:true, price:false, attr:`style="margin-left:${k * 6}px;margin-top:${-k * 5}px"` });
-  const top = big ? (flip ? `<div class="spc${(lv || 0) >= 2 ? ' sp' : ''}${['rainbow', 'galaxy'].includes(DEFS[big.d].fin) || (lv || 0) >= 4 ? ' foil' : ''}" style="--rc:${LVCOL[lv || 0]};--hue:${SPIN_HUE[lv || 0]}deg"><i class="swirl"></i><i class="bang"></i><i class="fxshine"></i><i class="fxspark"></i><i class="fxfoil"></i><div class="sptag">${money(cv(big))}</div>${cardHTML(DEFS[big.d], { c:big, flip:true, spin:true, bk:BACKFOR[lv || 0], live:true, price:false, attr:`style="--turns:${turns};--dur:${dur}ms"` })}</div>` : cardHTML(DEFS[big.d], { c:big, live:true })) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:BACKFOR[hitLevel(OP.order[OP.ci])], price:false });
+  const top = big ? (flip ? `<div class="spc${(lv || 0) >= 1 ? ' aura' : ''}${(lv || 0) >= 5 ? ' zoomw' : ''}${(lv || 0) >= 2 ? ' sp' : ''}${['rainbow', 'galaxy'].includes(DEFS[big.d].fin) || (lv || 0) >= 4 ? ' foil' : ''}" style="--rc:${LVCOL[lv || 0]};--hue:${SPIN_HUE[lv || 0]}deg;--lvn:${lv || 0};--dur:${dur}ms"><i class="swirl"></i><i class="bang"></i><i class="fxshine"></i><i class="fxspark"></i><i class="fxfoil"></i><div class="sptag">${money(cv(big))}</div>${cardHTML(DEFS[big.d], { c:big, flip:true, spin:true, bk:BACKFOR[lv || 0], live:true, price:false, attr:`style="--turns:${turns};--dur:${dur}ms"` })}</div>` : cardHTML(DEFS[big.d], { c:big, live:true })) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:0, price:false, attr:(hitLevel(OP.order[OP.ci]) ? `data-aura="1" style="--rc:${LVCOL[hitLevel(OP.order[OP.ci])]};--lvn:${hitLevel(OP.order[OP.ci])}"` : '') });
   overlay(`<div class="modal opn rv rv${rl}" style="--rc:${LVCOL[rl]}"><div class="dim">${prodImg(OP.s, OP.p, 34)}${OP.packs.length > 1 ? '<br>' + (OP.pi + 1) + ' / ' + OP.packs.length : ''}</div>
     <div class="stage" data-a="opnext">${stack + top}</div>
     <div class="dim">${doneCards && big ? money(OP.pv) : OP.ci + ' / ' + OP.order.length}</div>
