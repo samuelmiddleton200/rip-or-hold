@@ -641,7 +641,7 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 .htabart2{position:absolute;left:3%;width:94%;bottom:0;height:62%;z-index:1;image-rendering:pixelated;object-fit:fill;pointer-events:none}
 .showhall .stbl-grid{position:relative;z-index:2;margin-top:auto;padding:14px 14px 4px;justify-content:center}
 /* walk the floor: other collectors showing their best cards */
-.floorhall{display:block;min-height:0}
+.floorhall{display:block;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;touch-action:pan-y}
 .floorhall .stbl-top{width:auto;display:block}
 .vbooths{position:relative;z-index:2;display:flex;flex-direction:column;gap:10px;margin-top:8px}
 .vbooth{background:rgba(20,12,36,.84);border:2px solid #c9a24a;border-radius:10px;padding:6px 10px 2px}
@@ -919,7 +919,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwiqnfk3';'use strict';
+<script>const BUILD='mwiv8kln';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -1340,17 +1340,25 @@ function listEbay(uid, startFrac, mins){
 }
 function cancelEbay(uid){ const i = G.ebay.findIndex(l => l.u === uid); if (i < 0 || G.ebay[i].auc.bids) return false; const c = G.ebay.splice(i, 1)[0]; delete c.auc; delete c.listed; G.inv.cards.push(c); return true; }
 function ebayHour(){
-  const keep = [], beat = G.beat || 0;
+  const beat = G.beat || 0;
   for (const c of G.ebay){
     const a = c.auc; if (!a){ delete c.ask; G.inv.cards.push(c); continue; }
+    if (a.done) continue;                                                                           // finished: waits for you to press Collect
     a.comp = compOf(compKey(c.d), ((G.mkt && G.mkt.cnt && G.mkt.cnt[compKey(c.d)]) || 0) + 1);       // what else is listed on eBay right now sets how high bidders go
-    if (!auctionTick(a, beat)){ keep.push(c); continue; }
-    if (a.bids){
-      const net = a.bid; noteDeal('sale', c, a.bid, 'eBay'); G.cash += net; G.stats.revenue += net; G.stats.bigSale = Math.max(G.stats.bigSale, a.bid); if (!c.bs) recordSale(c.d, a.bid, 'eBay'); releaseCard(c);
-      ledger('eBay: sold ' + cname(c) + ' for ' + money(a.bid) + '', net); addRep(.1); note('eBay: sold ' + cname(c) + ' for ' + money(a.bid));
-    } else { delete c.auc; delete c.listed; G.inv.cards.push(c); note('eBay: no bids on ' + cname(c) + '. It is back in your collection.'); }
+    if (!auctionTick(a, beat)) continue;
+    a.done = 1;
+    note(a.bids ? 'eBay: ' + cname(c) + ' sold for ' + money(a.bid) + '. Collect your money in Your auctions.' : 'eBay: no bids on ' + cname(c) + '. Collect your card in Your auctions.');
   }
-  G.ebay = keep;
+}
+// pressing Collect on a finished auction: the money lands in your cash, or the unsold card goes back to your collection
+function collectEbay(uid){
+  const i = G.ebay.findIndex(l => l.u === uid); if (i < 0 || !G.ebay[i].auc || !G.ebay[i].auc.done) return false;
+  const c = G.ebay.splice(i, 1)[0], a = c.auc;
+  if (a.bids){
+    const net = a.bid; noteDeal('sale', c, a.bid, 'eBay'); G.cash += net; G.stats.revenue += net; G.stats.bigSale = Math.max(G.stats.bigSale, a.bid); if (!c.bs) recordSale(c.d, a.bid, 'eBay'); releaseCard(c);
+    ledger('eBay: sold ' + cname(c) + ' for ' + money(a.bid) + '', net); addRep(.1); note('eBay: collected ' + money(a.bid) + ' for ' + cname(c));
+  } else { delete c.auc; delete c.listed; G.inv.cards.push(c); note('eBay: ' + cname(c) + ' is back in your collection.'); }
+  return true;
 }
 
 // ───────────────────────── bankruptcy ─────────────────────────
@@ -2113,7 +2121,8 @@ function scrEbaySelling(){
   const endTs = a => G.last + (a.ends - G.beat) * BEAT_MS;
   for (const c of G.ebay){
     const a = c.auc;
-    h += `<div class="row">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}<div class="nm"><b>${cname(c)}</b><small>${a.bids ? a.bids + ' bid' + (a.bids > 1 ? 's' : '') : 'no bids yet'}</small></div><div class="ev">${a.bids ? 'Bid ' + money(a.bid) : 'Starts ' + money(a.start)}<br>Value ${money(cv(c))}</div><div class="ev gold"><b data-ready="${endTs(a)}">${fmtDur(endTs(a) - Date.now())}</b> left</div><button data-a="ecancel" data-v="${c.u}" ${a.bids ? 'disabled' : ''}>Cancel</button></div>`;
+    const dn = a.done, btn = dn ? `<button class="grn" data-a="ecollect" data-v="${c.u}">${a.bids ? 'Collect ' + money(a.bid) : 'Collect card'}</button>` : `<button data-a="ecancel" data-v="${c.u}" ${a.bids ? 'disabled' : ''}>Cancel</button>`;
+    h += `<div class="row">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}<div class="nm"><b>${cname(c)}</b><small>${a.bids ? a.bids + ' bid' + (a.bids > 1 ? 's' : '') : 'no bids yet'}</small></div><div class="ev">${a.bids ? (dn ? 'Sold ' : 'Bid ') + money(a.bid) : 'Starts ' + money(a.start)}<br>Value ${money(cv(c))}</div><div class="ev gold">${dn ? '<b>Ended</b>' : `<b data-ready="${endTs(a)}">${fmtDur(endTs(a) - Date.now())}</b> left`}</div>${btn}</div>`;
   }
   return h;
 }
@@ -2140,14 +2149,14 @@ function scrShow(){
     return h + `<div class="box" style="display:flex;gap:12px;align-items:center">${ico('ticket', 36)}<div><b>${inf.label} IS OPEN</b><div style="font-size:30px;margin:4px 0">closes in <b class="gold" data-ready="${clk.end}">${fmtDur(clk.end - Date.now())}</b></div><div class="dim">Table fee ${money(inf.fee)} &middot; ${inf.slots} spots &middot; ${inf.buyers} buyers. Press Start, pick your cards, then start the show. Once you start, the clock stops until you press End show.</div>
       <div style="margin-top:8px"><button class="gold" style="font-size:22px;padding:6px 30px" data-a="showjoin" ${G.cash < inf.fee ? 'disabled' : ''}>START</button>${G.cash < inf.fee ? ` <span class="down">You need ${money(inf.fee)} for the table fee.</span>` : ''}</div></div></div>` + rows + cyc;
   }
-  const inf = SHOWINFO[SH.kind];
+  const inf = SHOWINFO[SH.kind], unpriced = SH.table.filter(t => !t.price).length;
   const used = new Set(SH.table.filter(t => t.k === 'c').map(t => t.u));
   const cards = G.inv.cards.filter(c => !used.has(c.u) && (!SH.hide || cv(c) >= .5)).sort((a, b) => cv(b) - cv(a)).slice(0, 100);
   const sealed = sealedKeys().map(k => ({ k, left:G.inv.sealed[k] - SH.table.filter(t => t.k === 's' && t.key === k).length })).filter(x => x.left > 0);
   h += `<div class="showhead"><div class="sh1"><b>${inf.label}</b><span>table fee <b>${money(inf.fee)}</b></span><span><b>${SH.table.length}</b> of ${inf.slots} spots used</span></div>
-    <div class="tabs"><button class="gold" data-a="shopen" ${G.cash < inf.fee ? 'disabled' : ''}>START SHOW (${money(inf.fee)})</button><button data-a="showcancel">Cancel</button><button data-a="shhide">${SH.hide ? 'Show' : 'Hide'} bulk cards</button><button data-a="shclear">Clear table</button></div></div>
-    <div class="dim" style="margin:2px 0 6px">Tap a card to put it on your table. Tap it on the table to set its price or take it off. Buyers will haggle if you price above market.</div>
-    <div class="settable"><div class="dim" style="font-size:12px;letter-spacing:1px;text-transform:uppercase">Your table</div><div class="grid sg">${SH.table.map((t, i) => t.k === 'c' ? `<div>${cardHTML(DEFS[instOf(t.u).d], { sm:true, c:instOf(t.u), tagText:money(t.price || cv(instOf(t.u))), attr:`data-a="shpedit" data-v="${i}"` })}</div>` : `<div class="box" data-a="shoff" data-v="${i}" style="cursor:pointer">${prodImg(...t.key.split(':'), 36)}<br>${prodName(...t.key.split(':'))}</div>`).join('') || '<span class="dim">Empty.</span>'}</div></div>
+    <div class="tabs"><button class="gold" data-a="shopen" ${G.cash < inf.fee || unpriced ? 'disabled' : ''}>START SHOW (${money(inf.fee)})</button>${unpriced ? `<span class="down" style="align-self:center">Set a price on ${unpriced} item${unpriced > 1 ? 's' : ''} first</span>` : ''}<button data-a="showcancel">Cancel</button><button data-a="shhide">${SH.hide ? 'Show' : 'Hide'} bulk cards</button><button data-a="shclear">Clear table</button></div></div>
+    <div class="dim" style="margin:2px 0 6px">Tap a card to put it on your table, then pick its price. Every card needs a price before you can start. Tap it on the table to change the price or take it off. Buyers will haggle if you price above market.</div>
+    <div class="settable"><div class="dim" style="font-size:12px;letter-spacing:1px;text-transform:uppercase">Your table</div><div class="grid sg">${SH.table.map((t, i) => t.k === 'c' ? `<div>${cardHTML(DEFS[instOf(t.u).d], { sm:true, c:instOf(t.u), tagText:t.price ? money(t.price) : 'SET PRICE', attr:`data-a="shpedit" data-v="${i}"` })}</div>` : `<div class="box" data-a="shpedit" data-v="${i}" style="cursor:pointer">${prodImg(...t.key.split(':'), 36)}<br>${prodName(...t.key.split(':'))}<br><b class="${t.price ? 'gold' : 'down'}">${t.price ? money(t.price) : 'SET PRICE'}</b></div>`).join('') || '<span class="dim">Empty.</span>'}</div></div>
     <div class="dim" style="margin:8px 0 2px;font-size:12px;letter-spacing:1px;text-transform:uppercase">Your cards</div><div class="grid sg" style="padding-bottom:16px">${sealed.map(x => `<div class="box" data-a="shons" data-v="${x.k}" style="cursor:pointer">${prodImg(...x.k.split(':'), 36)}<br>${prodName(...x.k.split(':'))} x${x.left}</div>`).join('')}${cards.map(c => `<div style="margin-bottom:${c.g ? 6 : 10}px">${cardHTML(DEFS[c.d], { sm:true, price:false, c, attr:`data-a="shon" data-v="${c.u}"` })}</div>`).join('')}</div>`;
   return h;
 }
@@ -2532,6 +2541,7 @@ const ACT = {
   ebay(d){ const cc = instOf(+d.u); if (cc && listEbay(+d.u, startFracs(cv(cc))[AUC.si], AUC.mins)){ sfx.buy(); toast('Auction started'); } else toast('Listing limit reached (20)'); closeOv(); render(); },
   aset(d){ AUC[d.k] = +d.v; const c = instOf(+d.u); if (c) showInst(c.u); sfx.click(); },
   ecancel(d){ cancelEbay(+d.v); render(); },
+  ecollect(d){ if (collectEbay(+d.v)){ sfx.buy(); save(); } render(); },
   gradeone(d){ GSEL = new Set([+d.v]); SCREEN = 'grade'; closeOv(); render(); },
   gsel(d){ const u = +d.v; if (GSEL.has(u)) GSEL.delete(u); else if (GSEL.size >= maxGrading() - G.grading.length) toast('The grader holds ' + maxGrading() + ' cards at a time (+1 for every 15 rep, up to 5).'); else GSEL.add(u); sfx.click(); render(); },
   gclear(){ GSEL = new Set(); render(); },
@@ -2541,8 +2551,8 @@ const ACT = {
   opnext(){ opNext(); }, opall(){ opAll(); }, oppack(){ opNextPack(); }, opripall(){ opRipAll(); }, opfinish(){ opFinish(); }, opdone(){ closeOv(); recordNW(); render(); }, optear(){ opTear(); },
   shhide(){ SH.hide = !SH.hide; render(); },
   shclear(){ SH.table = []; render(); },
-  shon(d){ const inf = SHOWINFO[SH.kind]; if (SH.table.length >= inf.slots) return toast('Table is full'); SH.table.push({ k:'c', u:+d.v }); sfx.click(); render(); },
-  shons(d){ const inf = SHOWINFO[SH.kind]; if (SH.table.length >= inf.slots) return toast('Table is full'); SH.table.push({ k:'s', key:d.v }); sfx.click(); render(); },
+  shon(d){ const inf = SHOWINFO[SH.kind]; if (SH.table.length >= inf.slots) return toast('Table is full'); SH.table.push({ k:'c', u:+d.v }); sfx.click(); render(); showPriceEdit(SH.table.length - 1); },
+  shons(d){ const inf = SHOWINFO[SH.kind]; if (SH.table.length >= inf.slots) return toast('Table is full'); SH.table.push({ k:'s', key:d.v }); sfx.click(); render(); showPriceEdit(SH.table.length - 1); },
   shoff(d){ SH.table.splice(+d.v, 1); render(); },
   showjoin(){
     const clk = showClock(); if (SH || clk.phase !== 'open') return; const inf = SHOWINFO[clk.kind];
@@ -2555,7 +2565,7 @@ const ACT = {
     G.sc = { t0:Date.now() - (SHOW_SLOT - left), i0:idx }; SH = null; sfx.click(); save(); render();          // nothing was charged: the window picks up where it was
   },
   shopen(){
-    const kind = SH.kind, inf = SHOWINFO[kind]; if (G.cash < inf.fee) return;
+    const kind = SH.kind, inf = SHOWINFO[kind]; if (G.cash < inf.fee || SH.table.some(t => !t.price)) return toast('Pick a price for every card first');
     SH.cash0 = G.cash; G.cash -= inf.fee; G.stats.spent += inf.fee; ledger('Table fee (' + kind + ' show)', -inf.fee);
     for (const t of SH.table) if (!t.price){ if (t.k === 'c'){ const c = instOf(t.u); t.price = r2(cv(c)); } else { const [a, b] = t.key.split(':'); t.price = r2(sealedPx(a, b)); } }
     Object.assign(SH, { stage:'run', tab:'cust', kind, name:showName(SH.idx || 0), fee:inf.fee, sold:0, earned:0, bought:0, traded:0, log:[], queue:inf.buyers * 2 + Math.floor(G.rep / 4), clock:0, next:2, buyRate:.6 + rnd() * .15 });
@@ -2662,6 +2672,8 @@ async function boot(){
   if (!G.gift1){ G.gift1 = 1; addSealed('T1', 'collectors', 1, 0); note('Gift: a free Collectors Pack is waiting in your Packs tab!'); save(); }
   // a second one-time gift: 3 more free Collectors Packs for everyone already playing
   if (!G.gift2){ G.gift2 = 1; addSealed('T1', 'collectors', 3, 0); note('Gift: 3 free Collectors Packs are waiting in your Packs tab!'); save(); }
+  // a third one-time gift: 3 more free Collectors Packs for everyone already playing
+  if (!G.gift3){ G.gift3 = 1; addSealed('T1', 'collectors', 3, 0); note('Gift: 3 more free Collectors Packs are waiting in your Packs tab!'); save(); }
   if (!G.sc) G.sc = { t0:Date.now(), i0:0 };
   SH = G.sh || null; G.sh = null; if (SH) SH.deal = null;          // a show you were in is still there when you come back
   if (G.sc.paused && !SH){ const left = G.sc.left || 1000, idx = G.sc.idx || 0; G.sc = { t0:Date.now() - (SHOW_SLOT - left), i0:idx }; }
