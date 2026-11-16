@@ -910,7 +910,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwfvi9vd';'use strict';
+<script>const BUILD='mwio0xj3';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -1323,8 +1323,11 @@ const startFracs = v => {
 function listEbay(uid, startFrac, mins){
   if (G.ebay.length >= 20) return false;
   const i = G.inv.cards.findIndex(c => c.u === uid); if (i < 0) return false;
-  const c = G.inv.cards.splice(i, 1)[0], v = mktVal(c), a = auctionNew(v, Math.round(mins * 60000 / BEAT_MS));
-  a.start = Math.max(.01, r2(cv(c) * startFrac)); c.auc = a;          // you pick the start price from the card's set value; bidders judge it against the market, so too high may get no bids c.listed = G.day; G.ebay.push(c); return true;
+  const c = G.inv.cards[i];
+  // everything is worked out BEFORE the card leaves your collection, so a card can never be lost on the way
+  const a = auctionNew(mktVal(c), Math.round(mins * 60000 / BEAT_MS)); a.start = Math.max(.01, r2(cv(c) * startFrac));          // start price comes from the set value; bidders judge it against the market
+  if (!isFinite(a.start) || !isFinite(a.cap)) return false;
+  G.inv.cards.splice(i, 1); c.auc = a; c.listed = G.day; G.ebay.push(c); return true;
 }
 function cancelEbay(uid){ const i = G.ebay.findIndex(l => l.u === uid); if (i < 0 || G.ebay[i].auc.bids) return false; const c = G.ebay.splice(i, 1)[0]; delete c.auc; delete c.listed; G.inv.cards.push(c); return true; }
 function ebayHour(){
@@ -2602,9 +2605,11 @@ async function boot(){
   // self-update: if the server already has a newer build than this page (a stale cached copy), reload once to pick it up
   try { if (/^https?:/.test(location.protocol)) fetch(location.pathname + '?b=' + Date.now(), { cache:'reload' }).then(r => r.text()).then(t => { const m = t.match(/const BUILD='([^']+)'/); if (m && typeof BUILD !== 'undefined' && m[1] !== BUILD && !sessionStorage.getItem('upd' + m[1])){ sessionStorage.setItem('upd' + m[1], '1'); location.reload(); } }).catch(() => {}); } catch (e) {}
   await CardRenderer.init(CARD_ASSETS, CARD_DATA); CardRenderer.ready = true;
-  if (!load()){ newGameState(); G.gift1 = 1; save(); }
+  if (!load()){ newGameState(); G.gift1 = 1; G.gift2 = 1; save(); }
   // a one-time gift for everyone already playing: a free Collectors Pack in the Packs tab
   if (!G.gift1){ G.gift1 = 1; addSealed('T1', 'collectors', 1, 0); note('Gift: a free Collectors Pack is waiting in your Packs tab!'); save(); }
+  // a second one-time gift: 3 more free Collectors Packs for everyone already playing
+  if (!G.gift2){ G.gift2 = 1; addSealed('T1', 'collectors', 3, 0); note('Gift: 3 free Collectors Packs are waiting in your Packs tab!'); save(); }
   checkBroke(); checkAch();
   G.visitors = G.visitors || []; G.orders = G.orders || []; worldCatchUp();
   render(); setInterval(worldLoop, 1000); document.addEventListener('visibilitychange', () => { if (!document.hidden) worldLoop(); });
