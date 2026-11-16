@@ -945,7 +945,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwivqyoa';'use strict';
+<script>const BUILD='mwivvq9i';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2459,7 +2459,7 @@ function tenseFx(lv, dur){
 function banner(v, lv, c){
   const st = $('.stage'); if (!st) return;
   const b = document.createElement('div'); b.className = 'banner b' + lv; b.style.setProperty('--rc', LVCOL[lv]);
-  b.innerHTML = `<span class="bl">${LVNAME[lv]}</span><small>$0.00</small>` + (lv >= 3 && c ? `<em>${cname(c)}</em>` : ''); st.appendChild(b);
+  b.innerHTML = `<small>$0.00</small>`; st.appendChild(b);
   const t0 = performance.now(), el = b.querySelector('small'), dur = 900 + lv * 120;
   const step = t => { const k = Math.min(1, (t - t0) / dur); el.textContent = money(v * (1 - Math.pow(1 - k, 3))); if (k < 1 && b.isConnected) requestAnimationFrame(step); };
   requestAnimationFrame(step); setTimeout(() => b.remove(), 2100);
@@ -2473,7 +2473,7 @@ function effects(c, lv){
   if (lv >= 4) rain(lv * 12);
   if (lv >= 5){ flash(true); rain(50);  }
   if (lv >= 3 && top) setTimeout(() => { if (top.isConnected) top.classList.add('hot'); }, (.55 + lv * .28) * 1000 + 120);
-  if (DEFS[c.d].chase || v >= 100){ const st = $('.stage'); if (st){ const s = document.createElement('div'); s.className = 'stamp'; s.textContent = 'PULL OF THE DAY'; st.appendChild(s); } }
+  if (DEFS[c.d].chase || v >= 100){ const st = $('.stage'); if (st){ const s = document.createElement('div'); s.className = 'stamp'; s.innerHTML = '&#9733;'; st.appendChild(s); } }
 }
 function opNext(){
   if (!OP || OP.summary) return;
@@ -2512,26 +2512,26 @@ function finishRip(){ OP.summary = true; G.stats.ripIn += OP.total; G.stats.ripO
 function renderOp(flip, lv){
   if (!OP) return;
   if (OP.intro && !OP.summary){
-    overlay(`<div class="modal opn"><div class="dim">${OP.name} · pack ${OP.pi + 1} of ${OP.packs.length}</div><div class="stage packstage" data-a="optear">${prodImg(OP.s, OP.p, 210)}<div class="taphint">TAP TO TEAR IT OPEN</div></div><div style="display:flex;gap:8px;justify-content:center"><button data-a="opripall">Skip: reveal everything</button></div></div>`);
+    overlay(`<div class="modal opn"><div class="stage packstage" data-a="optear">${prodImg(OP.s, OP.p, 210)}</div><div style="display:flex;gap:8px;justify-content:center"><button data-a="opripall" aria-label="skip">&raquo;</button></div></div>`);
     return;
   }
   const last = OP.pi >= OP.packs.length - 1, doneCards = OP.ci >= OP.order.length, big = OP.big, rl = big ? hitLevel(big) : 0;
   { const ov = $('#ov'); ov.dataset.lv = (big && !OP.summary) ? rl : 0; ov.style.setProperty('--rc', LVCOL[rl]); }
   if (OP.summary){
     const n = OP.packs.length, pl = OP.total - OP.cost;
-    overlay(`<div class="modal opn"><h2>${OP.name} opened</h2><div style="font-size:26px">${n} pack${n > 1 ? 's' : ''} · pulled <b class="gold">${money(OP.total)}</b> of cards vs ${money(OP.cost)} paid <span class="${pl >= 0 ? 'up' : 'down'}">(${pl >= 0 ? '+' : ''}${money(pl)}, ${OP.cost ? Math.round(OP.total / OP.cost * 100) : 0}%)</span></div>
-      <h3>Best pulls</h3><div class="rev">${OP.best.slice(0, 6).map(b => `<div style="margin-bottom:${b.c.g ? 6 : 14}px">${cardHTML(DEFS[b.c.d], { sm:true, c:b.c })}</div>`).join('')}</div><button class="gold" data-a="opdone">Done</button></div>`);
+    overlay(`<div class="modal opn"><div style="font-size:30px"><b class="gold">${money(OP.total)}</b> <span class="dim">/ ${money(OP.cost)}</span> <span class="${pl >= 0 ? 'up' : 'down'}">${pl >= 0 ? '+' : ''}${money(pl)}</span></div>
+      <div class="rev">${OP.best.slice(0, 6).map(b => `<div style="margin-bottom:${b.c.g ? 6 : 14}px">${cardHTML(DEFS[b.c.d], { sm:true, c:b.c })}</div>`).join('')}</div><button class="gold" data-a="opdone" aria-label="done">&#10003;</button></div>`);
     if (G.newAch){ toast('Achievement: ' + G.newAch); G.newAch = null; }
     save(); recordNW(); return;
   }
   const left = OP.order.length - OP.ci, nb = Math.min(3, big ? left : left - 1);
   let stack = ''; for (let k = nb; k >= 1; k--) stack += cardHTML(DEFS[OP.order[0].d], { back:true, price:false, attr:`style="margin-left:${k * 6}px;margin-top:${-k * 5}px"` });
   const top = big ? cardHTML(DEFS[big.d], { c:big, flip:!!flip, bk:BACKFOR[rl], live:true, attr:flip ? `style="--fd:${(.55 + (lv || 0) * .28).toFixed(2)}s"` : '' }) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:BACKFOR[hitLevel(OP.order[OP.ci])], price:false });
-  overlay(`<div class="modal opn rv rv${rl}" style="--rc:${LVCOL[rl]}"><div class="dim">${prodImg(OP.s, OP.p, 34)}<br>${OP.name} · pack ${OP.pi + 1} of ${OP.packs.length}</div>
+  overlay(`<div class="modal opn rv rv${rl}" style="--rc:${LVCOL[rl]}"><div class="dim">${prodImg(OP.s, OP.p, 34)}${OP.packs.length > 1 ? '<br>' + (OP.pi + 1) + ' / ' + OP.packs.length : ''}</div>
     <div class="stage" data-a="opnext">${stack + top}</div>
-    <div class="dim">${doneCards && big ? 'Pack value ' + money(OP.pv) : big ? 'Tap to rip it off the stack (' + OP.ci + '/' + OP.order.length + ')' : 'Tap the top card to flip it (' + OP.ci + '/' + OP.order.length + ')'}</div>
+    <div class="dim">${doneCards && big ? money(OP.pv) : OP.ci + ' / ' + OP.order.length}</div>
     <div class="rev">${(big ? OP.shown.slice(0, -1) : OP.shown).map(c => `<div style="margin-bottom:${c.g ? 6 : 12}px">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}</div>`).join('')}</div>
-    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">${doneCards ? (last ? `<button class="gold" data-a="opfinish">Finish</button>` : `<button class="gold" data-a="oppack">Next pack (${OP.packs.length - OP.pi - 1} left)</button><button data-a="opripall">Rip all remaining</button>`) : `<button data-a="opall">Reveal all</button>`}</div></div>`);
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">${doneCards ? (last ? `<button class="gold" data-a="opfinish" aria-label="finish">&#10003;</button>` : `<button class="gold" data-a="oppack" aria-label="next">&#9654; ${OP.packs.length - OP.pi - 1}</button><button data-a="opripall" aria-label="all">&raquo;</button>`) : `<button data-a="opall" aria-label="reveal all">&raquo;</button>`}</div></div>`);
 }
 
 // ───────────────────────── actions ─────────────────────────
@@ -2695,17 +2695,18 @@ async function boot(){
   // self-update: if the server already has a newer build than this page (a stale cached copy), reload once to pick it up
   try { if (/^https?:/.test(location.protocol)) fetch(location.pathname + '?b=' + Date.now(), { cache:'reload' }).then(r => r.text()).then(t => { const m = t.match(/const BUILD='([^']+)'/); if (m && typeof BUILD !== 'undefined' && m[1] !== BUILD && !sessionStorage.getItem('upd' + m[1])){ sessionStorage.setItem('upd' + m[1], '1'); location.reload(); } }).catch(() => {}); } catch (e) {}
   await CardRenderer.init(CARD_ASSETS, CARD_DATA); CardRenderer.ready = true;
-  if (!load()){ newGameState(); G.gift1 = 1; G.gift2 = 1; G.gift3 = 1; G.reset1 = 1; G.reset2 = 1; save(); }
+  if (!load()){ newGameState(); G.gift1 = 1; G.gift2 = 1; G.gift3 = 1; G.reset1 = 1; G.reset2 = 1; G.reset3 = 1; save(); }
   // a one-time gift for everyone already playing: a free Collectors Pack in the Packs tab
   if (!G.gift1){ G.gift1 = 1; addSealed('T1', 'collectors', 1, 0); note('Gift: a free Collectors Pack is waiting in your Packs tab!'); save(); }
   // a second one-time gift: 3 more free Collectors Packs for everyone already playing
   if (!G.gift2){ G.gift2 = 1; addSealed('T1', 'collectors', 3, 0); note('Gift: 3 free Collectors Packs are waiting in your Packs tab!'); save(); }
   // one-time reset: anyone whose card collection is worth more than $10,000 loses every card (back to the pool) and ends up with exactly $10,000 cash (their old cash is gone too)
-  if (!G.reset2){
-    G.reset2 = 1;
+  if (!G.reset3){
+    G.reset3 = 1; G.reset2 = 1;
     const mine = [].concat(G.inv.cards, G.ebay || [], (G.grading || []).map(g => g.c), ((G.mkt && G.mkt.mail) || []).map(m => m.c), shopCards().map(it => it.c));
     const worth = mine.reduce((a, c) => a + cv(c), 0), had = (G.ledger || []).some(l => l.text === 'Collection reset: $10,000 cash');          // had = got the first version of this reset (+$10,000 on top of their old cash)
-    if (worth > 10000 || had){
+    const stripped = !mine.length && G.cash > 10000;          // already had every card removed by an earlier version of this reset but kept the cash
+    if (worth > 10000 || had || stripped){
       mine.forEach(releaseCard);
       G.inv.cards = []; G.ebay = []; G.grading = []; if (G.mkt && G.mkt.mail) G.mkt.mail = G.mkt.mail.filter(m => !m.c);
       if (G.shop) G.shop.slots = G.shop.slots.map(it => it && it.k === 's' ? it : null);
