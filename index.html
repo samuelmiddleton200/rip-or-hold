@@ -149,7 +149,10 @@ h3{margin:14px 0 6px;font-family:var(--pix);font-size:12px;letter-spacing:1.5px;
 .stage{height:300px;display:flex;align-items:center;justify-content:center;position:relative}
 .stage::before{content:'';position:absolute;left:50%;top:50%;width:560px;height:560px;margin:-280px 0 0 -280px;background:repeating-conic-gradient(rgba(255,230,120,.20) 0 9deg,transparent 9deg 18deg);-webkit-mask-image:radial-gradient(circle,#000 8%,transparent 66%);mask-image:radial-gradient(circle,#000 8%,transparent 66%);animation:rays 26s linear infinite;pointer-events:none}
 @keyframes rays{to{transform:rotate(360deg)}}
-.stage .card{--w:185px;position:absolute;left:calc(50% - var(--w)/2);top:14px}
+.stage .card,.stage .spc{--w:185px;position:absolute;left:calc(50% - var(--w)/2);top:14px}
+.stage .spc{width:var(--w);height:calc(var(--w)*1.4);z-index:5}
+.modal.opn .stage .spc .card{--w:inherit;left:0!important;top:0!important}
+.stage .spc.landed .card{animation:landpop .45s cubic-bezier(.3,1.5,.5,1) both}
 .rev{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:20px 0 8px;min-height:90px}
 .banner{position:absolute;top:-6px;left:0;right:0;font-family:var(--pix);font-size:34px;color:var(--gold);text-shadow:3px 3px 0 #000,0 0 22px #ffb52e;animation:ban 1.6s ease-out forwards;pointer-events:none;z-index:9;line-height:1}
 .banner small{display:block;font-size:26px;color:#fff;font-family:var(--font);font-weight:700}
@@ -188,7 +191,7 @@ canvas.ch{background:rgba(0,0,0,.4);border:2px solid var(--p3);border-radius:10p
   #news{padding-top:1px;padding-bottom:1px;font-size:13px}
   #main{padding-top:6px;padding-bottom:6px}
   h2{font-size:15px;margin-bottom:4px}h3{font-size:16px;margin:6px 0 3px}
-  .stage{height:236px}.stage .card{--w:140px}.stage::before{width:420px;height:420px;margin:-210px 0 0 -210px}
+  .stage{height:236px}.stage .card,.stage .spc{--w:140px}.stage::before{width:420px;height:420px;margin:-210px 0 0 -210px}
   .card{--w:100px}.person{font-size:40px}.buyer{margin:2px 0}.tabs{margin-bottom:4px}
   .modal{padding:8px 12px;max-height:92vh;border-radius:14px}
   button{padding:4px 10px}.toast{top:52px;font-size:14px}
@@ -559,7 +562,7 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 }
 @media (max-height:520px){
   .modal.opn:has(.rev) .stage{height:min(176px,40vh)}
-  .modal.opn:has(.rev) .stage .card{--w:min(98px,22vh);top:4px}
+  .modal.opn:has(.rev) .stage .card,.modal.opn:has(.rev) .stage .spc{--w:min(98px,22vh);top:4px}
   .modal.opn .rev .card,.modal.opn .rev .card.sm{--w:min(46px,11vh)}
   .modal.opn .rev{gap:4px;padding-bottom:6px}
   .modal.opn{padding-top:4px;padding-bottom:4px}
@@ -970,7 +973,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwiw3h4b';'use strict';
+<script>const BUILD='mwiw5yss';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2515,16 +2518,20 @@ function opNext(){
   }
   if (OP.ci >= OP.order.length) return;
   const c = OP.order[OP.ci], lv = hitLevel(c);
-  const reveal = () => { if (!OP) return; OP.busy = false; OP.ci++; OP.shown.push(c); OP.big = c; noteCard(c); renderOp(true, lv); effects(c, lv); };
-  if (lv >= 1){
-    OP.busy = true; const top = $('.stage .card:last-child'); if (top){ top.style.setProperty('--rc', LVCOL[lv]); top.classList.add('tense'); } sfx.tense(lv);
-    const dur = TENSE_MS[lv], stop = tenseFx(lv, dur); let tt = 0;
-    const go = () => { if (!OP || OP.rv !== go) return; OP.rv = null; clearTimeout(tt); stop(); reveal(); };
-    OP.rv = go; tt = setTimeout(go, dur);
-  } else reveal();
+  OP.busy = true; sfx.click();
+  OP.ci++; OP.shown.push(c); OP.big = c; noteCard(c);
+  const turns = ONE_TURNS[lv], dur = Math.round(turns * ONE_T0);
+  renderOp(true, lv, dur, turns);
+  const tm = [];
+  const land = () => { if (!OP || OP.rv !== land) return; OP.rv = null; tm.forEach(clearTimeout); const w = $('.stage .spc'), cd = w && w.querySelector('.card'); if (w){ w.classList.add('face', 'landed'); if (cd) cd.style.animation = 'none'; } OP.busy = false; effects(c, lv); };
+  OP.rv = land;
+  tm.push(setTimeout(() => { const w = $('.stage .spc'); if (w) w.classList.add('face'); }, easeT(1 - .5 / turns) * dur));
+  if (lv >= 2) tm.push(setTimeout(() => { const w = $('.stage .spc'); if (w && !w.classList.contains('landed')) w.classList.add('tenseW'); }, Math.max(0, dur - 900)));
+  tm.push(setTimeout(land, dur));
 }
 
 // ───── the pack opens: every card spins face down together, the better the card the more turns it takes, and each lands face up on its last turn ─────
+const ONE_TURNS = [1, 2, 3, 5, 7, 9], ONE_T0 = 430;          // turns before a single card lands, by how good it is
 const SPIN_TURNS = [2, 3, 4, 6, 8, 10], SPIN_T0 = 520, SPIN_HUE = [0, 0, 200, 150, 90, 0];
 function easeT(p){ const f = (a, b, t) => 3 * (1 - t) * (1 - t) * t * a + 3 * (1 - t) * t * t * b + t * t * t; let lo = 0, hi = 1; for (let k = 0; k < 24; k++){ const m = (lo + hi) / 2; if (f(.15, 1, m) < p) lo = m; else hi = m; } return f(.3, .2, (lo + hi) / 2); }          // the card's easing curve: when (0-1 of its time) has it turned p of its way?
 function startSpin(){
@@ -2576,7 +2583,7 @@ function opNextPack(){ if (OP.busy) return; OP.vals.push(OP.pv); OP.total += OP.
 // tear the wrapper: it shakes, bursts, and the cards are there
 function opTear(){
   if (!OP || !OP.intro || OP.busy) return; OP.busy = true; const st = $('.packstage'); if (st) st.classList.add('tearing'); sfx.tense(2);
-  setTimeout(() => { if (!OP) return; flash(false); sfx.hit(1); OP.busy = false; OP.intro = false; startSpin(); }, 560);
+  setTimeout(() => { if (!OP) return; flash(false); sfx.hit(1); OP.busy = false; OP.intro = false; renderOp(); }, 560);
 }
 function opRipAll(){
   if (OP.busy) return; OP.vals.push(OP.pv); OP.total += OP.pv;
@@ -2586,7 +2593,7 @@ function opRipAll(){
 }
 function opFinish(){ if (OP.busy) return; OP.vals.push(OP.pv); OP.total += OP.pv; finishRip(); }
 function finishRip(){ OP.summary = true; G.stats.ripIn += OP.total; G.stats.ripOut += OP.cost; checkAch(); renderOp(); }
-function renderOp(flip, lv){
+function renderOp(flip, lv, dur, turns){
   if (!OP) return;
   if (OP.intro && !OP.summary){
     overlay(`<div class="modal opn"><div class="stage packstage" data-a="optear">${prodImg(OP.s, OP.p, 210)}</div><div style="display:flex;gap:8px;justify-content:center"><button data-a="opripall" aria-label="skip">&raquo;</button></div></div>`);
@@ -2601,10 +2608,9 @@ function renderOp(flip, lv){
     if (G.newAch){ toast('Achievement: ' + G.newAch); G.newAch = null; }
     save(); recordNW(); return;
   }
-  if (OP.order.length) return renderSpinView();
   const left = OP.order.length - OP.ci, nb = Math.min(3, big ? left : left - 1);
   let stack = ''; for (let k = nb; k >= 1; k--) stack += cardHTML(DEFS[OP.order[0].d], { back:true, price:false, attr:`style="margin-left:${k * 6}px;margin-top:${-k * 5}px"` });
-  const top = big ? cardHTML(DEFS[big.d], { c:big, flip:!!flip, bk:BACKFOR[rl], live:true, attr:flip ? `style="--fd:${(.55 + (lv || 0) * .28).toFixed(2)}s"` : '' }) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:BACKFOR[hitLevel(OP.order[OP.ci])], price:false });
+  const top = big ? (flip ? `<div class="spc" style="--rc:${LVCOL[lv || 0]};--hue:${SPIN_HUE[lv || 0]}deg"><i class="swirl"></i><i class="bang"></i>${cardHTML(DEFS[big.d], { c:big, flip:true, spin:true, bk:BACKFOR[lv || 0], live:true, price:false, attr:`style="--turns:${turns};--dur:${dur}ms"` })}</div>` : cardHTML(DEFS[big.d], { c:big, live:true })) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:BACKFOR[hitLevel(OP.order[OP.ci])], price:false });
   overlay(`<div class="modal opn rv rv${rl}" style="--rc:${LVCOL[rl]}"><div class="dim">${prodImg(OP.s, OP.p, 34)}${OP.packs.length > 1 ? '<br>' + (OP.pi + 1) + ' / ' + OP.packs.length : ''}</div>
     <div class="stage" data-a="opnext">${stack + top}</div>
     <div class="dim">${doneCards && big ? money(OP.pv) : OP.ci + ' / ' + OP.order.length}</div>
@@ -2772,6 +2778,8 @@ function intro(){
 async function boot(){
   // self-update: if the server already has a newer build than this page (a stale cached copy), reload once to pick it up
   try { if (/^https?:/.test(location.protocol)) fetch(location.pathname + '?b=' + Date.now(), { cache:'reload' }).then(r => r.text()).then(t => { const m = t.match(/const BUILD='([^']+)'/); if (m && typeof BUILD !== 'undefined' && m[1] !== BUILD && !sessionStorage.getItem('upd' + m[1])){ sessionStorage.setItem('upd' + m[1], '1'); location.reload(); } }).catch(() => {}); } catch (e) {}
+  // a page that stays open for hours keeps running old code, so look for a newer build every minute and reload once nothing is open on screen
+  try { if (/^https?:/.test(location.protocol)) setInterval(() => { fetch(location.pathname + '?b=' + Date.now(), { cache:'reload' }).then(r => r.text()).then(t => { const m = t.match(/const BUILD='([^']+)'/); if (m && typeof BUILD !== 'undefined' && m[1] !== BUILD && !OP && !SH && !$('#ov').classList.contains('on')){ save(); location.reload(); } }).catch(() => {}); }, 60000); } catch (e) {}
   await CardRenderer.init(CARD_ASSETS, CARD_DATA); CardRenderer.ready = true;
   if (!load()){ newGameState(); G.gift1 = 1; G.gift2 = 1; G.gift3 = 1; G.reset1 = 1; G.reset2 = 1; G.reset3 = 1; save(); }
   // a one-time gift for everyone already playing: a free Collectors Pack in the Packs tab
