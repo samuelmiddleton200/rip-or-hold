@@ -778,6 +778,18 @@ html,body{overflow:hidden}
 @keyframes riseup{from{transform:translateY(0) scale(1)}to{transform:translateY(-12px) scale(1.07)}}
 .spc.redshine .fxshine{filter:hue-rotate(135deg) saturate(2.4) brightness(1.1)}
 .spc .swirl{filter:drop-shadow(0 0 6px #4a9bff)!important;width:calc(var(--w)*1.75)!important;height:calc(var(--w)*1.75)!important;margin:calc(var(--w)*-.875) 0 0 calc(var(--w)*-.875)!important}
+
+/* ranges 5-8: a little shake while the card flips; 6-7 lift as well; 8 lifts high and then slams down */
+.stage .spc.jit:not(.landed){animation:jit .07s linear infinite}
+.stage .spc.jit.lift:not(.landed){animation:jit .07s linear infinite,liftup var(--dur) ease-in-out both}
+.stage .spc.jit.liftbig:not(.landed){animation:jit .07s linear infinite,liftbig var(--dur) cubic-bezier(.3,.1,.4,1) both}
+@keyframes jit{0%{transform:translate(0,0)}25%{transform:translate(-1.6px,1px)}50%{transform:translate(1.4px,-1.2px)}75%{transform:translate(-1px,-1.4px)}100%{transform:translate(0,0)}}
+@keyframes liftup{from{translate:0 0;scale:1}to{translate:0 calc(var(--w)*-.09);scale:1.09}}
+@keyframes liftbig{from{translate:0 0;scale:1}to{translate:0 calc(var(--w)*-.3);scale:1.28}}
+.stage .spc.landed.raise{animation:riseup .45s cubic-bezier(.2,1.3,.4,1) both;transform:none;translate:0 calc(var(--w)*-.09);scale:1.09}
+@keyframes riseup{from{translate:0 0;scale:1}to{translate:0 calc(var(--w)*-.09);scale:1.09}}
+.stage .spc.landed.slam{animation:slamdown .3s cubic-bezier(.7,0,1,.6) both}
+@keyframes slamdown{0%{translate:0 calc(var(--w)*-.3);scale:1.28}58%{translate:0 calc(var(--w)*.05);scale:.95}74%{translate:0 calc(var(--w)*-.13);scale:1.1}100%{translate:0 calc(var(--w)*-.09);scale:1.09}}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -1029,7 +1041,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwiyujb1';'use strict';
+<script>const BUILD='mwiz2nvf';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2588,7 +2600,7 @@ function opNext(){
   const c = OP.order[OP.ci], lv = hype(c);
   OP.busy = true; sfx.click();
   OP.ci++; OP.shown.push(c); OP.big = c; noteCard(c);
-  const turns = ONE_TURNS[lv], dur = Math.round(turns * ONE_T0);
+  const turns = ONE_TURNS[lv], dur = Math.round(turns * ONE_T[lv]);
   renderOp(true, lv, dur, turns);
   const tm = [], stops = [];
   const land = () => { if (!OP || OP.rv !== land) return; OP.rv = null; tm.forEach(clearTimeout); stops.forEach(f => f()); const w = $('.stage .spc'), cd = w && w.querySelector('.card'); if (w){ w.classList.add('face', 'landed'); if (cd) cd.style.animation = 'none'; setTimeout(() => { if (w.isConnected) w.classList.add('calm'); }, 2400); } OP.busy = false; effects(c, lv); };          // once the show is over the card is left alone with its price
@@ -2598,7 +2610,7 @@ function opNext(){
 }
 
 // ───── the pack opens: every card spins face down together, the better the card the more turns it takes, and each lands face up on its last turn ─────
-const ONE_TURNS = [1, 1, 1, 1, 2, 2, 2, 4], ONE_T0 = 430;          // flips by value range: the first four flip once, then 5-7 flip twice (an extra flip), 8 flips four times          // turns before a single card lands, by how good it is
+const ONE_TURNS = [1, 1, 1, 1, 2, 2, 2, 4], ONE_T = [430, 430, 650, 650, 430, 430, 430, 430];          // turns and milliseconds per turn for each value range (ranges 3 and 4 flip a bit slower)          // flips by value range: the first four flip once, then 5-7 flip twice (an extra flip), 8 flips four times          // turns before a single card lands, by how good it is
 const SPIN_TURNS = [2, 3, 4, 6, 8, 10], SPIN_T0 = 520, SPIN_HUE = [0, 0, 200, 150, 90, 40, 330, 0];
 function easeT(p){ const f = (a, b, t) => 3 * (1 - t) * (1 - t) * t * a + 3 * (1 - t) * t * t * b + t * t * t; let lo = 0, hi = 1; for (let k = 0; k < 24; k++){ const m = (lo + hi) / 2; if (f(.15, 1, m) < p) lo = m; else hi = m; } return f(.3, .2, (lo + hi) / 2); }          // the card's easing curve: when (0-1 of its time) has it turned p of its way?
 function startSpin(){
@@ -2677,7 +2689,7 @@ function renderOp(flip, lv, dur, turns){
   }
   const left = OP.order.length - OP.ci, nb = Math.min(3, big ? left : left - 1);
   let stack = ''; for (let k = nb; k >= 1; k--) stack += cardHTML(DEFS[OP.order[0].d], { back:true, price:false, attr:`style="margin-left:${k * 6}px;margin-top:${-k * 5}px"` });
-  const r = lv || 0, top = big ? (flip ? `<div class="spc${r >= 5 ? ' raise' : ''}${r >= 6 ? ' redshine' : ''}" style="--dur:${dur}ms">${r >= 2 ? '<i class="swirl"></i>' : ''}${r >= 3 ? '<i class="bang"></i>' : ''}${r >= 1 ? '<i class="fxshine"></i>' : ''}<div class="sptag">${money(cv(big))}</div>${cardHTML(DEFS[big.d], { c:big, flip:true, spin:true, bk:BACKFOR[lv || 0], live:true, price:false, attr:`style="--turns:${turns};--dur:${dur}ms"` })}</div>` : cardHTML(DEFS[big.d], { c:big, live:true })) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:0, price:false, attr:(hype(OP.order[OP.ci]) ? `data-aura="1" style="--rc:${LVCOL[hype(OP.order[OP.ci])]};--lvn:${hype(OP.order[OP.ci])}"` : '') });
+  const r = lv || 0, top = big ? (flip ? `<div class="spc${r >= 4 ? ' jit' : ''}${r >= 5 && r < 7 ? ' lift' : ''}${r === 7 ? ' liftbig' : ''}${r >= 5 ? ' raise' : ''}${r === 7 ? ' slam' : ''}${r >= 6 ? ' redshine' : ''}" style="--dur:${dur}ms">${r >= 2 ? '<i class="swirl"></i>' : ''}${r >= 3 ? '<i class="bang"></i>' : ''}${r >= 1 ? '<i class="fxshine"></i>' : ''}<div class="sptag">${money(cv(big))}</div>${cardHTML(DEFS[big.d], { c:big, flip:true, spin:true, bk:BACKFOR[lv || 0], live:true, price:false, attr:`style="--turns:${turns};--dur:${dur}ms"` })}</div>` : cardHTML(DEFS[big.d], { c:big, live:true })) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:0, price:false, attr:(hype(OP.order[OP.ci]) ? `data-aura="1" style="--rc:${LVCOL[hype(OP.order[OP.ci])]};--lvn:${hype(OP.order[OP.ci])}"` : '') });
   overlay(`<div class="modal opn rv" style="--rc:${LVCOL[0]}"><div class="dim">${prodImg(OP.s, OP.p, 34)}${OP.packs.length > 1 ? '<br>' + (OP.pi + 1) + ' / ' + OP.packs.length : ''}</div>
     <div class="stage" data-a="opnext">${stack + top}</div>
     <div class="dim">${doneCards && big ? money(OP.pv) : OP.ci + ' / ' + OP.order.length}</div>
