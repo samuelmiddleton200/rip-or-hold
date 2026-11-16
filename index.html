@@ -1041,7 +1041,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwiztmvr';'use strict';
+<script>const BUILD='mwjoyzbp';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2040,9 +2040,9 @@ function worldLoop(){
     if (!ov && !typing && !show) render();
   } else if (mran && SCREEN === 'ebay' && !$('#ov').classList.contains('on') && !(EB.page === 'item' && EB.bidTxt)) render();          // not while you are typing a bid        // the auction list keeps changing every few seconds
 }
-// card shows run on a cycle of 5: local, local, regional, local, national. Each show is announced 10 minutes ahead and stays open for 5 minutes. The clock keeps going while the game is closed.
+// card shows run on a cycle of 5: local, local, regional, local, national. Each show is announced 5 minutes ahead and stays open for 5 minutes. The clock keeps going while the game is closed.
 const SHOW_CYCLE = ['local', 'local', 'regional', 'local', 'national'];
-const SHOW_WAIT = 10 * 60000, SHOW_OPEN = 5 * 60000, SHOW_SLOT = SHOW_WAIT + SHOW_OPEN;
+const SHOW_WAIT = 5 * 60000, SHOW_OPEN = 5 * 60000, SHOW_SLOT = SHOW_WAIT + SHOW_OPEN;
 const SHOWINFO = { local:{ fee:50, slots:20, buyers:8, rep:0, label:'LOCAL SHOW' }, regional:{ fee:75, slots:40, buyers:14, rep:0, label:'REGIONAL SHOW' }, national:{ fee:150, slots:80, buyers:24, rep:0, label:'NATIONAL SHOW' } };
 // where the cycle is right now: which show, and whether we are counting down to it or it is open
 function showClock(now){
@@ -2304,7 +2304,7 @@ function scrShow(){
   if (!SH){
     const clk = showClock(), inf = SHOWINFO[clk.kind], lab = k => cap(k), next = [1, 2, 3, 4].map(n => lab(SHOW_CYCLE[(clk.idx + n) % 5]));
     SHOWKEY = clk.idx + clk.phase;
-    const cyc = `<div class="dim" style="margin-top:10px">Coming up after this one: ${next.join(' &rarr; ')}. A show is announced 10 minutes ahead and open for 5. The clock keeps running while the game is closed, so shows come and go.</div>`;
+    const cyc = `<div class="dim" style="margin-top:10px">Coming up after this one: ${next.join(' &rarr; ')}. A show is announced 5 minutes ahead and open for 5. The clock keeps running while the game is closed, so shows come and go.</div>`;
     const rows = ['local', 'regional', 'national'].map(k => `<div class="row"><div class="nm"><b>${cap(k)}</b><small>${SHOWINFO[k].slots} spots &middot; ${SHOWINFO[k].buyers} buyers</small></div><div class="pr">${money(SHOWINFO[k].fee)} table</div></div>`).join('');
     if (clk.phase === 'wait') return h + `<div class="box" style="display:flex;gap:12px;align-items:center">${ico('ticket', 36)}<div><b>Next show: ${inf.label}</b><div style="font-size:30px;margin:4px 0">opens in <b class="gold" data-ready="${clk.end}">${fmtDur(clk.end - Date.now())}</b></div><div class="dim">Then it stays open for 5 minutes. Until then, sell to the dealer from your Collection or list on eBay.</div></div></div>` + rows + cyc;
     return h + `<div class="box" style="display:flex;gap:12px;align-items:center">${ico('ticket', 36)}<div><b>${inf.label} IS OPEN</b><div style="font-size:30px;margin:4px 0">closes in <b class="gold" data-ready="${clk.end}">${fmtDur(clk.end - Date.now())}</b></div><div class="dim">Table fee ${money(inf.fee)} &middot; ${inf.slots} spots &middot; ${inf.buyers} buyers. Press Start, pick your cards, then start the show. Once you start, the clock stops until you press End show.</div>
@@ -2812,7 +2812,7 @@ const ACT = {
   sclose(){
     if (SH.stage !== 'run') return;
     SH.stage = 'done'; SH.table.forEach(dropOffer);
-    G.sc = { t0:Date.now(), i0:(SH.idx || 0) + 1 };          // End show: a fresh 10 minutes starts toward the next show in the cycle
+    G.sc = { t0:Date.now(), i0:(SH.idx || 0) + 1 };          // End show: a fresh 5 minutes starts toward the next show in the cycle
     save(); render();
   },
   shend(){ (SH.vendors || []).forEach(v => v.items.forEach(i => releaseCard(i.c))); save(); G.stats.shows++; if (SH.sold >= 3) addRep(SH.kind === 'national' ? 3 : SH.kind === 'regional' ? 2 : 1); SH = null; toast('The show is over.'); afterSkip(); },
@@ -3552,7 +3552,14 @@ function acceptTrade(id){
   mine.forEach(releaseCard); addCards(t.theirs); G.trades = G.trades.filter(x => x !== t);
   ledger('Trade at the shop: ' + mine.length + ' for ' + t.theirs.length, 0); addRep(.3); return true;
 }
-const tradeTile = c => `<div style="margin-bottom:14px">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}</div>`;          // no values on trade offers: you have to know what your cards are worth (the Guide has the prices)
+// what a trade card is, in words: creature, edge, tier, finish (no "basic" or "evolved", no word "finish", no plain finish)
+const FIN_SAY = { none:'', shiny:'shiny', gold:'gold', etched:'etched', noir:'etched noir', rainbow:'rainbow', galaxy:'galaxy' };
+function cardWords(c){
+  if (c.bs) return 'bound set of ' + c.size;
+  const d = DEFS[c.d];
+  return [d.name, d.edge + ' edge', 'tier ' + d.tier, FIN_SAY[d.fin], c.g ? 'graded ' + c.g : ''].filter(Boolean).join(', ');
+}
+const tradeTile = c => `<div style="margin-bottom:14px;width:104px;text-align:center">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}<div class="dim" style="margin-top:6px;font-size:13px;line-height:1.15;color:#cfe3f7">${cardWords(c)}</div></div>`;          // still no values on trade offers: you have to know what your cards are worth (the Guide has the prices)
 function tradesHTML(){
   if (!G.trades.length) return '';
   let h = '<h3 style="margin-top:0">Trade offers</h3>';
