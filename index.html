@@ -919,7 +919,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwiqdb0p';'use strict';
+<script>const BUILD='mwiqgbh2';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -984,8 +984,8 @@ const mkProd = (id, name, price, packs, cards, ev, bc, hits, o) => Object.assign
 const PRODUCTS = {
   tcg: [
     mkProd('standard', 'Standard Pack', 29.99, 1, 10, 93, 5, [{ n:2, f:'shiny' }]),
-    mkProd('foil', 'Foil Pack', 39.99, 1, 10, 92, 5, [{ n:3, f:'shiny' }], { color:'#ffd23f' }),
-    mkProd('premium', 'Premium Pack', 79.99, 1, 10, 93, 20, [{ n:1, f:'tier 2+' }], { color:'#b56cff' }),
+    mkProd('foil', 'Foil Pack', 39.99, 1, 10, 94, 5, [{ n:3, f:'shiny' }], { color:'#ffd23f' }),
+    mkProd('premium', 'Premium Pack', 79.99, 1, 10, 94, 20, [{ n:1, f:'tier 2+' }], { color:'#b56cff' }),
     ...TYPES.map(t => mkProd('el_' + t, cap(t) + ' Pack', 39.99, 1, 5, 91, 0, [{ n:5, f:t }], { color:TYPE_COL[t] })),
     mkProd('evo', 'Evolution Pack', 99.99, 1, 5, 93, 0, [{ n:5, f:'stage 2' }], { color:'#ff7ac0' }),
     mkProd('bulk', 'Bulk Pack', 49.99, 1, 20, 95, 0, [], { color:'#8a97b8' }),
