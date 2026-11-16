@@ -999,7 +999,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwixubc8';'use strict';
+<script>const BUILD='mwixuyjc';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2538,7 +2538,6 @@ function effects(c, lv){
   if (lv >= 6){ rain(70); burst(90, lv, 360); setTimeout(() => flash(true), 350); }
   if (lv >= 7) [500, 1000, 1500].forEach(t => setTimeout(() => { if (OP){ burst(60, 5, 320); rain(40); } }, t));
   if (lv >= 3 && top) setTimeout(() => { if (top.isConnected) top.classList.add('hot'); }, (.55 + lv * .28) * 1000 + 120);
-  if (DEFS[c.d].chase || v >= 100){ const st = $('.stage'); if (st){ const s = document.createElement('div'); s.className = 'stamp'; s.innerHTML = '&#9733;'; st.appendChild(s); } }
 }
 function opNext(){
   if (!OP || OP.summary) return;
