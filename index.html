@@ -945,7 +945,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwivkb2b';'use strict';
+<script>const BUILD='mwivnjmt';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2695,11 +2695,24 @@ async function boot(){
   // self-update: if the server already has a newer build than this page (a stale cached copy), reload once to pick it up
   try { if (/^https?:/.test(location.protocol)) fetch(location.pathname + '?b=' + Date.now(), { cache:'reload' }).then(r => r.text()).then(t => { const m = t.match(/const BUILD='([^']+)'/); if (m && typeof BUILD !== 'undefined' && m[1] !== BUILD && !sessionStorage.getItem('upd' + m[1])){ sessionStorage.setItem('upd' + m[1], '1'); location.reload(); } }).catch(() => {}); } catch (e) {}
   await CardRenderer.init(CARD_ASSETS, CARD_DATA); CardRenderer.ready = true;
-  if (!load()){ newGameState(); G.gift1 = 1; G.gift2 = 1; save(); }
+  if (!load()){ newGameState(); G.gift1 = 1; G.gift2 = 1; G.gift3 = 1; G.reset1 = 1; save(); }
   // a one-time gift for everyone already playing: a free Collectors Pack in the Packs tab
   if (!G.gift1){ G.gift1 = 1; addSealed('T1', 'collectors', 1, 0); note('Gift: a free Collectors Pack is waiting in your Packs tab!'); save(); }
   // a second one-time gift: 3 more free Collectors Packs for everyone already playing
   if (!G.gift2){ G.gift2 = 1; addSealed('T1', 'collectors', 3, 0); note('Gift: 3 free Collectors Packs are waiting in your Packs tab!'); save(); }
+  // one-time reset: anyone whose card collection is worth more than $10,000 loses every card (back to the pool) and gets $10,000 cash instead
+  if (!G.reset1){
+    G.reset1 = 1;
+    const mine = [].concat(G.inv.cards, G.ebay || [], (G.grading || []).map(g => g.c), ((G.mkt && G.mkt.mail) || []).map(m => m.c), shopCards().map(it => it.c));
+    const worth = mine.reduce((a, c) => a + cv(c), 0);
+    if (worth > 10000){
+      mine.forEach(releaseCard);
+      G.inv.cards = []; G.ebay = []; G.grading = []; if (G.mkt && G.mkt.mail) G.mkt.mail = G.mkt.mail.filter(m => !m.c);
+      if (G.shop) G.shop.slots = G.shop.slots.map(it => it && it.k === 's' ? it : null);
+      SH = null; G.cash += 10000; ledger('Collection reset: $10,000 cash', 10000);
+      note('Your collection was worth over $10,000, so it was cashed out: all cards removed and $10,000 added to your cash.'); save();
+    }
+  }
   // a third one-time gift: 3 more free Collectors Packs for everyone already playing
   if (!G.gift3){ G.gift3 = 1; addSealed('T1', 'collectors', 3, 0); note('Gift: 3 more free Collectors Packs are waiting in your Packs tab!'); save(); }
   if (!G.sc) G.sc = { t0:Date.now(), i0:0 };
