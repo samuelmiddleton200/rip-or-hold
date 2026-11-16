@@ -95,9 +95,37 @@ h3{margin:14px 0 6px;font-family:var(--pix);font-size:12px;letter-spacing:1.5px;
 @keyframes pulseO{0%,100%{box-shadow:0 0 6px #ff9a2e}50%{box-shadow:0 0 20px #ff9a2e,0 0 32px #ff9a2e66}}
 @keyframes rainbowB{0%{box-shadow:0 0 18px #f55}20%{box-shadow:0 0 18px #fd3}40%{box-shadow:0 0 18px #5f7}60%{box-shadow:0 0 18px #5df}80%{box-shadow:0 0 18px #a6f}100%{box-shadow:0 0 18px #f55}}
 .card.back canvas{visibility:hidden}
-.cback{position:absolute;inset:0;border-radius:4px;background:repeating-linear-gradient(45deg,#2a3a8a 0 8px,#1d2870 8px 16px);display:flex;align-items:center;justify-content:center;color:var(--gold);text-align:center;font-size:calc(var(--w)*.2);line-height:.95;border:3px double var(--gold)}
-.card.flip{animation:flipin var(--fd,.35s) ease-out}
-@keyframes flipin{0%{transform:rotateY(90deg) scale(.9)}100%{transform:none}}
+.cback{position:absolute;inset:0;border-radius:4px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#ffe9a8;text-align:center;font-family:var(--pix,inherit);font-size:calc(var(--w)*.17);line-height:1;letter-spacing:1px;text-shadow:0 2px 0 #1a0f3c,0 0 8px #000;border:calc(var(--w)*.035) solid #ffd23f;box-shadow:inset 0 0 0 calc(var(--w)*.03) #1a0f3c,inset 0 0 calc(var(--w)*.22) rgba(0,0,0,.55);
+  background:var(--cardback,none) center/100% 100% no-repeat,radial-gradient(circle at 50% 50%,#7a4bd6 0,#3a2a9a 38%,#170d3b 100%)}
+.cback::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(255,210,63,.16) 0 2px,transparent 2px calc(var(--w)*.09)),repeating-linear-gradient(-45deg,rgba(255,210,63,.16) 0 2px,transparent 2px calc(var(--w)*.09));opacity:var(--cbo,1)}
+.cback>span{position:relative;z-index:1;background:rgba(23,13,59,.72);padding:calc(var(--w)*.05) calc(var(--w)*.07);border-radius:calc(var(--w)*.06);border:2px solid #ffd23f}
+.cback .cbgem{position:absolute;left:50%;top:50%;width:calc(var(--w)*.8);height:calc(var(--w)*.8);transform:translate(-50%,-50%) rotate(45deg);border:calc(var(--w)*.025) solid rgba(255,210,63,.55);border-radius:calc(var(--w)*.06)}
+.card.flip3d{transform-style:preserve-3d;animation:flip3d var(--fd,.5s) cubic-bezier(.25,.9,.35,1) both;will-change:transform}
+.card.flip3d canvas.cv{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.card.flip3d .cbturn{backface-visibility:hidden;-webkit-backface-visibility:hidden;transform:rotateY(180deg)}
+.card.flip3d .sheen{position:absolute;inset:0;border-radius:4px;pointer-events:none;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.75) 50%,transparent 65%);background-size:260% 100%;animation:sheen var(--fd,.5s) ease-out both;mix-blend-mode:screen}
+@keyframes sheen{0%{background-position:130% 0;opacity:0}40%{opacity:1}100%{background-position:-30% 0;opacity:0}}
+@keyframes flip3d{
+  0%{transform:perspective(800px) translateY(0) rotateY(180deg) scale(1)}
+  30%{transform:perspective(800px) translateY(-34px) rotateY(115deg) scale(1.14)}
+  62%{transform:perspective(800px) translateY(-18px) rotateY(-14deg) scale(1.1)}
+  82%{transform:perspective(800px) translateY(2px) rotateY(5deg) scale(.98)}
+  100%{transform:perspective(800px) translateY(0) rotateY(0) scale(1)}}
+/* the better the card, the bigger the show: a double spin for rares, a full twirl and a slam for the top hits */
+.rv3 .card.flip3d,.rv4 .card.flip3d{animation-name:flipbig}
+.rv5 .card.flip3d{animation-name:flipmax}
+@keyframes flipbig{
+  0%{transform:perspective(800px) translateY(0) rotateY(540deg) scale(.9)}
+  40%{transform:perspective(800px) translateY(-46px) rotateY(250deg) scale(1.22)}
+  70%{transform:perspective(800px) translateY(-22px) rotateY(-16deg) scale(1.16)}
+  86%{transform:perspective(800px) translateY(4px) rotateY(6deg) scale(.97)}
+  100%{transform:perspective(800px) translateY(0) rotateY(0) scale(1)}}
+@keyframes flipmax{
+  0%{transform:perspective(800px) translateY(40px) rotateY(900deg) rotateZ(-8deg) scale(.5)}
+  45%{transform:perspective(800px) translateY(-70px) rotateY(330deg) rotateZ(6deg) scale(1.38)}
+  72%{transform:perspective(800px) translateY(-30px) rotateY(-20deg) rotateZ(-2deg) scale(1.26)}
+  88%{transform:perspective(800px) translateY(10px) rotateY(7deg) scale(.95)}
+  100%{transform:perspective(800px) translateY(0) rotateY(0) scale(1)}}
 .card.tense{animation:shake .1s linear infinite;box-shadow:0 0 18px var(--rc),0 0 32px var(--rc)}
 .card.tense .cback{box-shadow:inset 0 0 22px var(--rc)}
 @keyframes shake{0%{transform:translate(0,0) rotate(0)}25%{transform:translate(-2px,1px) rotate(-.6deg)}50%{transform:translate(2px,-1px) rotate(.6deg)}75%{transform:translate(-1px,-2px) rotate(-.3deg)}100%{transform:translate(0,0)}}
@@ -713,6 +741,7 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
     if (window.visualViewport) { visualViewport.addEventListener('resize', settle); visualViewport.addEventListener('scroll', settle); }
   })();
 </script>
+
 </head><body>
 <div id="top"></div><div id="main"></div><div id="news"></div><div id="nav"></div><div id="ov"></div>
 <div id="rot"><div class="rphone"><i></i></div><b>TURN YOUR PHONE SIDEWAYS</b><span>Rip or Hold plays in landscape</span></div>
@@ -919,7 +948,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwiv8kln';'use strict';
+<script>const BUILD='mwive5m7';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -1765,8 +1794,9 @@ function cardHTML(def, o){
   }
   const c = o.c || null, price = c ? cv(c) : px(def.id);
   const spec = def.cid + '|' + def.rar + '|' + def.fin + '|' + def.tier + '|' + def.edge + '|' + ((o.serialOf || c) && (o.serialOf || c).n || '') + '|' + def.run;
-  const cls = ['card', 'r-' + def.rar, o.sm ? 'sm' : '', o.back ? 'back' : '', o.flip ? 'flip' : ''].join(' ');
-  const inner = o.back ? '<div class="cback"><span>RIP<br>OR<br>HOLD</span></div>' : `<canvas class="cv" width="120" height="168" data-spec="${spec}"${o.live ? ' data-live="1"' : ''}></canvas>`;
+  const cls = ['card', 'r-' + def.rar, o.sm ? 'sm' : '', o.back ? 'back' : '', o.flip ? 'flip3d' : ''].join(' ');
+  const BACKHTML = '<div class="cback"><i class="cbgem"></i><span>RIP<br>OR<br>HOLD</span></div>';
+  const inner = o.back ? BACKHTML : `<canvas class="cv" width="120" height="168" data-spec="${spec}"${o.live ? ' data-live="1"' : ''}></canvas>${o.flip ? BACKHTML.replace('class="cback"', 'class="cback cbturn"') + '<i class="sheen"></i>' : ''}`;
   const tagHtml = o.tagText ? `<div class="ptag">${o.tagText}</div>` : o.price === false ? '' : `<div class="ptag">${money(price)}${o.count > 1 ? ' <u>x' + o.count + '</u>' : ''}</div>`;
   if (c && c.g){        // a graded card sits in a clear plastic slab with a printed label, like the real thing
     const gl = { 10:'Gem mint', 9:'Mint', 8:'NM-MT', 7:'Near mint' }[c.g] || 'Good';
@@ -2443,7 +2473,7 @@ function effects(c, lv){
   if (lv >= 2){ banner(v, lv, c); quake(lv); flash(false, col); burst(lv * 9, lv, 110 + lv * 60); }
   if (lv >= 3) burst(lv * 10, lv, 250);
   if (lv >= 4) rain(lv * 12);
-  if (lv >= 5){ flash(true); rain(50); if (top){ top.classList.remove('flip'); top.classList.add('spin'); } }
+  if (lv >= 5){ flash(true); rain(50);  }
   if (lv >= 3 && top) setTimeout(() => { if (top.isConnected) top.classList.add('hot'); }, lv >= 5 ? 1500 : 500);
   if (DEFS[c.d].chase || v >= 100){ const st = $('.stage'); if (st){ const s = document.createElement('div'); s.className = 'stamp'; s.textContent = 'PULL OF THE DAY'; st.appendChild(s); } }
 }
@@ -2498,7 +2528,7 @@ function renderOp(flip, lv){
   }
   const left = OP.order.length - OP.ci, nb = Math.min(3, big ? left : left - 1);
   let stack = ''; for (let k = nb; k >= 1; k--) stack += cardHTML(DEFS[OP.order[0].d], { back:true, price:false, attr:`style="margin-left:${k * 6}px;margin-top:${-k * 5}px"` });
-  const top = big ? cardHTML(DEFS[big.d], { c:big, flip:!!flip, live:true, attr:flip ? `style="--fd:${(.35 + (lv || 0) * .22).toFixed(2)}s"` : '' }) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, price:false });
+  const top = big ? cardHTML(DEFS[big.d], { c:big, flip:!!flip, live:true, attr:flip ? `style="--fd:${(.55 + (lv || 0) * .28).toFixed(2)}s"` : '' }) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, price:false });
   overlay(`<div class="modal opn rv rv${rl}" style="--rc:${LVCOL[rl]}"><div class="dim">${prodImg(OP.s, OP.p, 34)}<br>${OP.name} · pack ${OP.pi + 1} of ${OP.packs.length}</div>
     <div class="stage" data-a="opnext">${stack + top}</div>
     <div class="dim">${doneCards && big ? 'Pack value ' + money(OP.pv) : big ? 'Tap to rip it off the stack (' + OP.ci + '/' + OP.order.length + ')' : 'Tap the top card to flip it (' + OP.ci + '/' + OP.order.length + ')'}</div>
