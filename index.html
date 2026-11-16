@@ -919,7 +919,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwioemwt';'use strict';
+<script>const BUILD='mwiqdb0p';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -983,17 +983,17 @@ TYPES.forEach(t => { FILTER_TXT[t] = t; });
 const mkProd = (id, name, price, packs, cards, ev, bc, hits, o) => Object.assign({ id, name, price, packs, cards, ev, bc, hits, limit:price < 50 ? 6 : price < 150 ? 4 : price < 300 ? 2 : 1, shape:'pack' }, o || {});
 const PRODUCTS = {
   tcg: [
-    mkProd('standard', 'Standard Pack', 29.99, 1, 10, 90, 5, [{ n:2, f:'shiny' }]),
+    mkProd('standard', 'Standard Pack', 29.99, 1, 10, 93, 5, [{ n:2, f:'shiny' }]),
     mkProd('foil', 'Foil Pack', 39.99, 1, 10, 92, 5, [{ n:3, f:'shiny' }], { color:'#ffd23f' }),
     mkProd('premium', 'Premium Pack', 79.99, 1, 10, 93, 20, [{ n:1, f:'tier 2+' }], { color:'#b56cff' }),
-    ...TYPES.map(t => mkProd('el_' + t, cap(t) + ' Pack', 39.99, 1, 5, 90, 0, [{ n:5, f:t }], { color:TYPE_COL[t] })),
-    mkProd('evo', 'Evolution Pack', 99.99, 1, 5, 94, 0, [{ n:5, f:'stage 2' }], { color:'#ff7ac0' }),
-    mkProd('bulk', 'Bulk Pack', 49.99, 1, 20, 95, 8, [{ n:5, f:'edge' }], { color:'#8a97b8' }),
-    mkProd('blister', 'Blister', 149.99, 3, 10, 94, 15, [{ n:1, f:'rainbow' }], { shape:'blister' }),
-    mkProd('etb', 'ETB', 249.99, 3, 10, 94, 50, [{ n:5, f:'shiny' }], { shape:'etb' }),
-    mkProd('box', 'Booster Box', 499.99, 5, 10, 94, 75, [{ n:2, f:'rainbow' }, { n:2, f:'shiny' }], { shape:'box' }),
-    mkProd('collectors', 'Collectors Pack', 749.99, 1, 10, 96, 200, [{ n:3, f:'tier 2+' }, { n:2, f:'tier 3' }], { color:'#ff9a2e', shape:'case' }),
-    mkProd('poke', 'ポケモン', 1999.99, 1, 3, 96, 0, [{ n:2, f:'rainbow' }, { n:1, f:'s2t3' }], { color:'#ff3b3b' }),
+    ...TYPES.map(t => mkProd('el_' + t, cap(t) + ' Pack', 39.99, 1, 5, 91, 0, [{ n:5, f:t }], { color:TYPE_COL[t] })),
+    mkProd('evo', 'Evolution Pack', 99.99, 1, 5, 93, 0, [{ n:5, f:'stage 2' }], { color:'#ff7ac0' }),
+    mkProd('bulk', 'Bulk Pack', 49.99, 1, 20, 95, 0, [], { color:'#8a97b8' }),
+    mkProd('blister', 'Blister', 149.99, 3, 10, 95, 40, [{ n:1, f:'rainbow' }], { shape:'blister' }),
+    mkProd('etb', 'ETB', 249.99, 3, 10, 94, 50, [{ n:5, f:'tier 3' }], { shape:'etb' }),
+    mkProd('box', 'Booster Box', 499.99, 5, 10, 90, 250, [{ n:2, f:'rainbow' }, { n:2, f:'shiny' }], { shape:'box' }),
+    mkProd('collectors', 'Collectors Pack', 749.99, 1, 10, 110, 0, [{ n:3, f:'tier 3' }], { color:'#ff9a2e', shape:'case' }),
+    mkProd('poke', 'ポケモン', 1999.99, 1, 3, 100, 0, [{ n:1, f:'rainbow' }, { n:1, f:'s2t3' }], { color:'#ff3b3b' }),
   ],
   vint: [],
 };
