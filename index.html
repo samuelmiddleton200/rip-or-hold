@@ -919,7 +919,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwiqgbh2';'use strict';
+<script>const BUILD='mwiqnfk3';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2180,19 +2180,38 @@ function sellItem(x, price){
   SH.log.push(showName2(x) + ': sold for ' + money(price)); sfx.sell(); save();
 }
 // one visit from a buyer, every few seconds while you are at the show. Returns true if anything changed on the table.
+// what a buyer does on one visit to a table card, by your price as a share of the card's set value. Between the listed prices the odds blend smoothly.
+// buy = pays your price, low = offers less (haggle), trade = offers cards, the rest = just looks.
+const SHOW_ODDS = [
+  [.90, { buy:.80, low:0,   trade:.10, look:.10 }],
+  [1.0, { buy:.60, low:.10, trade:.20, look:.10 }],
+  [1.1, { buy:.60, low:.20, trade:.10, look:.10 }],
+  [1.25, { buy:.45, low:.20, trade:0,  look:.35 }],
+  [1.5, { buy:0,   low:.30, trade:.14, look:.56 }],
+];
+function showOdds(ratio){
+  if (ratio <= SHOW_ODDS[0][0]) return SHOW_ODDS[0][1];
+  for (let i = 1; i < SHOW_ODDS.length; i++){
+    const [r1, a1] = SHOW_ODDS[i], [r0, a0] = SHOW_ODDS[i - 1];
+    if (ratio <= r1){ const k = (ratio - r0) / (r1 - r0), o = {}; for (const key in a1) o[key] = a0[key] + (a1[key] - a0[key]) * k; return o; }
+  }
+  return SHOW_ODDS[SHOW_ODDS.length - 1][1];
+}
+// one visit from a buyer, every few seconds while you are at the show. Returns true if anything changed on the table.
 function showTick(){
   if (!SH || SH.stage !== 'run') return false;
   SH.clock = (SH.clock || 0) + 1; if (SH.clock < (SH.next || 0)) return false;
   SH.next = SH.clock + ri(4, 9);
   const items = tableItems().filter(x => !x.t.offer); if (!items.length || SH.queue <= 0) return false;
-  SH.queue--; const x = pick(items), r = rnd();
-  if (rnd() < showBuyChance(x)){ sellItem(x, x.price); toast(showName2(x) + ' sold for ' + money(x.price)); return true; }
-  const tooHigh = x.price > x.v * 1.02;
-  if (tooHigh && r < .55){          // wants it for less
+  SH.queue--; const x = pick(items), o = showOdds(x.price / x.v); let r = rnd();
+  if (r < o.buy){ sellItem(x, x.price); toast(showName2(x) + ' sold for ' + money(x.price)); return true; }
+  r -= o.buy;
+  if (r < o.low){          // wants it for less
     const base = x.v * (.78 + rnd() * .2), offer = Math.max(.01, r2(Math.min(base, x.price * .97))), maxP = x.v * (.93 + rnd() * .17);
     x.t.offer = { kind:'price', offer, maxP, pat:3, msg:'Would you take ' + money(offer) + '?' }; x.t.offer.q = offerQuick(x.t.offer, x.price); return true;
   }
-  if (!x.sealed && r < (tooHigh ? .8 : .45)){          // offers cards for it
+  r -= o.low;
+  if (r < o.trade && !x.sealed){          // offers cards for it
     const w = cardsWorth(x.v * (.9 + rnd() * .35)); if (!w) return false;
     x.t.offer = { kind:'trade', theirs:w.cards, cash:0, sum:w.sum }; return true;
   }
