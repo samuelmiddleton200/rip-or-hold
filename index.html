@@ -668,6 +668,10 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 .modal.opn .rev{flex:1 1 auto;min-height:0;overflow-y:auto;width:100%;align-content:flex-start}
 .modal.opn>div:last-child,.modal.opn>button:last-child{flex:none}
 .modal.opn>.dim,.modal.opn>h2,.modal.opn>h3{flex:none}
+
+/* while you are at a card show the other tabs are greyed out */
+#nav button.lock,#nav button:disabled{opacity:.32;filter:grayscale(1);pointer-events:none}
+.bulkbtn:disabled{opacity:.32;filter:grayscale(1);pointer-events:none}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -915,7 +919,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwio2zmo';'use strict';
+<script>const BUILD='mwioemwt';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -1015,7 +1019,7 @@ const defId = (setId, cid, tier, fin, edge) => setId + '|' + cid + '|' + tier + 
 
 function newGameState(){
   const seed = Math.floor(Math.random() * 1e9);
-  G = { v:5, taken:{}, orders:[], visitors:[], trades:[], mtk:0, mlast:Date.now(), beat:0, last:Date.now(), showN:0, showAt:8, hour:9, seed, day:0, cash:500, rep:0, uid:0, sets:[], inv:{ cards:[], sealed:{} }, basis:{}, ent:{}, lp:{}, hist:{}, lps:{}, shist:{}, news:[], bought:{}, ledger:[], ebay:[], grading:[], coll:[], hof:[], ach:{}, trophies:[], done:{},
+  G = { v:5, taken:{}, orders:[], visitors:[], trades:[], mtk:0, mlast:Date.now(), beat:0, last:Date.now(), sc:{ t0:Date.now(), i0:0 }, hour:9, seed, day:0, cash:500, rep:0, uid:0, sets:[], inv:{ cards:[], sealed:{} }, basis:{}, ent:{}, lp:{}, hist:{}, lps:{}, shist:{}, news:[], bought:{}, ledger:[], ebay:[], grading:[], coll:[], hof:[], ach:{}, trophies:[], done:{},
         nw:[], stats:{ packs:0, cards:0, spent:0, revenue:0, shows:0, best:null, hits:0, ripIn:0, ripOut:0, bigSale:0 }, snd:true, tutorial:true, broke:false, wasBroke:false, chores:0 };
   BIAS = {}; initSets(); buildWorld();
   for (let d = -60; d <= 0; d++){ ensureSets(d); tick(d); }
@@ -1448,8 +1452,10 @@ function save(){
   let lst = null;
   try {
     if (G.mkt && G.mkt.list){ lst = G.mkt.list; G.mkt.list = lst.map(packListing); }
+    G.sh = (typeof SH !== 'undefined' && SH) ? SH : null;          // a show in progress is saved too
     localStorage.setItem(SAVEKEY, JSON.stringify(G));
   } catch (e){}
+  G.sh = null;
   if (lst) G.mkt.list = lst;
 }
 function load(){
@@ -1857,14 +1863,25 @@ function worldLoop(){
   const finished = G.grading.length !== before;
   document.querySelectorAll('[data-ready]').forEach(e => { e.textContent = fmtDur(+e.dataset.ready - Date.now()); });
   if (SCREEN === 'show' && showTick()) render();
+  if (SCREEN === 'show' && !SH && G.sc){ const clk = showClock(); if (clk.idx + clk.phase !== SHOWKEY) render(); }
+  else if (!SH && G.sc && SCREEN !== 'show'){ const clk = showClock(), open = clk.phase === 'open'; if (open !== !!SHOWOPEN){ SHOWOPEN = open; render(); } }
   if (ran || finished){
     flushNotes(); if (G.hour % 3 === 0) save();
     const ov = $('#ov').classList.contains('on'), typing = SCREEN === 'ebay' && EB.kb, show = SH && SH.stage === 'run';
     if (!ov && !typing && !show) render();
   } else if (mran && SCREEN === 'ebay' && !$('#ov').classList.contains('on') && !(EB.page === 'item' && EB.bidTxt)) render();          // not while you are typing a bid        // the auction list keeps changing every few seconds
 }
-const SHOW_FREE = true;          // TEMPORARY: shows cost nothing while they are being tested. Set to false to bring the table fees back ($25 / $150 / $800).
-const SHOWINFO = { local:{ fee:SHOW_FREE ? 0 : 25, slots:20, buyers:8, rep:0, label:'LOCAL SHOW' }, regional:{ fee:SHOW_FREE ? 0 : 150, slots:40, buyers:14, rep:15, label:'REGIONAL SHOW' }, national:{ fee:SHOW_FREE ? 0 : 800, slots:80, buyers:24, rep:40, label:'NATIONAL SHOW' } };
+// card shows run on a cycle of 5: local, local, regional, local, national. Each show is announced 10 minutes ahead and stays open for 5 minutes. The clock keeps going while the game is closed.
+const SHOW_CYCLE = ['local', 'local', 'regional', 'local', 'national'];
+const SHOW_WAIT = 10 * 60000, SHOW_OPEN = 5 * 60000, SHOW_SLOT = SHOW_WAIT + SHOW_OPEN;
+const SHOWINFO = { local:{ fee:50, slots:20, buyers:8, rep:0, label:'LOCAL SHOW' }, regional:{ fee:75, slots:40, buyers:14, rep:0, label:'REGIONAL SHOW' }, national:{ fee:150, slots:80, buyers:24, rep:0, label:'NATIONAL SHOW' } };
+// where the cycle is right now: which show, and whether we are counting down to it or it is open
+function showClock(now){
+  now = now || Date.now(); const c = G.sc, el = Math.max(0, now - c.t0), k = Math.floor(el / SHOW_SLOT), within = el - k * SHOW_SLOT, idx = c.i0 + k, kind = SHOW_CYCLE[idx % 5];
+  return within < SHOW_WAIT ? { idx, kind, phase:'wait', end:now + (SHOW_WAIT - within) } : { idx, kind, phase:'open', end:now + (SHOW_SLOT - within) };
+}
+const showLocked = () => !!(G && G.sc && G.sc.paused && SH);          // joined a show: only Card Show and Guide work until you press End show
+let SHOWKEY = '', SHOWOPEN = false;
 function toast(t){ const e = document.createElement('div'); e.className = 'toast'; e.textContent = t; e.style.top = (70 + document.querySelectorAll('.toast').length * 40) + 'px'; document.body.appendChild(e); setTimeout(() => e.remove(), 2200); }
 function overlay(html){ const o = $('#ov'); o.innerHTML = html; o.classList.add('on'); paintCards(); liveCards(); }
 function closeOv(){ const o = $('#ov'); o.classList.remove('on'); o.innerHTML = ''; delete o.dataset.lv; delete o.dataset.tense; if (OP && OP.rv) OP.rv = null; OP = null; }
@@ -1877,9 +1894,11 @@ const pageHead = (icon, title, sub) => `<div class="ph">${ico(icon, 32)}<div><h2
 function render(){
   if (!G) return;
   const nw = netWorth();
-  $('#top').innerHTML = `<h1>${ico('pack', 26)}<div><b>RIP</b> OR <b>HOLD</b><span>CARD SHOP SIM</span></div></h1><div class="st"><div class="chip">${ico('coin', 24)}<div><small>Cash</small><b class="gold">${money(G.cash)}</b></div></div><div class="chip">${ico('trend', 24)}<div><small>Collection</small><b>${money(invValue())}</b></div></div><div class="chip">${ico('star', 24)}<div><small>Rep</small><b>${Math.floor(G.rep)}</b></div></div></div><button class="bulkbtn gold" data-a="bulkopen">${ico('cards', 20)}<span>Bulk sell</span></button>`;
+  $('#top').innerHTML = `<h1>${ico('pack', 26)}<div><b>RIP</b> OR <b>HOLD</b><span>CARD SHOP SIM</span></div></h1><div class="st"><div class="chip">${ico('coin', 24)}<div><small>Cash</small><b class="gold">${money(G.cash)}</b></div></div><div class="chip">${ico('trend', 24)}<div><small>Collection</small><b>${money(invValue())}</b></div></div><div class="chip">${ico('star', 24)}<div><small>Rep</small><b>${Math.floor(G.rep)}</b></div></div></div><button class="bulkbtn gold" data-a="bulkopen" ${showLocked() ? 'disabled' : ''}>${ico('cards', 20)}<span>Bulk sell</span></button>`;
+  const lockedNow = showLocked(), clkNow = G.sc && !SH ? showClock() : null;
+  if (lockedNow && SCREEN !== 'show' && SCREEN !== 'guide') SCREEN = 'show';
   const tabs = [['shop', 'Store', 'pack'], ['myshop', 'My Shop', 'shop'], ['inv', 'Packs', 'box'], ['coll', 'Collection', 'cards'], ['grade', 'Grading', 'grade'], ['show', 'Card Show', 'ticket'], ['ebay', 'eBay', 'globe'], ['guide', 'Guide', 'book'], ['stats', 'Stats', 'bars']];
-  $('#nav').innerHTML = tabs.map(t => `<button data-a="tab" data-v="${t[0]}" class="${SCREEN === t[0] ? 'on' : ''}">${ico(t[2], 26)}${t[1]}${t[0] === 'myshop' && bellCount() ? `<i class="bdg">${bellCount()}</i>` : ''}</button>`).join('');
+  $('#nav').innerHTML = tabs.map(t => `<button data-a="tab" data-v="${t[0]}" class="${SCREEN === t[0] ? 'on' : ''}${lockedNow && t[0] !== 'show' && t[0] !== 'guide' ? ' lock' : ''}" ${lockedNow && t[0] !== 'show' && t[0] !== 'guide' ? 'disabled' : ''}>${t[0] === 'show' && clkNow && clkNow.phase === 'open' ? '<i class="bdg">!</i>' : ''}${ico(t[2], 26)}${t[1]}${t[0] === 'myshop' && bellCount() ? `<i class="bdg">${bellCount()}</i>` : ''}</button>`).join('');
   const n = G.news[0];
     LASTNEWS = n;
   $('#news').innerHTML = '';
@@ -2111,23 +2130,22 @@ function aucControls(c){
 function scrShow(){
   if (SH && SH.stage === 'run') return showRun();
   if (SH && SH.stage === 'done') return showDone();
-  const kind = curShowKind();
   let h = pageHead('ticket', 'Card show', 'Sell at your table, haggle on the floor, trade with vendors.');
-  if (!kind){
-    return h + `<div class="box" style="display:flex;gap:12px;align-items:center">${ico('ticket', 36)}<div><b>No show in town right now.</b><div class="dim">The next one opens in about ${showWaitMin()} minute${showWaitMin() > 1 ? 's' : ''}. It will be a ${showKindAt(G.showN || 0)} show.</div></div></div>
-      <div class="row"><div class="nm"><b>Local</b><small>${SHOWINFO.local.slots} slots</small></div><div class="pr">${money(SHOWINFO.local.fee)} table</div></div>
-      <div class="row"><div class="nm"><b>Regional</b><small>every 4th show · ${SHOWINFO.regional.slots} slots · needs reputation ${SHOWINFO.regional.rep}</small></div><div class="pr">${money(SHOWINFO.regional.fee)} table</div></div>
-      <div class="row"><div class="nm"><b>National</b><small>every 12th show · ${SHOWINFO.national.slots} slots · needs reputation ${SHOWINFO.national.rep}</small></div><div class="pr">${money(SHOWINFO.national.fee)} table</div></div>
-      <div class="dim" style="margin-top:8px">Bigger shows bring more buyers with bigger budgets. Until then, sell to the dealer from your Collection or list on eBay.</div>`;
+  if (!SH){
+    const clk = showClock(), inf = SHOWINFO[clk.kind], lab = k => cap(k), next = [1, 2, 3, 4].map(n => lab(SHOW_CYCLE[(clk.idx + n) % 5]));
+    SHOWKEY = clk.idx + clk.phase;
+    const cyc = `<div class="dim" style="margin-top:10px">Coming up after this one: ${next.join(' &rarr; ')}. A show is announced 10 minutes ahead and open for 5. The clock keeps running while the game is closed, so shows come and go.</div>`;
+    const rows = ['local', 'regional', 'national'].map(k => `<div class="row"><div class="nm"><b>${cap(k)}</b><small>${SHOWINFO[k].slots} spots &middot; ${SHOWINFO[k].buyers} buyers</small></div><div class="pr">${money(SHOWINFO[k].fee)} table</div></div>`).join('');
+    if (clk.phase === 'wait') return h + `<div class="box" style="display:flex;gap:12px;align-items:center">${ico('ticket', 36)}<div><b>Next show: ${inf.label}</b><div style="font-size:30px;margin:4px 0">opens in <b class="gold" data-ready="${clk.end}">${fmtDur(clk.end - Date.now())}</b></div><div class="dim">Then it stays open for 5 minutes. Until then, sell to the dealer from your Collection or list on eBay.</div></div></div>` + rows + cyc;
+    return h + `<div class="box" style="display:flex;gap:12px;align-items:center">${ico('ticket', 36)}<div><b>${inf.label} IS OPEN</b><div style="font-size:30px;margin:4px 0">closes in <b class="gold" data-ready="${clk.end}">${fmtDur(clk.end - Date.now())}</b></div><div class="dim">Table fee ${money(inf.fee)} &middot; ${inf.slots} spots &middot; ${inf.buyers} buyers. Press Start, pick your cards, then start the show. Once you start, the clock stops until you press End show.</div>
+      <div style="margin-top:8px"><button class="gold" style="font-size:22px;padding:6px 30px" data-a="showjoin" ${G.cash < inf.fee ? 'disabled' : ''}>START</button>${G.cash < inf.fee ? ` <span class="down">You need ${money(inf.fee)} for the table fee.</span>` : ''}</div></div></div>` + rows + cyc;
   }
-  const inf = SHOWINFO[kind];
-  if (G.rep < inf.rep) return h + `<div class="box">It's a <b>${kind} show</b> today, but you need reputation ${inf.rep} to get a table. You have ${Math.floor(G.rep)}. Sell fairly at smaller shows to build it.</div>`;
-  if (!SH) SH = { stage:'setup', table:[], hide:true };
+  const inf = SHOWINFO[SH.kind];
   const used = new Set(SH.table.filter(t => t.k === 'c').map(t => t.u));
   const cards = G.inv.cards.filter(c => !used.has(c.u) && (!SH.hide || cv(c) >= .5)).sort((a, b) => cv(b) - cv(a)).slice(0, 100);
   const sealed = sealedKeys().map(k => ({ k, left:G.inv.sealed[k] - SH.table.filter(t => t.k === 's' && t.key === k).length })).filter(x => x.left > 0);
   h += `<div class="showhead"><div class="sh1"><b>${inf.label}</b><span>table fee <b>${money(inf.fee)}</b></span><span><b>${SH.table.length}</b> of ${inf.slots} spots used</span></div>
-    <div class="tabs"><button class="gold" data-a="shopen" ${G.cash < inf.fee ? 'disabled' : ''}>ENTER THE SHOW (${money(inf.fee)})</button><button data-a="shhide">${SH.hide ? 'Show' : 'Hide'} bulk cards</button><button data-a="shclear">Clear table</button></div></div>
+    <div class="tabs"><button class="gold" data-a="shopen" ${G.cash < inf.fee ? 'disabled' : ''}>START SHOW (${money(inf.fee)})</button><button data-a="showcancel">Cancel</button><button data-a="shhide">${SH.hide ? 'Show' : 'Hide'} bulk cards</button><button data-a="shclear">Clear table</button></div></div>
     <div class="dim" style="margin:2px 0 6px">Tap a card to put it on your table. Tap it on the table to set its price or take it off. Buyers will haggle if you price above market.</div>
     <div class="settable"><div class="dim" style="font-size:12px;letter-spacing:1px;text-transform:uppercase">Your table</div><div class="grid sg">${SH.table.map((t, i) => t.k === 'c' ? `<div>${cardHTML(DEFS[instOf(t.u).d], { sm:true, c:instOf(t.u), tagText:money(t.price || cv(instOf(t.u))), attr:`data-a="shpedit" data-v="${i}"` })}</div>` : `<div class="box" data-a="shoff" data-v="${i}" style="cursor:pointer">${prodImg(...t.key.split(':'), 36)}<br>${prodName(...t.key.split(':'))}</div>`).join('') || '<span class="dim">Empty.</span>'}</div></div>
     <div class="dim" style="margin:8px 0 2px;font-size:12px;letter-spacing:1px;text-transform:uppercase">Your cards</div><div class="grid sg" style="padding-bottom:16px">${sealed.map(x => `<div class="box" data-a="shons" data-v="${x.k}" style="cursor:pointer">${prodImg(...x.k.split(':'), 36)}<br>${prodName(...x.k.split(':'))} x${x.left}</div>`).join('')}${cards.map(c => `<div style="margin-bottom:${c.g ? 6 : 10}px">${cardHTML(DEFS[c.d], { sm:true, price:false, c, attr:`data-a="shon" data-v="${c.u}"` })}</div>`).join('')}</div>`;
@@ -2263,7 +2281,7 @@ function showPriceEdit(i){
 function showDone(){
   const profit = SH.earned - SH.fee - (SH.spent || 0);
   const tile = (l, v, cls) => `<div class="stat"><div><small>${l}</small><b class="${cls || ''}">${v}</b></div></div>`;
-  return `<h2 style="margin:6px 0">Show's over</h2><div class="stats">${tile('Sold', SH.sold)}${tile('Earned', money(SH.earned), 'gold')}${tile('Bought', SH.bought)}${tile('Traded', SH.traded || 0)}${tile('Table fee', money(SH.fee))}${SH.refund ? tile('Fee refunded', money(SH.refund), 'up') : ''}${tile('Spent on cards', money(SH.paid || 0))}</div>
+  return `<h2 style="margin:6px 0">Show's over</h2><div class="stats">${tile('Sold', SH.sold)}${tile('Earned', money(SH.earned), 'gold')}${tile('Bought', SH.bought)}${tile('Traded', SH.traded || 0)}${tile('Table fee', money(SH.fee))}${tile('Spent on cards', money(SH.paid || 0))}</div>
     <div style="font-size:20px;margin:8px 0">Cash spent at the card show: <b class="${((SH.fee - (SH.refund || 0)) + (SH.paid || 0)) > 0 ? 'down' : ''}">${money(r2((SH.fee - (SH.refund || 0)) + (SH.paid || 0)))}</b> <span class="dim">(table fee ${money(r2(SH.fee - (SH.refund || 0)))} + cards bought ${money(SH.paid || 0)}${(SH.paid || 0) > 0 ? '; those cards are in your collection' : ''})</span></div>
     <div class="dim" style="margin:8px 0">${SH.log.slice(-6).reverse().join('<br>')}</div><button class="gold" data-a="shend">Finish the day</button>`;
 }
@@ -2470,8 +2488,8 @@ function startOver(){
 const ACT = {
   pinfo(d){ sfx.click(); packInfo(d.s, d.p); },
   next(){ advance(); },
-  restart(){ resetGame(); SCREEN = 'shop'; closeOv(); render(); intro(); },
-  tab(d){ SCREEN = d.v; CONFIRM = ''; sfx.click(); render(); if (SCREEN === 'myshop') showShopSales(); if (SCREEN === 'jobs' && JOB) jobLoop(); },
+  restart(){ SH = null; resetGame(); SCREEN = 'shop'; closeOv(); render(); intro(); },
+  tab(d){ if (showLocked() && d.v !== 'show' && d.v !== 'guide') return toast('You are at a card show. Press End show first.'); SCREEN = d.v; CONFIRM = ''; sfx.click(); render(); if (SCREEN === 'myshop') showShopSales(); if (SCREEN === 'jobs' && JOB) jobLoop(); },
   cat(d){ CAT = d.v; render(); },
   buy(d){ const r = buyProduct(d.s, d.p, +d.n); if (!r.ok) toast(r.msg); else sfx.buy(); render(); },
   coll(d){ const cards = buyCollection(+d.id); if (!cards) return; sfx.buy(); const got = stock(cards), v = got.reduce((a, c) => a + cv(c), 0); G.stats.cards += got.length;
@@ -2498,20 +2516,30 @@ const ACT = {
   gradeone(d){ GSEL = new Set([+d.v]); SCREEN = 'grade'; closeOv(); render(); },
   gsel(d){ const u = +d.v; if (GSEL.has(u)) GSEL.delete(u); else if (GSEL.size >= maxGrading() - G.grading.length) toast('The grader holds ' + maxGrading() + ' cards at a time (+1 for every 15 rep, up to 5).'); else GSEL.add(u); sfx.click(); render(); },
   gclear(){ GSEL = new Set(); render(); },
-  bulkopen(){ overlay(`<div class="modal" style="width:min(430px,92vw);text-align:center"><h2>Bulk sell</h2><div class="dim" style="font-size:16px;margin-bottom:6px">Pays 60% of market value</div><div style="font-size:19px">Sell all cards under $ <input id="bulkx" inputmode="decimal" autocomplete="off" placeholder="___" style="width:110px;font:inherit;font-size:22px;text-align:center;background:var(--surf2);color:var(--ink);border:2px solid var(--line);border-radius:8px;padding:3px 6px"></div><div id="bulksum" class="dim" style="margin:12px 0;font-size:20px;min-height:28px">Type an amount</div><div style="display:flex;gap:10px;justify-content:center"><button data-a="close">Cancel</button><button class="gold" id="bulkgo" data-a="bulkgo" disabled>Sell</button></div></div>`); setTimeout(() => { const e = $('#bulkx'); if (e) e.focus(); }, 50); },
+  bulkopen(){ if (showLocked()) return toast('You are at a card show. Press End show first.'); overlay(`<div class="modal" style="width:min(430px,92vw);text-align:center"><h2>Bulk sell</h2><div class="dim" style="font-size:16px;margin-bottom:6px">Pays 60% of market value</div><div style="font-size:19px">Sell all cards under $ <input id="bulkx" inputmode="decimal" autocomplete="off" placeholder="___" style="width:110px;font:inherit;font-size:22px;text-align:center;background:var(--surf2);color:var(--ink);border:2px solid var(--line);border-radius:8px;padding:3px 6px"></div><div id="bulksum" class="dim" style="margin:12px 0;font-size:20px;min-height:28px">Type an amount</div><div style="display:flex;gap:10px;justify-content:center"><button data-a="close">Cancel</button><button class="gold" id="bulkgo" data-a="bulkgo" disabled>Sell</button></div></div>`); setTimeout(() => { const e = $('#bulkx'); if (e) e.focus(); }, 50); },
   bulkgo(){ const x = parseFloat(($('#bulkx') || {}).value), list = x > 0 ? bulkList(x) : []; if (!list.length) return; let tot = 0; for (const c of list){ const v = bulkOffer(c); tot += v; noteDeal('sale', c, v, 'the dealer'); releaseCard(c); } const set = new Set(list); G.inv.cards = G.inv.cards.filter(c => !set.has(c)); G.cash += tot; G.stats.revenue += tot; ledger('Bulk sold ' + list.length + ' cards', tot); sfx.sell(); toast('Sold ' + list.length + ' cards for ' + money(tot)); closeOv(); checkAch(); render(); },
   gsend(){ if (startGrading([...GSEL])){ toast('Sent ' + GSEL.size + ' to the grader'); sfx.buy(); GSEL = new Set(); } render(); },
   opnext(){ opNext(); }, opall(){ opAll(); }, oppack(){ opNextPack(); }, opripall(){ opRipAll(); }, opfinish(){ opFinish(); }, opdone(){ closeOv(); recordNW(); render(); }, optear(){ opTear(); },
   shhide(){ SH.hide = !SH.hide; render(); },
   shclear(){ SH.table = []; render(); },
-  shon(d){ const inf = SHOWINFO[curShowKind()]; if (SH.table.length >= inf.slots) return toast('Table is full'); SH.table.push({ k:'c', u:+d.v }); sfx.click(); render(); },
-  shons(d){ const inf = SHOWINFO[curShowKind()]; if (SH.table.length >= inf.slots) return toast('Table is full'); SH.table.push({ k:'s', key:d.v }); sfx.click(); render(); },
+  shon(d){ const inf = SHOWINFO[SH.kind]; if (SH.table.length >= inf.slots) return toast('Table is full'); SH.table.push({ k:'c', u:+d.v }); sfx.click(); render(); },
+  shons(d){ const inf = SHOWINFO[SH.kind]; if (SH.table.length >= inf.slots) return toast('Table is full'); SH.table.push({ k:'s', key:d.v }); sfx.click(); render(); },
   shoff(d){ SH.table.splice(+d.v, 1); render(); },
+  showjoin(){
+    const clk = showClock(); if (SH || clk.phase !== 'open') return; const inf = SHOWINFO[clk.kind];
+    if (G.cash < inf.fee) return toast('You need ' + money(inf.fee) + ' for the table fee');
+    G.sc.paused = true; G.sc.left = clk.end - Date.now(); G.sc.idx = clk.idx;          // from here the show clock stops
+    SH = { stage:'setup', table:[], hide:true, kind:clk.kind, idx:clk.idx }; sfx.click(); save(); render();
+  },
+  showcancel(){
+    if (!SH || SH.stage !== 'setup') return; const left = G.sc.left || 1000, idx = G.sc.idx || 0;
+    G.sc = { t0:Date.now() - (SHOW_SLOT - left), i0:idx }; SH = null; sfx.click(); save(); render();          // nothing was charged: the window picks up where it was
+  },
   shopen(){
-    const kind = curShowKind(), inf = SHOWINFO[kind]; if (G.cash < inf.fee) return;
+    const kind = SH.kind, inf = SHOWINFO[kind]; if (G.cash < inf.fee) return;
     SH.cash0 = G.cash; G.cash -= inf.fee; G.stats.spent += inf.fee; ledger('Table fee (' + kind + ' show)', -inf.fee);
     for (const t of SH.table) if (!t.price){ if (t.k === 'c'){ const c = instOf(t.u); t.price = r2(cv(c)); } else { const [a, b] = t.key.split(':'); t.price = r2(sealedPx(a, b)); } }
-    Object.assign(SH, { stage:'run', tab:'cust', kind, name:showName(G.showN || 0), fee:inf.fee, sold:0, earned:0, bought:0, traded:0, log:[], queue:inf.buyers * 2 + Math.floor(G.rep / 4), clock:0, next:2, buyRate:.6 + rnd() * .15 });
+    Object.assign(SH, { stage:'run', tab:'cust', kind, name:showName(SH.idx || 0), fee:inf.fee, sold:0, earned:0, bought:0, traded:0, log:[], queue:inf.buyers * 2 + Math.floor(G.rep / 4), clock:0, next:2, buyRate:.6 + rnd() * .15 });
     SH.vendors = genVendors(); render();
   },
   stab(d){ SH.tab = d.v; render(); },
@@ -2545,11 +2573,10 @@ const ACT = {
   sclose(){
     if (SH.stage !== 'run') return;
     SH.stage = 'done'; SH.table.forEach(dropOffer);
-    const gain = (SH.earned || 0) + (SH.gain || 0), refund = r2(Math.max(0, Math.min(SH.fee, SH.fee - gain)));
-    if (refund > 0){ G.cash += refund; SH.refund = refund; ledger('Table fee refunded (sales did not cover it)', refund); }
+    G.sc = { t0:Date.now(), i0:(SH.idx || 0) + 1 };          // End show: a fresh 10 minutes starts toward the next show in the cycle
     save(); render();
   },
-  shend(){ (SH.vendors || []).forEach(v => v.items.forEach(i => releaseCard(i.c))); save(); G.stats.shows++; if (SH.sold >= 3) addRep(SH.kind === 'national' ? 3 : SH.kind === 'regional' ? 2 : 1); SH = null; G.showN = (G.showN || 0) + 1; G.showAt = (G.beat || 0) + 32; toast('The show is over.'); afterSkip(); },
+  shend(){ (SH.vendors || []).forEach(v => v.items.forEach(i => releaseCard(i.c))); save(); G.stats.shows++; if (SH.sold >= 3) addRep(SH.kind === 'national' ? 3 : SH.kind === 'regional' ? 2 : 1); SH = null; toast('The show is over.'); afterSkip(); },
   vendor(d){ showVendor(+d.vi); sfx.click(); },
   deal(d){ SH.deal = { vi:+d.vi, ii:+d.ii, pat:3, msg:'Let\'s talk.', counter:0, dead:false, sel:new Set() }; dealModal(); },
   dof(d){
@@ -2616,6 +2643,9 @@ async function boot(){
   if (!G.gift1){ G.gift1 = 1; addSealed('T1', 'collectors', 1, 0); note('Gift: a free Collectors Pack is waiting in your Packs tab!'); save(); }
   // a second one-time gift: 3 more free Collectors Packs for everyone already playing
   if (!G.gift2){ G.gift2 = 1; addSealed('T1', 'collectors', 3, 0); note('Gift: 3 free Collectors Packs are waiting in your Packs tab!'); save(); }
+  if (!G.sc) G.sc = { t0:Date.now(), i0:0 };
+  SH = G.sh || null; G.sh = null; if (SH) SH.deal = null;          // a show you were in is still there when you come back
+  if (G.sc.paused && !SH){ const left = G.sc.left || 1000, idx = G.sc.idx || 0; G.sc = { t0:Date.now() - (SHOW_SLOT - left), i0:idx }; }
   checkBroke(); checkAch();
   G.visitors = G.visitors || []; G.orders = G.orders || []; worldCatchUp();
   render(); setInterval(worldLoop, 1000); document.addEventListener('visibilitychange', () => { if (!document.hidden) worldLoop(); });
