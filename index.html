@@ -1041,7 +1041,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwiz95rw';'use strict';
+<script>const BUILD='mwiztmvr';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -1088,6 +1088,16 @@ for (const cr of CR){
   for (let t = 1; t <= 3; t++) for (const f of FIN_KEYS) for (const e of EDGE_KEYS){
     const m = (evo ? STAGE_MULT : 1) * FIN_MULT[f] * EDGE_MULT[e];
     const l = { id:SET_ID + '|' + cr.id + '|' + t + '|' + f + '|' + e, cid:cr.id, el:cr.element, evo, tier:t, fin:f, edge:e, v0:b * TIER_MULT[t] * FIN_MULT[f] * EDGE_MULT[e], copies:Math.max(1, Math.round(TIER_RUN[t] / Math.pow(m, SHRINK))) };
+    LOOKS.push(l); LOOKI[l.id] = l;
+  }
+}
+// NOIR: one extra card for every creature x edge, tier 3, 1 copy in the whole world, worth 2.5x the etched tier 3 card with the same creature and edge, drawn in black and white.
+// 'noir' is deliberately NOT in FIN_KEYS: sets, the guide and the finish tables never see it. Everywhere else it is an ordinary card (packs, eBay, shows, trades, shop).
+const NOIR_MULT = 2.5; FIN_MULT.noir = FIN_MULT.etched * NOIR_MULT; FIN_LABEL.noir = 'NOIR ETCHED';
+for (const cr of CR){
+  const evo = cr.stage === 'evolved', b = evo ? evoBase(cr.evolves_from) * STAGE_MULT : BASEVAL[cr.id];
+  for (const e of EDGE_KEYS){
+    const l = { id:SET_ID + '|' + cr.id + '|3|noir|' + e, cid:cr.id, el:cr.element, evo, tier:3, fin:'noir', edge:e, v0:b * TIER_MULT[3] * FIN_MULT.noir * EDGE_MULT[e], copies:1 };
     LOOKS.push(l); LOOKI[l.id] = l;
   }
 }
@@ -1529,6 +1539,7 @@ function buildSets(){
   const map = new Map();
   for (const c of G.inv.cards){
     if (c.bs || c.g) continue;
+    if (DEFS[c.d].fin === 'noir') continue;          // Noir cards are not in any set
     const d = DEFS[c.d], stage = d.cr.stage === 'evolved' ? 1 : 0, slot = slotOf(d.cr), ti = d.tier, fi = FIN_KEYS.indexOf(d.fin), ei = EDGE_KEYS.indexOf(d.edge), ty = TYPES.indexOf(d.type);
     const defs = [['creature', 'c|' + d.type + '|' + stage + '|' + ti + '|' + fi + '|' + ei, slot, 4], ['edge', 'e|' + d.cid + '|' + ti + '|' + fi, ei, 4], ['finish', 'f|' + d.cid + '|' + ti + '|' + ei, fi, 6], ['type', 't|' + slot + '|' + stage + '|' + ti + '|' + fi + '|' + ei, ty, 8]];
     for (const [dim, key, pos, size] of defs){
@@ -1900,6 +1911,14 @@ function cardHTML(def, o){
   const badge = c && c.bs ? `<div class="setbadge">SET ${c.size}</div>` : '';
   return `<div class="${cls}" ${o.attr || ''}>${inner}${badge}${tagHtml}</div>`;
 }
+// Noir cards are the etched card drawn in black and white (zero saturation, a touch darker and more contrasty)
+function drawCard(cv, sp, o){
+  if (sp.finish !== 'noir'){ CardRenderer.render(cv, sp, o); return; }
+  CardRenderer.render(cv, Object.assign({}, sp, { finish:'etched' }), o);
+  const g = cv.getContext('2d'), im = g.getImageData(0, 0, cv.width, cv.height), d = im.data;
+  for (let i = 0; i < d.length; i += 4){ let y = .299 * d[i] + .587 * d[i + 1] + .114 * d[i + 2]; y = Math.max(0, Math.min(255, (y - 118) * 1.25 + 108)); d[i] = d[i + 1] = d[i + 2] = y; }
+  g.putImageData(im, 0, 0);
+}
 const specOf = s => { const [creature, rarity, finish, tier, edge, serial, run] = s.split('|'); return { creature, rarity, finish, tier:+tier, edge, serial:+serial || 0, run:+run || 0 }; };
 // slab labels shrink their own text until every line fits (nothing is ever cut off)
 function fitSlabs(){
@@ -1914,21 +1933,21 @@ function fitSlabs(){
 function paintCards(){
   if (!window.CardRenderer || !CardRenderer.ready) return;
   fitSlabs();
-  document.querySelectorAll('canvas.cv:not([data-done])').forEach(cv => { try { CardRenderer.render(cv, specOf(cv.dataset.spec), { mx:.5, my:.4, t:0 }); } catch (e){} cv.dataset.done = '1'; });
+  document.querySelectorAll('canvas.cv:not([data-done])').forEach(cv => { try { drawCard(cv, specOf(cv.dataset.spec), { mx:.5, my:.4, t:0 }); } catch (e){} cv.dataset.done = '1'; });
 }
 let LIVE = null, LASTM = { mx:.5, my:.4 };
 function liveCards(){
   if (LIVE) clearInterval(LIVE);
   const cs = [...document.querySelectorAll('canvas.cv[data-live]')]; if (!cs.length){ LIVE = null; return; }
   const t0 = performance.now();
-  LIVE = setInterval(() => { if (!cs[0].isConnected){ clearInterval(LIVE); LIVE = null; return; } cs.forEach(cv => CardRenderer.render(cv, specOf(cv.dataset.spec), { mx:LASTM.mx, my:LASTM.my, t:(performance.now() - t0) / 1000 })); }, 60);
+  LIVE = setInterval(() => { if (!cs[0].isConnected){ clearInterval(LIVE); LIVE = null; return; } cs.forEach(cv => drawCard(cv, specOf(cv.dataset.spec), { mx:LASTM.mx, my:LASTM.my, t:(performance.now() - t0) / 1000 })); }, 60);
 }
 document.addEventListener('pointermove', e => {
   const cv = e.target.closest && e.target.closest('canvas.cv'); if (!cv || !window.CardRenderer) return;
   const r = cv.getBoundingClientRect(), mx = (e.clientX - r.left) / r.width, my = (e.clientY - r.top) / r.height;
   if (cv.dataset.live){ LASTM = { mx, my }; return; }
   if (cv._busy) return; cv._busy = true;
-  requestAnimationFrame(() => { cv._busy = false; try { CardRenderer.render(cv, specOf(cv.dataset.spec), { mx, my, t:performance.now() / 1000 }); } catch (e){} });
+  requestAnimationFrame(() => { cv._busy = false; try { drawCard(cv, specOf(cv.dataset.spec), { mx, my, t:performance.now() / 1000 }); } catch (e){} });
 });
 
 // ───────────────────────── charts ─────────────────────────
@@ -2921,10 +2940,11 @@ let MXC = {}, MXEXP = null;
 const mxGauss = () => randn(rnd);
 function mxNew(){
   const lv = () => clamp(mxGauss() * .25, -.5, .5), mk = keys => { const o = {}; for (const k of keys) o[k] = { s:lv(), d:lv() }; return o; };
-  return { c:mk(CR.map(c => c.id)), t:mk([1, 2, 3]), e:mk(EDGE_KEYS), f:mk(FIN_KEYS), u:rnd(), F:null, n:0 };
+  return { c:mk(CR.map(c => c.id)), t:mk([1, 2, 3]), e:mk(EDGE_KEYS), f:mk(FIN_KEYS.concat('noir')), u:rnd(), F:null, n:0 };
 }
 function mxEnsure(){
   if (!G.mx || !G.mx.c) G.mx = mxNew();
+  if (!G.mx.f.noir) G.mx.f.noir = { s:0, d:0 };          // saves from before Noir existed
   return G.mx;
 }
 // one market tick of drift
@@ -3570,7 +3590,8 @@ Object.assign(ACT, {
 // creature -> edge -> tier -> finish -> that card's value and last sold prices.
 const GUIDE = { cid:null, edge:null, tier:null, fin:null };
 const guideId = (cid, tier, fin, edge) => SET_ID + '|' + cid + '|' + tier + '|' + fin + '|' + edge;
-const FIN_NAME = { none:'No finish', shiny:'Shiny', gold:'Gold', etched:'Etched', rainbow:'Rainbow', galaxy:'Galaxy' };
+const FIN_NAME = { none:'No finish', shiny:'Shiny', gold:'Gold', etched:'Etched', noir:'Etched Noir', rainbow:'Rainbow', galaxy:'Galaxy' };
+const guideFins = tier => FIN_KEYS.flatMap(f => f === 'etched' && tier === 3 ? ['etched', 'noir'] : [f]);          // Etched Noir sits after Etched, and only exists in tier 3
 function guideTile(id, label, attrs){
   return `<div class="gt">${cardHTML(DEFS[id], { tagText:money(LOOKI[id].v0), attr:attrs })}<div class="dim gl">${label}</div></div>`;
 }
@@ -3591,7 +3612,7 @@ function scrGuide(){
   } else if (!G_.tier){
     h += `<div class="dim" style="margin-bottom:8px">${cap(G_.edge)} edge. Pick a tier.</div><div class="grid ggrid" style="--gw:clamp(90px,24vw,340px)">${[1, 2, 3].map(t => guideTile(guideId(cr.id, t, 'none', G_.edge), 'Tier ' + t, `data-a="gpick" data-k="tier" data-v="${t}"`)).join('')}</div>`;
   } else if (!G_.fin){
-    h += `<div class="dim" style="margin-bottom:8px">${cap(G_.edge)} edge · tier ${G_.tier}. Pick a finish.</div><div class="grid ggrid" style="--gw:clamp(70px,14.5vw,230px)">${FIN_KEYS.map(f => guideTile(guideId(cr.id, G_.tier, f, G_.edge), FIN_NAME[f], `data-a="gpick" data-k="fin" data-v="${f}"`)).join('')}</div>`;
+    h += `<div class="dim" style="margin-bottom:8px">${cap(G_.edge)} edge · tier ${G_.tier}. Pick a finish.</div><div class="grid ggrid" style="--gw:clamp(70px,14.5vw,230px)">${guideFins(G_.tier).map(f => guideTile(guideId(cr.id, G_.tier, f, G_.edge), FIN_NAME[f], `data-a="gpick" data-k="fin" data-v="${f}"`)).join('')}</div>`;
   } else {
     const id = guideId(cr.id, G_.tier, G_.fin, G_.edge), l = LOOKI[id], rows = lastSold(id).slice(0, 5);
     const evo = cr.stage === 'evolved', base = evo ? evoBase(cr.evolves_from) : BASEVAL[cr.id];
