@@ -735,6 +735,10 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 @keyframes shp{0%{background-position:100% 0;opacity:1}85%{opacity:1}100%{background-position:0% 0;opacity:0}}
 @keyframes spk{0%{background-image:var(--sp1)}25%{background-image:var(--sp2)}50%{background-image:var(--sp3)}75%{background-image:var(--sp4)}}
 @keyframes foi{0%{background-image:var(--fo1)}25%{background-image:var(--fo2)}50%{background-image:var(--fo3)}75%{background-image:var(--fo4)}}
+
+/* the card's value sits under it once it has landed */
+.spc .sptag{position:absolute;left:50%;bottom:calc(var(--w)*-.13);transform:translateX(-50%);background:#08121d;border:2px solid #2d5075;border-radius:6px;padding:0 8px;font-size:calc(var(--w)*.15);font-weight:600;white-space:nowrap;color:var(--grn);z-index:6;opacity:0;transition:opacity .25s}
+.spc.landed .sptag{opacity:1}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -986,7 +990,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwiwlma2';'use strict';
+<script>const BUILD='mwiwq26u';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2623,7 +2627,7 @@ function renderOp(flip, lv, dur, turns){
   }
   const left = OP.order.length - OP.ci, nb = Math.min(3, big ? left : left - 1);
   let stack = ''; for (let k = nb; k >= 1; k--) stack += cardHTML(DEFS[OP.order[0].d], { back:true, price:false, attr:`style="margin-left:${k * 6}px;margin-top:${-k * 5}px"` });
-  const top = big ? (flip ? `<div class="spc${(lv || 0) >= 2 ? ' sp' : ''}${['rainbow', 'galaxy'].includes(DEFS[big.d].fin) || (lv || 0) >= 4 ? ' foil' : ''}" style="--rc:${LVCOL[lv || 0]};--hue:${SPIN_HUE[lv || 0]}deg"><i class="swirl"></i><i class="bang"></i><i class="fxshine"></i><i class="fxspark"></i><i class="fxfoil"></i>${cardHTML(DEFS[big.d], { c:big, flip:true, spin:true, bk:BACKFOR[lv || 0], live:true, price:false, attr:`style="--turns:${turns};--dur:${dur}ms"` })}</div>` : cardHTML(DEFS[big.d], { c:big, live:true })) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:BACKFOR[hitLevel(OP.order[OP.ci])], price:false });
+  const top = big ? (flip ? `<div class="spc${(lv || 0) >= 2 ? ' sp' : ''}${['rainbow', 'galaxy'].includes(DEFS[big.d].fin) || (lv || 0) >= 4 ? ' foil' : ''}" style="--rc:${LVCOL[lv || 0]};--hue:${SPIN_HUE[lv || 0]}deg"><i class="swirl"></i><i class="bang"></i><i class="fxshine"></i><i class="fxspark"></i><i class="fxfoil"></i><div class="sptag">${money(cv(big))}</div>${cardHTML(DEFS[big.d], { c:big, flip:true, spin:true, bk:BACKFOR[lv || 0], live:true, price:false, attr:`style="--turns:${turns};--dur:${dur}ms"` })}</div>` : cardHTML(DEFS[big.d], { c:big, live:true })) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:BACKFOR[hitLevel(OP.order[OP.ci])], price:false });
   overlay(`<div class="modal opn rv rv${rl}" style="--rc:${LVCOL[rl]}"><div class="dim">${prodImg(OP.s, OP.p, 34)}${OP.packs.length > 1 ? '<br>' + (OP.pi + 1) + ' / ' + OP.packs.length : ''}</div>
     <div class="stage" data-a="opnext">${stack + top}</div>
     <div class="dim">${doneCards && big ? money(OP.pv) : OP.ci + ' / ' + OP.order.length}</div>
