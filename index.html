@@ -766,6 +766,11 @@ html,body{overflow:hidden}
 .spc.calm .card{filter:none!important;animation:none!important;box-shadow:none!important}
 .spc.calm{filter:none!important}
 .stamp{display:none!important}
+
+/* nothing vibrates: the build-up is a steady glow, not a shake */
+.spc.tenseW{animation:glowpulse .45s ease-in-out infinite alternate!important;filter:drop-shadow(0 0 14px var(--rc)) drop-shadow(0 0 30px var(--rc))}
+@keyframes glowpulse{from{filter:drop-shadow(0 0 8px var(--rc)) brightness(1)}to{filter:drop-shadow(0 0 26px var(--rc)) drop-shadow(0 0 44px var(--rc)) brightness(1.25)}}
+.modal.rumble,.modal.quake,.modal.quake2,.card.tense{animation:none!important}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -1017,7 +1022,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwixxvie';'use strict';
+<script>const BUILD='mwiy38l7';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2501,7 +2506,7 @@ function noteCard(c){
 }
 // ───── pull effects: the better the card, the bigger the show ─────
 const LVNAME = ['', 'PULL', 'NICE HIT!', 'GREAT PULL!', 'BIG HIT!', 'CHASE PULL!'];
-const QAMP = [0, 0, 3, 7, 12, 18, 24, 30];                       // screen shake size (px) when a card lands
+const QAMP = [0, 0, 0, 0, 0, 0, 0, 0];          // no screen shaking: the cards never vibrate                       // screen shake size (px) when a card lands
 const TENSE_MS = [0, 520, 950, 1400, 1900, 2500, 3000, 3500];        // how long the buildup lasts before the flip (tap to skip it)
 const fxEl = (cls, css, ms, parent) => { const e = document.createElement('div'); e.className = cls; e.style.cssText = css; (parent || document.body).appendChild(e); setTimeout(() => e.remove(), ms); return e; };
 function stageCenter(){ const st = $('.stage'); if (!st) return { x:innerWidth / 2, y:innerHeight * .4 }; const r = st.getBoundingClientRect(); return { x:r.left + r.width / 2, y:r.top + r.height / 2 }; }
@@ -2534,7 +2539,7 @@ function ember(lv){
 // the buildup before a good card flips: the screen rumbles harder and harder, the backdrop pulses in the card's colour, embers rise
 function tenseFx(lv, dur){
   const md = $('.opn'), ov = $('#ov'); if (!md || !ov) return () => {};
-  ov.dataset.tense = lv; ov.style.setProperty('--rc', LVCOL[lv]); md.classList.add('rumble');
+  ov.dataset.tense = lv; ov.style.setProperty('--rc', LVCOL[lv]); 
   const t0 = performance.now(); let alive = true;
   const step = t => { if (!alive) return; const k = Math.min(1, (t - t0) / dur); md.style.setProperty('--amp', (.5 + lv * .85 * k * k).toFixed(2) + 'px'); requestAnimationFrame(step); };
   requestAnimationFrame(step);
@@ -2589,7 +2594,7 @@ function opNext(){
 }
 
 // ───── the pack opens: every card spins face down together, the better the card the more turns it takes, and each lands face up on its last turn ─────
-const ONE_TURNS = [1, 2, 3, 5, 7, 9, 11, 14], ONE_T0 = 430;          // turns before a single card lands, by how good it is
+const ONE_TURNS = [1, 1, 2, 3, 3, 4, 5, 6], ONE_T0 = 430;          // turns before a single card lands, by how good it is
 const SPIN_TURNS = [2, 3, 4, 6, 8, 10], SPIN_T0 = 520, SPIN_HUE = [0, 0, 200, 150, 90, 40, 330, 0];
 function easeT(p){ const f = (a, b, t) => 3 * (1 - t) * (1 - t) * t * a + 3 * (1 - t) * t * t * b + t * t * t; let lo = 0, hi = 1; for (let k = 0; k < 24; k++){ const m = (lo + hi) / 2; if (f(.15, 1, m) < p) lo = m; else hi = m; } return f(.3, .2, (lo + hi) / 2); }          // the card's easing curve: when (0-1 of its time) has it turned p of its way?
 function startSpin(){
