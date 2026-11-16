@@ -760,6 +760,12 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 .spinstage,.stage{overflow:visible;contain:none}
 #main{overflow-x:hidden}
 html,body{overflow:hidden}
+
+/* when the show is over: just the card and its price */
+.spc.calm .fxshine,.spc.calm .fxspark,.spc.calm .fxfoil,.spc.calm .swirl,.spc.calm .bang{display:none!important}
+.spc.calm .card{filter:none!important;animation:none!important;box-shadow:none!important}
+.spc.calm{filter:none!important}
+.stamp{display:none!important}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -1011,7 +1017,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwixwng1';'use strict';
+<script>const BUILD='mwixxvie';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2575,7 +2581,7 @@ function opNext(){
   if (lv >= 1) sfx.tense(lv);
   if (lv >= 2) stops.push(tenseFx(lv, dur));
   if (lv >= 4){ const hb = setInterval(() => sfx.thump(lv), Math.max(300, 720 - lv * 55)); stops.push(() => clearInterval(hb)); }
-  const land = () => { if (!OP || OP.rv !== land) return; OP.rv = null; tm.forEach(clearTimeout); stops.forEach(f => f()); const w = $('.stage .spc'), cd = w && w.querySelector('.card'); if (w){ w.classList.add('face', 'landed'); if (cd) cd.style.animation = 'none'; } OP.busy = false; effects(c, lv); };
+  const land = () => { if (!OP || OP.rv !== land) return; OP.rv = null; tm.forEach(clearTimeout); stops.forEach(f => f()); const w = $('.stage .spc'), cd = w && w.querySelector('.card'); if (w){ w.classList.add('face', 'landed'); if (cd) cd.style.animation = 'none'; setTimeout(() => { if (w.isConnected) w.classList.add('calm'); }, 2400); } OP.busy = false; effects(c, lv); };          // once the show is over the card is left alone with its price
   OP.rv = land;
   tm.push(setTimeout(() => { const w = $('.stage .spc'); if (w) w.classList.add('face'); }, easeT(1 - .5 / turns) * dur));
   if (lv >= 2) tm.push(setTimeout(() => { const w = $('.stage .spc'); if (w && !w.classList.contains('landed')) w.classList.add('tenseW'); }, Math.max(0, dur - 900)));
