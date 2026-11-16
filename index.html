@@ -771,6 +771,13 @@ html,body{overflow:hidden}
 .spc.tenseW{animation:glowpulse .45s ease-in-out infinite alternate!important;filter:drop-shadow(0 0 14px var(--rc)) drop-shadow(0 0 30px var(--rc))}
 @keyframes glowpulse{from{filter:drop-shadow(0 0 8px var(--rc)) brightness(1)}to{filter:drop-shadow(0 0 26px var(--rc)) drop-shadow(0 0 44px var(--rc)) brightness(1.25)}}
 .modal.rumble,.modal.quake,.modal.quake2,.card.tense{animation:none!important}
+
+/* pull recipes: 1 flip | 2 + card shimmer | 3 + blue swirl | 4 + orange burst | 5 + extra flip, better sound | 6 + the card rises | 7 + red shimmer | 8 + more flips, third chime */
+.spc.landed.raise{animation:riseup .5s cubic-bezier(.2,1.3,.4,1) both}
+.stage .spc.landed.raise{transform:translateY(-12px) scale(1.07)}
+@keyframes riseup{from{transform:translateY(0) scale(1)}to{transform:translateY(-12px) scale(1.07)}}
+.spc.redshine .fxshine{filter:hue-rotate(135deg) saturate(2.4) brightness(1.1)}
+.spc .swirl{filter:drop-shadow(0 0 6px #4a9bff)!important;width:calc(var(--w)*1.75)!important;height:calc(var(--w)*1.75)!important;margin:calc(var(--w)*-.875) 0 0 calc(var(--w)*-.875)!important}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -1022,7 +1029,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwiy38l7';'use strict';
+<script>const BUILD='mwiyujb1';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -1953,6 +1960,18 @@ const sfx = {
     if (l >= 6){ beep(55, .9, 'sine', .16, .3); for (let i = 0; i < 8; i++) beep(1319 * Math.pow(1.12, i), .35, 'triangle', .05, 0, .9 + i * .06); }
     if (l >= 7) for (let i = 0; i < 10; i++) beep(1568 * Math.pow(1.1, i), .4, 'square', .035, 0, 1.4 + i * .05);
   },
+  // the sound of a pull, one recipe per value range (0 = under $5 ... 7 = $2,000+): the first three are just a flip, then every range adds to the one before.
+  // chimes: range 3 has one, 4 has one richer one, 5 and 6 have two, 7 has three
+  pull(r){
+    if (r <= 2){ sfx.flip(); return; }
+    const chime = (f0, n, step, t0, type) => { for (let i = 0; i < n; i++) beep(f0 * Math.pow(step, i), .32, type || 'triangle', .05, 0, t0 + i * .07); };
+    beep(90, .35, 'sine', .1 + r * .01, .4);                                      // the boom under the explosion
+    if (r === 3){ chime(880, 3, 1.26, 0, 'square'); }                              // chime 1: simple
+    if (r === 4){ chime(880, 5, 1.22, 0, 'square'); beep(1760, .5, 'sine', .06, 0, .1); beep(70, .5, 'sine', .14, .4); }    // upgraded
+    if (r === 5){ chime(880, 5, 1.22, 0, 'square'); chime(1318, 5, 1.19, .35); beep(60, .6, 'sine', .16, .4); }            // chimes 1-2
+    if (r === 6){ chime(880, 6, 1.22, 0, 'square'); chime(1318, 7, 1.15, .35); beep(55, .8, 'sine', .18, .3); beep(110, .5, 'sawtooth', .04, .5, .3); }   // upgraded
+    if (r >= 7){ chime(880, 6, 1.22, 0, 'square'); chime(1318, 7, 1.15, .35); chime(1760, 9, 1.1, .8); beep(50, 1, 'sine', .2, .3); beep(110, .6, 'sawtooth', .05, .5, .3); }   // chimes 1-3
+  },
 };
 
 // effect frames drawn in ChatGPT (card-art/fx.js): the swirl that orbits a spinning card, the burst when it lands
@@ -2482,7 +2501,7 @@ function scrStats(){
 // ───────────────────────── pack opening ─────────────────────────
 const BACKFOR = [0, 0, 0, 0, 0, 0];          // card back by how good the card is: purple, ice, teal, orange, pink, black-gold
 // how much show a pull gets: cards under $40 get none, then it climbs (value levels 0-7 -> show levels)
-const HYPE = [0, 0, 0, 2, 3, 4, 5, 7], hype = c => HYPE[hitLevel(c)];
+const HYPE = [0, 1, 2, 3, 4, 5, 6, 7], hype = c => HYPE[hitLevel(c)];
 const LVCOL = ['#888', '#4a9bff', '#b56cff', '#ff9a2e', '#ff5fb7', '#ffd23f', '#ff4d4d', '#ffffff'];
 function startRip(key, n){
   const [s, p] = key.split(':'); n = Math.min(n, G.inv.sealed[key] || 0); if (n < 1) return;
@@ -2554,18 +2573,7 @@ function banner(v, lv, c){
   const step = t => { const k = Math.min(1, (t - t0) / dur); el.textContent = money(v * (1 - Math.pow(1 - k, 3))); if (k < 1 && b.isConnected) requestAnimationFrame(step); };
   requestAnimationFrame(step); setTimeout(() => b.remove(), 2100);
 }
-function effects(c, lv){
-  sfx.hit(lv);
-  const v = cv(c), top = $('.stage .card:last-child'), col = LVCOL[lv];
-  if (lv >= 1) shock(lv);
-  if (lv >= 2){ banner(v, lv, c); quake(lv); flash(false, col); burst(lv * 9, lv, 110 + lv * 60); }
-  if (lv >= 3) burst(lv * 10, lv, 250);
-  if (lv >= 4) rain(lv * 12, lv);
-  if (lv >= 5){ flash(false, '#ffffff'); rain(50, lv); }
-  if (lv >= 6){ rain(70, lv); burst(90, lv, 360); setTimeout(() => flash(false, '#ffffff'), 350); }
-  if (lv >= 7) [500, 1000, 1500].forEach(t => setTimeout(() => { if (OP){ burst(60, 5, 320); rain(40, 7); } }, t));
-  if (lv >= 3 && top) setTimeout(() => { if (top.isConnected) top.classList.add('hot'); }, (.55 + lv * .28) * 1000 + 120);
-}
+function effects(c, lv){ sfx.pull(lv); }          // the picture comes from the layers on the card (see renderOp); only the sound is played from here
 function opNext(){
   if (!OP || OP.summary) return;
   if (OP.spinning){ spinSkip(); return; }
@@ -2583,18 +2591,14 @@ function opNext(){
   const turns = ONE_TURNS[lv], dur = Math.round(turns * ONE_T0);
   renderOp(true, lv, dur, turns);
   const tm = [], stops = [];
-  if (lv >= 1) sfx.tense(lv);
-  if (lv >= 2) stops.push(tenseFx(lv, dur));
-  if (lv >= 4){ const hb = setInterval(() => sfx.thump(lv), Math.max(300, 720 - lv * 55)); stops.push(() => clearInterval(hb)); }
   const land = () => { if (!OP || OP.rv !== land) return; OP.rv = null; tm.forEach(clearTimeout); stops.forEach(f => f()); const w = $('.stage .spc'), cd = w && w.querySelector('.card'); if (w){ w.classList.add('face', 'landed'); if (cd) cd.style.animation = 'none'; setTimeout(() => { if (w.isConnected) w.classList.add('calm'); }, 2400); } OP.busy = false; effects(c, lv); };          // once the show is over the card is left alone with its price
   OP.rv = land;
   tm.push(setTimeout(() => { const w = $('.stage .spc'); if (w) w.classList.add('face'); }, easeT(1 - .5 / turns) * dur));
-  if (lv >= 2) tm.push(setTimeout(() => { const w = $('.stage .spc'); if (w && !w.classList.contains('landed')) w.classList.add('tenseW'); }, Math.max(0, dur - 900)));
   tm.push(setTimeout(land, dur));
 }
 
 // ───── the pack opens: every card spins face down together, the better the card the more turns it takes, and each lands face up on its last turn ─────
-const ONE_TURNS = [1, 1, 2, 3, 3, 4, 5, 6], ONE_T0 = 430;          // turns before a single card lands, by how good it is
+const ONE_TURNS = [1, 1, 1, 1, 2, 2, 2, 4], ONE_T0 = 430;          // flips by value range: the first four flip once, then 5-7 flip twice (an extra flip), 8 flips four times          // turns before a single card lands, by how good it is
 const SPIN_TURNS = [2, 3, 4, 6, 8, 10], SPIN_T0 = 520, SPIN_HUE = [0, 0, 200, 150, 90, 40, 330, 0];
 function easeT(p){ const f = (a, b, t) => 3 * (1 - t) * (1 - t) * t * a + 3 * (1 - t) * t * t * b + t * t * t; let lo = 0, hi = 1; for (let k = 0; k < 24; k++){ const m = (lo + hi) / 2; if (f(.15, 1, m) < p) lo = m; else hi = m; } return f(.3, .2, (lo + hi) / 2); }          // the card's easing curve: when (0-1 of its time) has it turned p of its way?
 function startSpin(){
@@ -2663,7 +2667,7 @@ function renderOp(flip, lv, dur, turns){
     return;
   }
   const last = OP.pi >= OP.packs.length - 1, doneCards = OP.ci >= OP.order.length, big = OP.big, rl = big ? hype(big) : 0;
-  { const ov = $('#ov'); ov.dataset.lv = (big && !OP.summary) ? rl : 0; ov.style.setProperty('--rc', LVCOL[rl]); }
+  { const ov = $('#ov'); ov.dataset.lv = 0; ov.style.setProperty('--rc', LVCOL[0]); }
   if (OP.summary){
     const n = OP.packs.length, pl = OP.total - OP.cost;
     overlay(`<div class="modal opn"><div style="font-size:30px"><b class="gold">${money(OP.total)}</b> <span class="dim">/ ${money(OP.cost)}</span> <span class="${pl >= 0 ? 'up' : 'down'}">${pl >= 0 ? '+' : ''}${money(pl)}</span></div>
@@ -2673,8 +2677,8 @@ function renderOp(flip, lv, dur, turns){
   }
   const left = OP.order.length - OP.ci, nb = Math.min(3, big ? left : left - 1);
   let stack = ''; for (let k = nb; k >= 1; k--) stack += cardHTML(DEFS[OP.order[0].d], { back:true, price:false, attr:`style="margin-left:${k * 6}px;margin-top:${-k * 5}px"` });
-  const top = big ? (flip ? `<div class="spc${(lv || 0) >= 1 ? ' aura' : ''}${(lv || 0) >= 5 ? ' zoomw' : ''}${(lv || 0) >= 2 ? ' sp' : ''}" style="--rc:${LVCOL[lv || 0]};--hue:${SPIN_HUE[lv || 0]}deg;--lvn:${lv || 0};--dur:${dur}ms"><i class="swirl"></i><i class="bang"></i><i class="fxshine"></i><i class="fxspark"></i><i class="fxfoil"></i><div class="sptag">${money(cv(big))}</div>${cardHTML(DEFS[big.d], { c:big, flip:true, spin:true, bk:BACKFOR[lv || 0], live:true, price:false, attr:`style="--turns:${turns};--dur:${dur}ms"` })}</div>` : cardHTML(DEFS[big.d], { c:big, live:true })) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:0, price:false, attr:(hype(OP.order[OP.ci]) ? `data-aura="1" style="--rc:${LVCOL[hype(OP.order[OP.ci])]};--lvn:${hype(OP.order[OP.ci])}"` : '') });
-  overlay(`<div class="modal opn rv rv${rl}" style="--rc:${LVCOL[rl]}"><div class="dim">${prodImg(OP.s, OP.p, 34)}${OP.packs.length > 1 ? '<br>' + (OP.pi + 1) + ' / ' + OP.packs.length : ''}</div>
+  const r = lv || 0, top = big ? (flip ? `<div class="spc${r >= 5 ? ' raise' : ''}${r >= 6 ? ' redshine' : ''}" style="--dur:${dur}ms">${r >= 2 ? '<i class="swirl"></i>' : ''}${r >= 3 ? '<i class="bang"></i>' : ''}${r >= 1 ? '<i class="fxshine"></i>' : ''}<div class="sptag">${money(cv(big))}</div>${cardHTML(DEFS[big.d], { c:big, flip:true, spin:true, bk:BACKFOR[lv || 0], live:true, price:false, attr:`style="--turns:${turns};--dur:${dur}ms"` })}</div>` : cardHTML(DEFS[big.d], { c:big, live:true })) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:0, price:false, attr:(hype(OP.order[OP.ci]) ? `data-aura="1" style="--rc:${LVCOL[hype(OP.order[OP.ci])]};--lvn:${hype(OP.order[OP.ci])}"` : '') });
+  overlay(`<div class="modal opn rv" style="--rc:${LVCOL[0]}"><div class="dim">${prodImg(OP.s, OP.p, 34)}${OP.packs.length > 1 ? '<br>' + (OP.pi + 1) + ' / ' + OP.packs.length : ''}</div>
     <div class="stage" data-a="opnext">${stack + top}</div>
     <div class="dim">${doneCards && big ? money(OP.pv) : OP.ci + ' / ' + OP.order.length}</div>
     <div class="rev">${(big ? OP.shown.slice(0, -1) : OP.shown).map(c => `<div style="margin-bottom:${c.g ? 6 : 12}px">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}</div>`).join('')}</div>
