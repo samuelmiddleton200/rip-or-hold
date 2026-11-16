@@ -663,6 +663,11 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 .mtnone{color:#cbb690;font-size:15px;padding:2px 0}
 .mtlog{color:#cbb690;font-size:13px;margin-top:3px}
 .deal .xmark{display:inline-block;border-radius:50%;background:#ff4a4a;color:#fff;font-family:var(--pix);text-align:center;border:2px solid #fff;box-shadow:0 2px 4px rgba(0,0,0,.5)}
+/* pack opening: the card row scrolls inside the window and the buttons stay pinned at the bottom (a 20-card Bulk Pack used to push Finish off the screen) */
+.modal.opn{display:flex;flex-direction:column;align-items:center}
+.modal.opn .rev{flex:1 1 auto;min-height:0;overflow-y:auto;width:100%;align-content:flex-start}
+.modal.opn>div:last-child,.modal.opn>button:last-child{flex:none}
+.modal.opn>.dim,.modal.opn>h2,.modal.opn>h3{flex:none}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -910,7 +915,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwio0xj3';'use strict';
+<script>const BUILD='mwio2zmo';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2332,6 +2337,7 @@ function openPack(){
   const pk = stock(OP.packs[OP.pi]); G.stats.packs++; G.stats.cards += pk.length;
   const sorted = pk.slice().sort((a, b) => cv(a) - cv(b));
   OP.order = sorted; OP.ci = 0; OP.shown = []; OP.big = null; OP.pv = pk.reduce((a, c) => a + cv(c), 0);
+  save();          // the pack is gone and its cards are in your collection: save right now, so closing the game mid-opening loses nothing
 }
 function noteCard(c){
   const v = cv(c); OP.best.push({ c, v }); OP.best.sort((a, b) => b.v - a.v); OP.best.length = Math.min(OP.best.length, 8);
