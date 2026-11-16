@@ -632,8 +632,9 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 @keyframes flo{0%{opacity:.75}100%{opacity:0}}
 .spk{position:fixed;border-radius:50%;z-index:61;pointer-events:none;transform:translate(-50%,-50%);animation:spka .9s cubic-bezier(.1,.7,.3,1) forwards}
 @keyframes spka{0%{transform:translate(-50%,-50%) scale(1.2);opacity:1}100%{transform:translate(calc(-50% + var(--dx)),calc(-50% + var(--dy))) scale(.2);opacity:0}}
-.rainp{position:fixed;top:-20px;z-index:61;pointer-events:none;animation:rainf 2s linear forwards}
-@keyframes rainf{0%{transform:translate(0,0) rotate(0)}100%{transform:translate(var(--sw),105vh) rotate(var(--rot));opacity:.9}}
+.rainp{position:fixed;top:-30px;z-index:61;pointer-events:none;animation:rainf 2s linear forwards;box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.rainp.s{width:6px;height:15px;border-radius:1px}.rainp.sq{width:10px;height:10px}.rainp.dm{width:9px;height:9px;transform:rotate(45deg)}.rainp.ci{width:8px;height:8px;border-radius:50%}.rainp.st{width:4px;height:34px;border-radius:3px}
+@keyframes rainf{0%{transform:translate(0,0) rotate(0) rotateX(0)}50%{transform:translate(calc(var(--sw)*.4),55vh) rotate(calc(var(--rot)*.5)) rotateX(calc(var(--rx)*.5))}100%{transform:translate(var(--sw),108vh) rotate(var(--rot)) rotateX(var(--rx));opacity:.9}}
 .shock{position:absolute;left:50%;top:50%;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;border:6px solid var(--sc,#fff);box-shadow:0 0 30px var(--sc),inset 0 0 30px var(--sc);pointer-events:none;z-index:8;animation:shk .7s ease-out forwards}
 @keyframes shk{0%{transform:scale(.3);opacity:1}100%{transform:scale(9);opacity:0}}
 .ember{position:absolute;border-radius:50%;pointer-events:none;z-index:8;animation:embu 1.2s ease-out forwards}
@@ -748,6 +749,17 @@ body.shopfull #main.fit{padding:0;overflow:hidden;display:flex;flex-direction:co
 .spc .swirl{width:calc(var(--w)*(1.5 + var(--lvn,0)*.08));height:calc(var(--w)*(1.5 + var(--lvn,0)*.08));margin:calc(var(--w)*(1.5 + var(--lvn,0)*.08)*-.5) 0 0 calc(var(--w)*(1.5 + var(--lvn,0)*.08)*-.5)}
 .stage .spc.zoomw:not(.landed){animation:zoomin var(--dur) ease-in both}
 @keyframes zoomin{to{transform:scale(1.22)}}
+
+/* the big pulls use the tier colour for the rays, not a rainbow */
+.opn.rv5 .stage::before,.opn.rv6 .stage::before,.opn.rv7 .stage::before{background:repeating-conic-gradient(var(--rc) 0 9deg,transparent 9deg 18deg)}
+
+/* shaking, quakes, banners and shockwaves must never make a page scroll: the overlay and the pack modal clip what moves, and the page never scrolls sideways */
+#ov{overflow:hidden}
+.modal.opn,.modal.opn.rv,.modal.quake,.modal.rumble{overflow:hidden}
+.modal.opn .rev{overflow-y:auto;overflow-x:hidden}
+.spinstage,.stage{overflow:visible;contain:none}
+#main{overflow-x:hidden}
+html,body{overflow:hidden}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -999,7 +1011,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwixuyjc';'use strict';
+<script>const BUILD='mwixwng1';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2497,9 +2509,13 @@ function burst(n, lv, speed){
   }
 }
 // confetti falling from the top of the screen
-function rain(n){
-  const cs = ['#ffd23f', '#ff7ac0', '#7ad6ff', '#5be37d', '#ffffff', '#ff9a2e'];
-  for (let i = 0; i < n; i++) fxEl('rainp', `left:${Math.random() * 100}%;background:${cs[i % 6]};--sw:${(Math.random() - .5) * 160}px;--rot:${360 + Math.random() * 720}deg;animation-duration:${(1.5 + Math.random() * 1.6).toFixed(2)}s;animation-delay:${(Math.random() * .5).toFixed(2)}s;width:${6 + Math.random() * 6}px;height:${9 + Math.random() * 8}px`, 3600);
+// confetti: strips, squares, diamonds, circles and long curly streamers in the colours of the pull (gold, white and the tier colour, no rainbow), fluttering as they fall
+const CONF_PAL = { 4:['#ff5fb7', '#ffd23f', '#ffffff', '#ffb8e0'], 5:['#ffd23f', '#fff0a0', '#ffffff', '#ffb52e'], 6:['#ff4d4d', '#ffd23f', '#ffffff', '#ff9a9a'], 7:['#ffffff', '#ffd23f', '#fff0a0', '#cfe8ff'] };
+function rain(n, lv){
+  const cs = CONF_PAL[lv] || ['#ffd23f', '#ffffff', '#ffb52e', '#fff0a0'], kinds = ['s', 's', 'sq', 'dm', 'ci', 'st'];
+  for (let i = 0; i < n; i++){
+    const e = fxEl('rainp ' + kinds[i % kinds.length], `left:${Math.random() * 100}%;background:${cs[i % cs.length]};--sw:${(Math.random() - .5) * 220}px;--rot:${360 + Math.random() * 720}deg;--rx:${360 + Math.random() * 720}deg;animation-duration:${(2.2 + Math.random() * 1.8).toFixed(2)}s;animation-delay:${(Math.random() * .7).toFixed(2)}s`, 5200);
+  }
 }
 function confetti(n){ burst(n, 5, 300); }
 function shock(lv){ const st = $('.spinstage') || $('.stage'); if (st) fxEl('shock', `--sc:${LVCOL[lv]};animation-duration:${(.55 + lv * .08).toFixed(2)}s`, 1100, st); }
@@ -2533,10 +2549,10 @@ function effects(c, lv){
   if (lv >= 1) shock(lv);
   if (lv >= 2){ banner(v, lv, c); quake(lv); flash(false, col); burst(lv * 9, lv, 110 + lv * 60); }
   if (lv >= 3) burst(lv * 10, lv, 250);
-  if (lv >= 4) rain(lv * 12);
-  if (lv >= 5){ flash(true); rain(50); }
-  if (lv >= 6){ rain(70); burst(90, lv, 360); setTimeout(() => flash(true), 350); }
-  if (lv >= 7) [500, 1000, 1500].forEach(t => setTimeout(() => { if (OP){ burst(60, 5, 320); rain(40); } }, t));
+  if (lv >= 4) rain(lv * 12, lv);
+  if (lv >= 5){ flash(false, '#ffffff'); rain(50, lv); }
+  if (lv >= 6){ rain(70, lv); burst(90, lv, 360); setTimeout(() => flash(false, '#ffffff'), 350); }
+  if (lv >= 7) [500, 1000, 1500].forEach(t => setTimeout(() => { if (OP){ burst(60, 5, 320); rain(40, 7); } }, t));
   if (lv >= 3 && top) setTimeout(() => { if (top.isConnected) top.classList.add('hot'); }, (.55 + lv * .28) * 1000 + 120);
 }
 function opNext(){
@@ -2581,8 +2597,8 @@ function spinLand(i){
   if (lv === 0) sfx.flip(); else { sfx.hit(lv); shock(lv); }
   if (lv >= 2){ banner(cv(c), lv, c); quake(lv); flash(false, LVCOL[lv]); burst(lv * 9, lv, 110 + lv * 60); }
   if (lv >= 3) burst(lv * 10, lv, 250);
-  if (lv >= 4) rain(lv * 12);
-  if (lv >= 5) flash(true);
+  if (lv >= 4) rain(lv * 12, lv);
+  if (lv >= 5) flash(false, '#ffffff');
   OP.landedN = (OP.landedN || 0) + 1;
   if (OP.landedN >= OP.order.length) spinEnd();
 }
@@ -2646,7 +2662,7 @@ function renderOp(flip, lv, dur, turns){
   }
   const left = OP.order.length - OP.ci, nb = Math.min(3, big ? left : left - 1);
   let stack = ''; for (let k = nb; k >= 1; k--) stack += cardHTML(DEFS[OP.order[0].d], { back:true, price:false, attr:`style="margin-left:${k * 6}px;margin-top:${-k * 5}px"` });
-  const top = big ? (flip ? `<div class="spc${(lv || 0) >= 1 ? ' aura' : ''}${(lv || 0) >= 5 ? ' zoomw' : ''}${(lv || 0) >= 2 ? ' sp' : ''}${['rainbow', 'galaxy'].includes(DEFS[big.d].fin) || (lv || 0) >= 4 ? ' foil' : ''}" style="--rc:${LVCOL[lv || 0]};--hue:${SPIN_HUE[lv || 0]}deg;--lvn:${lv || 0};--dur:${dur}ms"><i class="swirl"></i><i class="bang"></i><i class="fxshine"></i><i class="fxspark"></i><i class="fxfoil"></i><div class="sptag">${money(cv(big))}</div>${cardHTML(DEFS[big.d], { c:big, flip:true, spin:true, bk:BACKFOR[lv || 0], live:true, price:false, attr:`style="--turns:${turns};--dur:${dur}ms"` })}</div>` : cardHTML(DEFS[big.d], { c:big, live:true })) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:0, price:false, attr:(hype(OP.order[OP.ci]) ? `data-aura="1" style="--rc:${LVCOL[hype(OP.order[OP.ci])]};--lvn:${hype(OP.order[OP.ci])}"` : '') });
+  const top = big ? (flip ? `<div class="spc${(lv || 0) >= 1 ? ' aura' : ''}${(lv || 0) >= 5 ? ' zoomw' : ''}${(lv || 0) >= 2 ? ' sp' : ''}" style="--rc:${LVCOL[lv || 0]};--hue:${SPIN_HUE[lv || 0]}deg;--lvn:${lv || 0};--dur:${dur}ms"><i class="swirl"></i><i class="bang"></i><i class="fxshine"></i><i class="fxspark"></i><i class="fxfoil"></i><div class="sptag">${money(cv(big))}</div>${cardHTML(DEFS[big.d], { c:big, flip:true, spin:true, bk:BACKFOR[lv || 0], live:true, price:false, attr:`style="--turns:${turns};--dur:${dur}ms"` })}</div>` : cardHTML(DEFS[big.d], { c:big, live:true })) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:0, price:false, attr:(hype(OP.order[OP.ci]) ? `data-aura="1" style="--rc:${LVCOL[hype(OP.order[OP.ci])]};--lvn:${hype(OP.order[OP.ci])}"` : '') });
   overlay(`<div class="modal opn rv rv${rl}" style="--rc:${LVCOL[rl]}"><div class="dim">${prodImg(OP.s, OP.p, 34)}${OP.packs.length > 1 ? '<br>' + (OP.pi + 1) + ' / ' + OP.packs.length : ''}</div>
     <div class="stage" data-a="opnext">${stack + top}</div>
     <div class="dim">${doneCards && big ? money(OP.pv) : OP.ci + ' / ' + OP.order.length}</div>
