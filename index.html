@@ -790,6 +790,7 @@ html,body{overflow:hidden}
 @keyframes riseup{from{translate:0 0;scale:1}to{translate:0 calc(var(--w)*-.09);scale:1.09}}
 .stage .spc.landed.slam{animation:slamdown .3s cubic-bezier(.7,0,1,.6) both}
 @keyframes slamdown{0%{translate:0 calc(var(--w)*-.3);scale:1.28}58%{translate:0 calc(var(--w)*.05);scale:.95}74%{translate:0 calc(var(--w)*-.13);scale:1.1}100%{translate:0 calc(var(--w)*-.09);scale:1.09}}
+.tradecols{align-items:flex-start!important}.tradecols .tarrow{align-self:center;margin-top:50px}
 </style>
 <script>
   // Launch guard (from Retro Baseball): measure the real screen, pin the page to it, and if an iPhone opened sideways still reports a stale
@@ -1041,7 +1042,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwjoyzbp';'use strict';
+<script>const BUILD='mwk6g0nu';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2442,6 +2443,12 @@ function hallHTML(tabs){
     <div class="mytable"><div class="mthead"><b>My table</b><span>${items.length} card${items.length === 1 ? '' : 's'} out</span></div><div class="mtdeals">${rows || '<div class="mtnone">No deals right now. Offers show up here.</div>'}</div>${SH.log.length ? `<div class="mtlog">${SH.log.slice(-2).reverse().join(' &middot; ')}</div>` : ''}</div></div>`;
 }
 // the offer popup: a buyer wants it for less (haggle), or has cards to trade
+// a deal went through: the buyer says one line, the cash shows, then the pop-up closes
+function dealDone(price){
+  overlay(`<div class="modal" style="width:min(520px,94vw);text-align:center"><div class="bubble" style="font-size:32px;margin:6px 0">Deal! Nice card.</div><div class="up" style="font-size:34px">+ ${money(price)}</div></div>`);
+  render(); sfx.sell();
+  setTimeout(() => { if ($('#ov').querySelector('.bubble')){ closeOv(); render(); } }, 1100);
+}
 function showOfferModal(i){
   const x = tableItems().find(y => y.i === i); if (!x || !x.t.offer) return closeOv();
   const o = x.t.offer, name = showName2(x);
@@ -2785,10 +2792,10 @@ const ACT = {
   soffer(d){ const x = tableItems().find(y => y.i === +d.v); if (!x) return; if (x.t.offer){ sfx.click(); showOfferModal(+d.v); } },
   shpedit(d){ showPriceEdit(+d.v); },
   shpsave(d){ const t = SH.table[+d.v], el = document.getElementById('shwPrice'); if (!t || !el) return; const val = r2(+el.value); if (!(val > 0)) return toast('Type a price first'); t.price = val; sfx.click(); closeOv(); render(); },
-  soacc(d){ const x = tableItems().find(y => y.i === +d.v); if (!x || !x.t.offer) return; const price = x.t.offer.offer; sellItem(x, price); closeOv(); render(); toast('Sold for ' + money(price)); },
+  soacc(d){ const x = tableItems().find(y => y.i === +d.v); if (!x || !x.t.offer) return; const price = x.t.offer.offer; sellItem(x, price); dealDone(price); },
   somid(d){
     const i = +d.v, x = tableItems().find(y => y.i === i); if (!x || !x.t.offer) return; const o = x.t.offer, p = r2(+d.p);
-    if (p <= o.maxP){ sellItem(x, p); SH.log.push('You haggled it to ' + money(p) + '.'); closeOv(); render(); return toast('Sold for ' + money(p)); }
+    if (p <= o.maxP){ sellItem(x, p); SH.log.push('You haggled it to ' + money(p) + '.'); return dealDone(p); }
     o.pat--;
     if (o.pat <= 0){ SH.log.push('A buyer walked away from ' + showName2(x) + '.'); sfx.bad(); dropOffer(x.t); closeOv(); render(); return toast('They walked away'); }
     if (p <= o.maxP * 1.1){ o.offer = r2(Math.min(o.maxP, o.offer + (o.maxP - o.offer) * .6)); o.msg = 'I can do ' + money(o.offer) + '. That is my best.'; o.q = offerQuick(o, x.price); sfx.click(); }
@@ -3559,14 +3566,15 @@ function cardWords(c){
   const d = DEFS[c.d];
   return [d.name, d.edge + ' edge', 'tier ' + d.tier, FIN_SAY[d.fin], c.g ? 'graded ' + c.g : ''].filter(Boolean).join(', ');
 }
-const tradeTile = c => `<div style="margin-bottom:14px;width:104px;text-align:center">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}<div class="dim" style="margin-top:6px;font-size:13px;line-height:1.15;color:#cfe3f7">${cardWords(c)}</div></div>`;          // still no values on trade offers: you have to know what your cards are worth (the Guide has the prices)
+// the cards they give get a description; the cards you give don't need one (you know your own cards)
+const tradeTile = (c, words) => `<div style="margin-bottom:14px;${words ? 'width:104px;text-align:center' : ''}">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}${words ? `<div class="dim" style="margin-top:6px;font-size:13px;line-height:1.15;color:#cfe3f7">${cardWords(c)}</div>` : ''}</div>`;          // still no values on trade offers: you have to know what your cards are worth (the Guide has the prices)
 function tradesHTML(){
   if (!G.trades.length) return '';
   let h = '<h3 style="margin-top:0">Trade offers</h3>';
   for (const t of G.trades){
     const mine = displayedCards().filter(c => t.mine.includes(c.u)), give = mine.reduce((a, c) => a + cv(c), 0), get = t.theirs.reduce((a, c) => a + cv(c), 0);
     h += `<div class="box tradebox"><div class="dim">${t.kind === 'many' ? 'Wants your card from the shop for all of these' : 'Wants these cards from your shop for one of theirs'}</div>
-      <div class="tradecols"><div><div class="dim">You give</div><div class="grid tg">${mine.map(tradeTile).join('')}</div></div><div class="tarrow">&rarr;</div><div><div class="dim">You get</div><div class="grid tg">${t.theirs.map(tradeTile).join('')}</div></div></div>
+      <div class="tradecols"><div><div class="dim">You give</div><div class="grid tg">${mine.map(c => tradeTile(c, false)).join('')}</div></div><div class="tarrow">&rarr;</div><div><div class="dim">You get</div><div class="grid tg">${t.theirs.map(c => tradeTile(c, true)).join('')}</div></div></div>
       <div style="display:flex;gap:8px;margin-top:4px"><button class="grn" data-a="tradeyes" data-t="${t.id}">Accept</button><button data-a="tradeno" data-t="${t.id}">No thanks</button></div></div>`;
   }
   return h;
