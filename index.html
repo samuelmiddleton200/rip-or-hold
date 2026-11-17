@@ -1042,7 +1042,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwk6spqn';'use strict';
+<script>const BUILD='mwk6wwxk';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -2718,7 +2718,7 @@ function renderOp(flip, lv, dur, turns){
   const r = lv || 0, top = big ? (flip ? `<div class="spc${r >= 4 ? ' jit' : ''}${r >= 5 && r < 7 ? ' lift' : ''}${r === 7 ? ' liftbig' : ''}${r >= 5 ? ' raise' : ''}${r === 7 ? ' slam' : ''}${r >= 6 ? ' redshine' : ''}" style="--dur:${dur}ms">${r >= 2 ? '<i class="swirl"></i>' : ''}${r >= 3 ? '<i class="bang"></i>' : ''}${r >= 1 ? '<i class="fxshine"></i>' : ''}<div class="sptag">${money(cv(big))}</div>${cardHTML(DEFS[big.d], { c:big, flip:true, spin:true, bk:BACKFOR[lv || 0], live:true, price:false, attr:`style="--turns:${turns};--dur:${dur}ms"` })}</div>` : cardHTML(DEFS[big.d], { c:big, live:true })) : cardHTML(DEFS[OP.order[OP.ci].d], { back:true, bk:0, price:false, attr:(hype(OP.order[OP.ci]) ? `data-aura="1" style="--rc:${LVCOL[hype(OP.order[OP.ci])]};--lvn:${hype(OP.order[OP.ci])}"` : '') });
   overlay(`<div class="modal opn rv" style="--rc:${LVCOL[0]}"><div class="dim">${prodImg(OP.s, OP.p, 34)}${OP.packs.length > 1 ? '<br>' + (OP.pi + 1) + ' / ' + OP.packs.length : ''}</div>
     <div class="stage" data-a="opnext">${stack + top}</div>
-    <div class="dim">${doneCards && big ? money(OP.pv) : OP.ci + ' / ' + OP.order.length}</div>
+    <div class="dim">${OP.ci} / ${OP.order.length}</div>
     <div class="rev">${(big ? OP.shown.slice(0, -1) : OP.shown).map(c => `<div style="margin-bottom:${c.g ? 6 : 12}px">${cardHTML(DEFS[c.d], { sm:true, c, price:false })}</div>`).join('')}</div>
     <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">${doneCards ? (last ? `<button class="gold" data-a="opfinish" aria-label="finish">&#10003;</button>` : `<button class="gold" data-a="oppack" aria-label="next">&#9654; ${OP.packs.length - OP.pi - 1}</button><button data-a="opripall" aria-label="all">&raquo;</button>`) : `<button data-a="opall" aria-label="reveal all">&raquo;</button>`}</div></div>`);
 }
