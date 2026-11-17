@@ -1042,7 +1042,7 @@ const COMBOS = () => CARDS.cards.length * FINISHES.length * TIERS.length;       
 global.CardRenderer = { init, render, compose, randomSpec, COMBOS, RARITIES, ELEMENTS, FINISHES, TIERS, VARIANTS, EDGES, DEFAULT_FINISH, RARITY_NAME, CW, CH, cards:() => CARDS };
 })(window);
 </script>
-<script>const BUILD='mwk6g0nu';'use strict';
+<script>const BUILD='mwk6spqn';'use strict';
 // ───────────────────────── utilities ─────────────────────────
 const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
 let RNG = Math.random;
@@ -1241,7 +1241,7 @@ function lastSold(lookId){
   }
   return G.sales[lookId];
 }
-function cardLabel(c){ const d = DEFS[c.d]; return [FIN_LABEL[d.fin], EDGE_LABEL[d.edge], TIER_LABEL[d.tier]].filter(Boolean).join(' · ') + (c.n ? ' · #' + c.n + '/' + d.run : ''); }
+function cardLabel(c){ const d = DEFS[c.d]; return [EDGE_LABEL[d.edge], TIER_LABEL[d.tier], FIN_LABEL[d.fin]].filter(Boolean).join(' · ') + (c.n ? ' · #' + c.n + '/' + d.run : ''); }
 const hitLevel = c => levelOfValue(cv(c));
 
 // ───────────────────────── the world pool and packs ─────────────────────────
